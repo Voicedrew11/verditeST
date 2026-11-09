@@ -2147,6 +2147,12 @@ Four files in the directory have no entry below:
   where it used to throw. Only the two throw sites changed; the RAM, scratchpad
   and register paths are untouched. Off by default (KF1's fuzzer turns it on), so
   nothing changes for a port that does not set it. **No recompile.**
+- `0117-pad-set-act-align.patch` — `LibPad.PadSetActAlign` took a third argument,
+  a length, that the real call does not have: it is `PadSetActAlign(port, data)` and
+  `data` is always six bytes. With `a2` left at anything below 2 it returned 0, and
+  Shadow Tower retries until the call succeeds, so `ST.EXE` froze before its first
+  frame. It now reads six bytes. No King's Field port binds it, so nothing moves
+  for them.
 - `0116-model-depth-pull.patch` — a model placed a little into the floor or a wall
   (a chest's base under a bump in the ground) drew whole under the ordering table,
   whose map faces were linked 0xF0 slots behind their mean; the retained renderer's
