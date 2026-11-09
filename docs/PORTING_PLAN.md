@@ -1,8 +1,8 @@
 # Plan: porting Shadow Tower
 
 Prepared 2026-11-09. **This is planned work, not a record of anything done**,
-except "What is on the disc", which was read off the disc that day. When a
-phase's gate closes, strike it through here, as the siblings' `TODO.md` does.
+except struck-through phases. What was read off the disc that day is now in
+`docs/RECOMPILATION.md`, "What is on the disc". When a phase's gate closes, strike it through here, as the siblings' `TODO.md` does.
 Findings made along the way go in the documents named under each phase, not here.
 
 The models are Verdite2's `docs/SHARING_PLAN.md` (Phase 2, the bootstrap, and
@@ -103,7 +103,7 @@ Before `git init`: the disc sits in the directory's root today.
 `git status` shows no disc data. Move "What is on the disc" above into
 `docs/RECOMPILATION.md`.
 
-## Phase 1: recompile
+## ~~Phase 1: recompile~~ (done 2026-11-09)
 
 Verdite3's order, which matters (`docs/RECOMPILATION.md` there, "The function
 maps"):

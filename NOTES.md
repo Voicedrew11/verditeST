@@ -9,9 +9,11 @@ findings live in `docs/`, split by what you would be doing when you need them.
 
 ## Status
 
-Phase 0 of `docs/PORTING_PLAN.md` is done: the repository is laid out and holds
+Phases 0 and 1 of `docs/PORTING_PLAN.md` are done. The repository holds
 `tools/RecompOne` (the fork at `7031630`) and `tools/verdite-core` (Verdite Core at
-`f1138e1`).
+`f1138e1`). The disc recompiles (4027 functions, `applied 105 patches, 0
+reimplementations`) and `generated/` compiles. **Nothing has been run yet.**
+Phase 2 is next.
 
 ## The documents
 

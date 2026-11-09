@@ -2,5 +2,12 @@
   "disc": "disc/ShadowTower.cue",
   "recompilerConfig": "config/st.json",
   "funcmaps": "config/funcmaps",
-  "sdkOverlays": []
+  "sdkOverlays": [
+    "str",
+    "st",
+    "title",
+    "optxt",
+    "vs",
+    "end"
+  ]
 }

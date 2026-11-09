@@ -27,6 +27,25 @@ if (channels.Count > 0)
     Console.WriteLine($"[ST] log channels: {string.Join(",", channels)}");
 }
 
+// libapi's interrupt-callback table, per executable: the table setIntr indexes by
+// irq*4, intrEnv + 4. See "The interrupt-callback table" in docs/RECOMPILATION.md.
+RecompOne.Runtime.Events.Event.AddListener<RecompOne.Runtime.Events.OverlayLoadedEvent>(e =>
+{
+    uint table = e.Name switch
+    {
+        "str" => 0x80031528u,
+        "st" => 0x80086B0Cu,
+        "title" => 0x80027738u,
+        "optxt" => 0x8001E434u,
+        "vs" => 0x80061384u,
+        "end" => 0x8002EA40u,
+        _ => 0u,
+    };
+    if (table == 0) return;
+    RecompOne.Runtime.Interrupts.CallbackTable = table;
+    Console.WriteLine($"[ST] irq callback table: {e.Name} 0x{table:X8}");
+});
+
 RecompOne.Runtime.Runtime.AppId = "verditest";
 
 var memory = new PSMemory();
