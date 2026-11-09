@@ -71,7 +71,7 @@ the renderer work, since Verdite1's turned up late.
 ## Status
 
 Recompiled 2026-11-09: the boot stub, the six executables and 36 area modules,
-4027 functions, `applied 157 patches, 0 reimplementations`. `generated/` compiles
+4027 functions, `applied 199 patches, 0 reimplementations`. `generated/` compiles
 with no errors.
 
 ## How one program starts the next
@@ -141,8 +141,9 @@ none now in any of the 43 maps.
 `SdkPatches` would bind them.
 
 `patches[]` binds the 21 entry points the siblings bind, wherever an executable
-links them, 105, and the 13 `libpad` routines in the four programs that link them
-(below): 157. Every address came from a signature, and the distances between
+links them, 105, the 13 `libpad` routines in the four programs that link them
+(below), 52, and seven more `libcd` routines in all six programs (below), 42: 199.
+Every address came from a signature, and the distances between
 routines of one library agree across all six programs (`CdSync` to `CdInit`
 `+0x244`, `DrawOTag` to `DrawSync` `+0x5F4`, `PutDispEnv` to `PutDrawEnv` `+0x1CC`,
 `CdReadSync` to `CdRead` `+0x100`).
@@ -180,6 +181,28 @@ The libraries, by signature: `libpad` in `STR`, `TITLE`, `OPTXT` and `ST`; `libc
 in `ST` and `VS`; `libpress` in `STR` and `END`. `VS.EXE` links only three of the
 `St*` ring routines and `ST.EXE` none.
 
+### The disc library
+
+Bound by the 21 names alone, `ST.EXE` froze after "Now Loading": it waits in
+`func_80015AD4` for its disc queue to empty (see "The disc queue" in
+`docs/GAME_INTERNALS.md`), and the queue is driven by `CdSyncCallback` and
+`CdReadyCallback`. Those two were left recompiled, so they wrote libcd's own
+variables, and the bound `CdControl` never saw a callback to fire. `patches[]` now
+also binds `CdSyncCallback`, `CdReadyCallback`, `CdReadCallback`, `CdDataCallback`,
+`CdStatus`, `CdMode` and `CdLastCom` in all six programs (42 entries, 199 patches):
+each reads or writes state that only the bound routines keep. `CdSync` to
+`CdSyncCallback` is `+0x40` in all six. `CdSearchFile` stays recompiled, because it
+works through `CdRead`.
+
+Two runtime defects showed up behind that one, both in `LibCd` (patches 0118 and
+0119 in `tools/RecompOne/docs/RECOMPONE_PATCHES.md`):
+- The real `CdRead` sizes the copy by the caller's mode but runs the drive with
+  `CdlModeSize1` (`ori 0x20` at `0x8006B9B8`), and the drive stays that way. The
+  queue's ReadN relies on it: its sector callback takes a 3-word header, 0x200 data
+  words and 0x46 trailing words.
+- The runtime stepped one sector on after a sector callback, even when the callback
+  had just issued a seek.
+
 ### The pad library
 
 `STR`, `TITLE`, `OPTXT` and `ST` link the newer `libpad`. Left recompiled, `ST.EXE`
@@ -214,7 +237,7 @@ program. A pointer next to `InterruptCallback` leads to a struct whose `+8` is
 land on a prologue or just after a `jr ra` gives that address for all 36, 962
 points against 260 for the runner-up. `ST.EXE` confirms it: its start-up clears BSS
 up to `0x801EB560`, so the modules load at the end of the program's own memory.
-Nothing has run yet, so the load itself is unobserved.
+Observed 2026-11-09: `fdat002` loads on the way into the first area.
 
 A module is:
 

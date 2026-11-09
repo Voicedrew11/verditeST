@@ -11,9 +11,9 @@ findings live in `docs/`, split by what you would be doing when you need them.
 
 Phases 0 and 1 of `docs/PORTING_PLAN.md` are done. The repository holds
 `tools/RecompOne` (the fork at `7031630`) and `tools/verdite-core` (Verdite Core at
-`f1138e1`). The disc recompiles (4027 functions, `applied 157 patches, 0
+`f1138e1`). The disc recompiles (4027 functions, `applied 199 patches, 0
 reimplementations`) and `generated/` compiles. Phase 2 is under way: the movies,
-the title and the opening text run, and `ST.EXE` reaches its main loop.
+the title and the opening text run, and `ST.EXE` loads its first area module.
 
 ## The documents
 
