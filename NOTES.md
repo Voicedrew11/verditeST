@@ -1,0 +1,29 @@
+# VerditeST: Shadow Tower (`SLUS-00863`) RecompOne port
+
+Static recompilation of **Shadow Tower** (FromSoftware, 1998) using
+[RecompOne](https://github.com/BlackLabelHQ/RecompOne) (MIT). The user supplies
+their own dump of `SLUS-00863`.
+
+**This file is the index.** It says what the project is and where it stands;
+findings live in `docs/`, split by what you would be doing when you need them.
+
+## Status
+
+Phase 0 of `docs/PORTING_PLAN.md` is done: the repository is laid out and holds
+`tools/RecompOne` (the fork at `7031630`) and `tools/verdite-core` (Verdite Core at
+`f1138e1`).
+
+## The documents
+
+- [docs/PORTING_PLAN.md](docs/PORTING_PLAN.md): the phases and their gates.
+- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md): build, run and diagnose.
+- [docs/RECOMPILATION.md](docs/RECOMPILATION.md): config, overlays, function maps, SDK addresses.
+- [docs/GAME_INTERNALS.md](docs/GAME_INTERNALS.md): the game's own addresses and routines.
+- [docs/ENV_VARS.md](docs/ENV_VARS.md): every `ST_*` switch.
+- [docs/TODO.md](docs/TODO.md): what is open now.
+
+## Where to write a new finding
+
+The finding goes in the document, not only in the commit message. Pick by what a
+reader would be doing when they need it. If it fits nowhere yet, put it in the
+general-purpose part of the nearest document.

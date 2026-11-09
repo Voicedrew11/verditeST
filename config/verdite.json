@@ -1,0 +1,6 @@
+{
+  "disc": "disc/ShadowTower.cue",
+  "recompilerConfig": "config/st.json",
+  "funcmaps": "config/funcmaps",
+  "sdkOverlays": []
+}
