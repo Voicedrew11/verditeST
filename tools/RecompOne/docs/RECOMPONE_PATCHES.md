@@ -2147,6 +2147,16 @@ Four files in the directory have no entry below:
   where it used to throw. Only the two throw sites changed; the RAM, scratchpad
   and register paths are untouched. Off by default (KF1's fuzzer turns it on), so
   nothing changes for a port that does not set it. **No recompile.**
+- `0119-seek-from-sector-callback.patch` — the runtime stepped one sector on after
+  each sector callback, even when the callback had just issued a seek, so the new
+  read started one sector late. It now steps only if no `Setloc` happened during the
+  callback. Shadow Tower's disc queue seeks from its last-sector callback and failed
+  its own checksum forever. **No recompile.** Not tested on the King's Field ports.
+- `0118-cdread-drive-mode.patch` — `CdRead` set the drive to the caller's mode. The
+  real one sizes the copy by that mode but runs the drive with `CdlModeSize1`, and
+  the drive stays that way (`ori 0x20` in Shadow Tower's `CdRead`), which a game's
+  own ReadN after it relies on. Without it each sector arrived 12 bytes off. **No
+  recompile.** Not tested on the King's Field ports.
 - `0117-pad-set-act-align.patch` — `LibPad.PadSetActAlign` took a third argument,
   a length, that the real call does not have: it is `PadSetActAlign(port, data)` and
   `data` is always six bytes. With `a2` left at anything below 2 it returned 0, and
