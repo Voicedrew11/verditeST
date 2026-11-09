@@ -49,5 +49,17 @@ RecompOne.Runtime.Events.Event.AddListener<RecompOne.Runtime.Events.OverlayLoade
 RecompOne.Runtime.Runtime.AppId = "verditest";
 
 var memory = new PSMemory();
+
+// ST_BOOTEXE=str|title|optxt|st|end|vs starts that program instead of the movies:
+// the stub's first index, written once the stub is in memory. See "How one program
+// starts the next" in docs/RECOMPILATION.md.
+int bootExe = Array.IndexOf(new[] { "str", "title", "optxt", "st", "end", "vs" }, Verdite.Core.Game.Env("BOOTEXE"));
+RecompOne.Runtime.Events.Event.AddListener<RecompOne.Runtime.Events.OverlayLoadedEvent>(e =>
+{
+    if (e.Name != "main" || bootExe <= 0) return;
+    memory.WriteU32(0x80010394u, (uint)bootExe);
+    Console.WriteLine($"[ST] boot: program {bootExe}");
+});
+
 Entry.Run(memory, args.Length > 0 ? args[0] : null);
 return 0;

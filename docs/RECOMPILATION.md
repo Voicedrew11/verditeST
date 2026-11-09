@@ -71,8 +71,8 @@ the renderer work, since Verdite1's turned up late.
 ## Status
 
 Recompiled 2026-11-09: the boot stub, the six executables and 36 area modules,
-4027 functions, `applied 105 patches, 0 reimplementations`. `generated/` compiles
-with no errors. Nothing has been run yet: that is Phase 2.
+4027 functions, `applied 157 patches, 0 reimplementations`. `generated/` compiles
+with no errors.
 
 ## How one program starts the next
 
@@ -141,7 +141,8 @@ none now in any of the 43 maps.
 `SdkPatches` would bind them.
 
 `patches[]` binds the 21 entry points the siblings bind, wherever an executable
-links them: 105. Every address came from a signature, and the distances between
+links them, 105, and the 13 `libpad` routines in the four programs that link them
+(below): 157. Every address came from a signature, and the distances between
 routines of one library agree across all six programs (`CdSync` to `CdInit`
 `+0x244`, `DrawOTag` to `DrawSync` `+0x5F4`, `PutDispEnv` to `PutDrawEnv` `+0x1CC`,
 `CdReadSync` to `CdRead` `+0x100`).
@@ -178,6 +179,17 @@ game's own, and is not bound. The real one calls through `*0x80087B90 + 4`, as
 The libraries, by signature: `libpad` in `STR`, `TITLE`, `OPTXT` and `ST`; `libcard`
 in `ST` and `VS`; `libpress` in `STR` and `END`. `VS.EXE` links only three of the
 `St*` ring routines and `ST.EXE` none.
+
+### The pad library
+
+`STR`, `TITLE`, `OPTXT` and `ST` link the newer `libpad`. Left recompiled, `ST.EXE`
+froze before its first frame: `func_80057428` polls `PadGetState(0)` until it reads
+6 or 2, with a 60-vblank timeout through `VSync(-1)`. The pad never reported ready,
+and on the port's timeline `VSync(-1)` only advances when a frame is presented, so
+the timeout never ran out. The 13 routines `SdkPatches` knows (`PadInitDirect`
+through `PadSetAct`) are bound by address in those four programs. `merge_sdk_names`
+leaves their names off, so the binding has to be in `patches[]`. Any other wait on
+`VSync(-1)` before the first frame would freeze the same way.
 
 ### The interrupt-callback table
 
