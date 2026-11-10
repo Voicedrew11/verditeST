@@ -77,6 +77,7 @@ St.Subpixel.Install();
 St.ZBuffer.Configure(Verdite.Core.Game.Env("ZBUFFER"), Verdite.Core.Game.Env("ZBUFFER_PROBE"));
 St.ZBuffer.Install();
 St.MapCoverage.Install(Verdite.Core.Game.Env("MAPCOVERAGE"));
+St.WordWatch.Install(Verdite.Core.Game.Env("WORDWATCH"));
 
 // The draw path's routines in C# (patches/Draw/): ST_LITERAL=1|0|verify, or one
 // routine's own ST_<NAME>. See "The draw path in C#" in docs/GEOMETRY.md.
@@ -95,6 +96,7 @@ St.VBlankPacing.Install();
 // What stage 14 advances once a frame (cel animations, the light's flicker, the
 // rumble countdown), held to the world's tick under pacing.
 St.DrawStageTick.Install();
+St.EffectTimers.Install();
 St.RateCensus.Install(Verdite.Core.Game.Env("RATECENSUS"));
 // The camera carried between world ticks. See "The camera carried" in docs/SMOOTHING.md.
 St.ViewSmoothing.Configure(Verdite.Core.Game.Env("SMOOTH"), Verdite.Core.Game.Env("SMOOTH_PROBE"));

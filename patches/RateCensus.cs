@@ -6,7 +6,8 @@ namespace St;
 /// <summary>
 /// ST_RATECENSUS=&lt;seconds&gt; (with pacing on, drawing above the tick rate): which RAM
 /// words change between two frames on which no main-loop stage ran, i.e. what still
-/// moves at the drawn rate. Prints the busiest runs once, then stops. Verdite3's
+/// moves at the drawn rate. Prints the busiest runs every window, with the map, and starts
+/// the next. Verdite3's
 /// RateCensus. See "What runs at the drawn rate" in docs/GAME_INTERNALS.md.
 /// </summary>
 public static class RateCensus
@@ -20,7 +21,6 @@ public static class RateCensus
     static int _idlePairs;
     static bool _previousIdle;
     static long _start = -1;
-    static bool _done;
 
     public static void Install(string? seconds)
     {
@@ -34,7 +34,7 @@ public static class RateCensus
     // a frame is idle when the main-loop iteration that built it skipped its stages.
     static void Sample(IMemory memory)
     {
-        if (_done || memory is not PSMemory m || !AgentBeacon.InGame) return;
+        if (memory is not PSMemory m || !AgentBeacon.InGame) return;
 
         var ram = MemoryMarshal.Cast<byte, uint>(m.Ram[..RamBytes]);
         bool idle = !FramePacing.IterationTicked;
@@ -48,14 +48,18 @@ public static class RateCensus
 
         if (_start < 0) _start = Environment.TickCount64;
         if (Environment.TickCount64 - _start < _seconds * 1000L) return;
-        _done = true;
-        Report();
+        Report(m.ReadU8(Map));
+        Array.Clear(_changes!);
+        _idlePairs = 0;
+        _start = Environment.TickCount64;
     }
 
-    static void Report()
+    const uint Map = 0x801B5924;
+
+    static void Report(byte map)
     {
         int n = _idlePairs;
-        Console.WriteLine($"[ST] ratecensus: {n} idle-to-idle frame pairs; runs of words changing on >= 25% of them:");
+        Console.WriteLine($"[ST] ratecensus: map {map}, {n} idle-to-idle frame pairs; runs of words changing on >= 25% of them:");
         int i = Lo;
         while (i < Hi)
         {
