@@ -44,7 +44,7 @@ the scratchpad's `+0xC`; its offsets are from `bank + 0xC`:
 | `+0x04` | the vertex count |
 | `+0x08` | offset of the normals (to the scratchpad's `+0x24`) |
 | `+0x10` | offset of the faces |
-| `+0x18` | a u16 count of 0x14-byte records before the quads: the triangles, probably |
+| `+0x18` | u16, the triangle count; the quads follow the triangles' 0x14-byte records |
 | `+0x1C` | u16, the quad count |
 
 **A quad**, 0x1C bytes:
@@ -59,6 +59,12 @@ the scratchpad's `+0xC`; its offsets are from `bank + 0xC`:
 | `+0x0C` | u16, the fourth UV |
 | `+0x10` | u16, the face's normal, a byte offset into the normals |
 | `+0x12..+0x18` | four u16 byte offsets into the projected corners |
+
+**A triangle** (`MapTriangles`, `func_8001D2A8`), 0x14 bytes: `+0x00` u32 the CLUT
+and first UV, `+0x04` u32 the texture page and second UV, `+0x08` u16 the third UV,
+`+0x0A` s8 the depth bias, `+0x0B` the GP0 code `| 0x34` (GT3), `+0x0C` u16 the
+normal's offset, `+0x0E..+0x12` three u16 offsets into the projected corners. The
+same shape as a quad's, one corner and one UV fewer.
 
 **The projection** (`ScenePrepare4`, `func_8001CDF8`). Per visible cell, the GTE's
 rotation is one of four matrices at `0x8017BDB8` (0x20 bytes each), picked by the
@@ -115,5 +121,5 @@ and back colour, which fits the shared `GteLightMap`; the fog is linear between 
 record's near and far depths toward a far colour from three fixed choices, which is
 the shape of the shared `LinearDepthCue` (Verdite3's near/far cue), with this game's
 own arithmetic (full `SZ`, truncating division, the top saturated by `DPCS`). Still
-to read: what the halving count does to the vertices, the triangles' 0x14-byte record,
+to read: what the halving count does to the vertices,
 the record table's index, and when the record changes within an area.
