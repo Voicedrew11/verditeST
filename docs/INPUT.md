@@ -40,9 +40,22 @@ defaults, from `func_800573BC`:
 
 `func_80060334` rewrites the table (the controller page of the options, by the look
 of it) and `func_8005738C` ORs `+0x32` to `+0x38`, the four face buttons, into
-`+0x3A`, the mask `func_80057744` filters presses with. Which action each entry
-names is read from its consumers, not yet done; `+0x36` is the action button (doors,
-`func_80042B9C`).
+`+0x3A`, the mask `func_80057744` filters presses with.
+
+What each entry drives, from the routines that read it:
+
+| entry | default | read by | drives |
+|---|---|---|---|
+| `+0x22`, `+0x24` | Up, Down | `func_800420A0` | forward and back: the speed at `player+0x2C0` |
+| `+0x2A`, `+0x2C` | L1, R1 | `func_800420A0` | sidestep: `player+0x2B8` |
+| `+0x26`, `+0x28` | Left, Right | `func_80041D4C` | turning: `player+0x2CA` |
+| `+0x2E`, `+0x30` | L2, R2 | `func_80041D4C` | looking up and down: `player+0x2CC` (and `+0x27A`) |
+| `+0x32`, `+0x34` | Triangle, Square | `func_8003F4EC`, `func_800402AC`, `func_80042900` | the hands, probably (not read) |
+| `+0x36` | Cross | `func_80042B9C`, `func_80050768` | the action: doors and what is in front |
+| `+0x38` | Circle | `func_80042D74`, `func_8005335C` | not read |
+
+The speeds are the ones the warp zeroes on arrival (`patches/Warp.cs`), so a mouse
+look has the game's own turn and look velocities to drive (step 2).
 
 ## Vibration
 
