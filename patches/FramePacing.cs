@@ -67,6 +67,12 @@ public static class FramePacing
     static double _fallbackNextMs = -1.0;
     static bool _fallbackSaid;
 
+    /// <summary>How far the world clock is toward its next tick, 0..1: where a frame drawn
+    /// now falls between the last two ticks. 1 with pacing off or the boundary lost.</summary>
+    public static double TickFraction =>
+        !Enabled || _lastBoundaryMs < 0.0 || _clock.Elapsed.TotalMilliseconds - _lastBoundaryMs > BoundaryDeadMs
+            ? 1.0 : Math.Clamp(_logicCredit, 0.0, 1.0);
+
     /// <summary>Frame boundaries reached: an identity, not a rate.</summary>
     public static long Frames { get; private set; }
 

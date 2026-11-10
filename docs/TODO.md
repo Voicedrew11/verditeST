@@ -3,6 +3,16 @@
 The phases and their gates are in `docs/PORTING_PLAN.md`. This file holds what is
 open now.
 
+## Waiting on the user
+
+- **By eye:** the camera carried between ticks (`docs/SMOOTHING.md`): turning and
+  walking at 144 against `ST_SMOOTH=0`.
+
+## Phase 6: what is left
+
+Started 2026-11-10: the camera is carried (`docs/SMOOTHING.md`). Next: models and
+their poses, the arm, the HUD's gauges, whether the cell cull lags the carried eye.
+
 ## Phase 5: what is left
 
 Started 2026-11-10: the first inventory is in `docs/GEOMETRY.md`, from map 0 and the

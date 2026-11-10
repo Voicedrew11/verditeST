@@ -26,6 +26,7 @@ rate (144 by default); before Phase 4 the port ran it at 60, since the runtime's
 - [docs/RECOMPILATION.md](docs/RECOMPILATION.md): config, overlays, function maps, SDK addresses.
 - [docs/GAME_INTERNALS.md](docs/GAME_INTERNALS.md): the game's own addresses and routines.
 - [docs/GEOMETRY.md](docs/GEOMETRY.md): the draw path, routine by routine (Phase 5).
+- [docs/SMOOTHING.md](docs/SMOOTHING.md): what the picture carries between ticks (Phase 6).
 - [docs/ENV_VARS.md](docs/ENV_VARS.md): every `ST_*` switch.
 - [docs/TODO.md](docs/TODO.md): what is open now.
 
