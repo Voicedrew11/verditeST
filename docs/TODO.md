@@ -3,6 +3,18 @@
 The phases and their gates are in `docs/PORTING_PLAN.md`. This file holds what is
 open now.
 
+## Phase 5: what is left
+
+Started 2026-11-10: the first inventory is in `docs/GEOMETRY.md`, from map 0 and the
+menu and death prompt. Next, in order:
+
+- The contexts not reached: the card screens, a fight, other areas (needs arrival
+  points, Phase 3), the area modules' own drawing, `VS.EXE`.
+- What `func_800241D0`'s three model sites, `func_800251C8` and `func_80021AC4` draw;
+  the leaves `func_8001F954` and `func_8001FD00`.
+- `PrimBufferProbe`: the packet buffer's size and headroom.
+- Then Step 2: literal C# for each routine, verified with `Differential`.
+
 ## Phase 4: what is left
 
 The gate is met (2026-11-10, "Frame pacing" in `docs/DEVELOPMENT.md`). Still open:

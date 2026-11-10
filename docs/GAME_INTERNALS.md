@@ -98,6 +98,12 @@ vblanks (`0x80088204`) runs out, so it runs on the wall clock and needs nothing.
 With the three held, the census lists only the last three rows. One area, standing:
 an area with other animations, or a fight, may show more.
 
+### The draw path
+
+What stage 14 calls, which routine writes which packets, and the loops that present
+frames of their own (the menu, the death prompt, a blank frame entering an area) are
+in `docs/GEOMETRY.md`.
+
 ## The disc queue
 
 `ST.EXE` loads in the background through a ring of 0x34-byte requests at

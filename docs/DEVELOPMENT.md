@@ -84,6 +84,21 @@ second. The acceptance test passes with pacing on and with `ST_PACING=0`.
 and fades at 20, the movies, the title and the opening text with their counted waits
 honoured.
 
+## Measuring the draw path
+
+`scripts/session.py <log> [ST_X=1 ...]` boots a new game and plays the same moves
+every run: stand, walk forward and back along the first heading, turn in place, open
+and close the menu, then walk off the ledge to the left of the start and press Cross
+at the death prompt. Map 0's start is ringed by fatal drops: walking after a turn
+fell every time, so the session only walks along the first heading until the death
+it means. It prints the player's HP and position after each move and judges nothing;
+the probe's lines are in the log. About 1 minute 30. `carda.sav` is not touched by
+the moves, but copy it aside anyway.
+
+`ST_GEOPROBE=1` and `ST_PRESENTPROBE=1` are the probes; the tables in
+`docs/GEOMETRY.md` came from them. `scripts/callsites.py st <routine>` lists a
+routine's calls with their return addresses, which is what both probes key on.
+
 ## Driving the game without a person
 
 `ST_AUTOSTART=new` or `load` boots into play with nobody at the pad

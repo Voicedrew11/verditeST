@@ -62,6 +62,10 @@ St.AutoStart.Install(Verdite.Core.Game.Env("AUTOSTART"), memory);
 
 // The main loop's survey: which stages write the ordering table.
 St.StageProbe.Install(Verdite.Core.Game.Env("STAGEPROBE"));
+// The draw path's survey: what each of stage 14's calls adds to the table.
+St.GeometryProbe.Install(Verdite.Core.Game.Env("GEOPROBE"));
+// Who sends each frame to the screen: stage 14, or a loop drawing its own.
+St.PresentProbe.Install(Verdite.Core.Game.Env("PRESENTPROBE"));
 
 // The world at the game's own 20 Hz, the picture at any rate (FramePacing), and
 // VSync(n) waiting n vblanks as the console's does (VBlankPacing), which is what

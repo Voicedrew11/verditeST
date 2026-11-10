@@ -17,7 +17,7 @@ recompiles (4027 functions, `applied 199 patches, 0 reimplementations`).
 ways, changes areas and dies, driven by `ST_AUTOSTART`, the beacon's state and `warp`;
 all 36 area modules load and run. The world ticks at the console's 20 Hz at any drawn
 rate (144 by default); before Phase 4 the port ran it at 60, since the runtime's
-`VSync(3)` did not wait. Phase 5 is next, with the open items in `docs/TODO.md`.
+`VSync(3)` did not wait. Phase 5 has started: the draw path's first inventory is in `docs/GEOMETRY.md`, with the open items in `docs/TODO.md`.
 
 ## The documents
 
@@ -25,6 +25,7 @@ rate (144 by default); before Phase 4 the port ran it at 60, since the runtime's
 - [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md): build, run and diagnose.
 - [docs/RECOMPILATION.md](docs/RECOMPILATION.md): config, overlays, function maps, SDK addresses.
 - [docs/GAME_INTERNALS.md](docs/GAME_INTERNALS.md): the game's own addresses and routines.
+- [docs/GEOMETRY.md](docs/GEOMETRY.md): the draw path, routine by routine (Phase 5).
 - [docs/ENV_VARS.md](docs/ENV_VARS.md): every `ST_*` switch.
 - [docs/TODO.md](docs/TODO.md): what is open now.
 

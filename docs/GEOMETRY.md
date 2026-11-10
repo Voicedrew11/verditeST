@@ -1,0 +1,87 @@
+# The draw path
+
+Phase 5's inventory of `ST.EXE`: which routine writes which packets, in which
+context. Verdite1's `docs/RENDERER_PLAN.md` Step 0 is the model; none of its
+addresses apply. Measured with `ST_GEOPROBE=1` and `ST_PRESENTPROBE=1` over
+`scripts/session.py` ("Measuring the draw path" in `docs/DEVELOPMENT.md`). Calls are
+named by the return address they leave in RA (the call site plus 8), as
+`scripts/callsites.py` prints them and the probes key them; the presents table gives
+call sites.
+
+## Who presents a frame
+
+Measured 2026-11-10 over the session (map 0: stand, walk, turn, the menu, a death).
+`func_80017634` is the present (`DrawOTag` of the table); it is called from the swap
+`func_80017680` or directly.
+
+| context | presented by | rate | what it draws |
+|---|---|---|---|
+| play | stage 14 `func_80026AFC`, swap at `0x80026D90` | every frame (144 at the default) | the world, then the HUD |
+| entering an area | `func_800214CC`, swap at `0x80021500` | 6.4 a second for about a second | nothing: it clears the table (`func_800174C4`) and swaps, a blank frame. Called from `func_8001531C` and `func_80015F0C` |
+| the menu (Select) | `func_80029B74`, direct at `0x8002A1A0` | 20 | **only the menu**: it clears the table and draws text and panels (`func_8002732C`, `func_800276BC`, `func_80026ECC`, `func_80029618`, `func_8002948C`); no world behind it. Called from `func_80058EF4` |
+| the death prompt | `func_8002CEF8`, direct at `0x8002D08C` | 20 | a panel and two text lines (`func_80027D18`, `func_800286A8`, `func_8002732C`, `func_80029618`) after a clear; no world. Called from `func_80063260`, the yes/no |
+
+While the menu or the death prompt is up, stage 14 runs about 3 times a second (the
+rest of the loop is stopped inside stage 3), so these loops present nearly every
+frame. They step at 20 because `VBlankPacing` holds their `VSync(3)`.
+
+Not reached yet: the card screens (`func_80062C28`), the opening of the game, the
+area modules' own drawing, the other menu pages, a fight, `VS.EXE`.
+
+## Stage 14, call by call
+
+Map 0's start, standing and turning, per call:
+
+| return address | routine | packets | what |
+|---|---|---|---|
+| `0x80026B30` | `func_800176A8` | none | frame set-up (calls `func_80049CD4`, `func_800498CC`) |
+| `0x80026B74` | `func_800174C4` | removes the last frame's | **frame head**: clears the ordering table |
+| `0x80026D14` | `func_80021654` | FT4S, now and then | |
+| `0x80026D2C` | `func_80020A80` | GT4 120-200, GT3 11-22, FT4 1-30 | **the scene** (below) |
+| `0x80026D4C` | `func_800241D0` | FT4 26-76, FT3, GT3, GT4, and their S forms | **the models** (below) |
+| `0x80026D54` | `func_800246E4` | FT3 5, FT4 2.5, in one window | an effect on a timer kept in vblanks |
+| `0x80026C7C` | `func_80026964(0)` | E1-6 10, sprite 8, F4 2, FT4 2; 80 words | **the HUD**: `func_80025C24` a sprite, `func_80025E00` an FT4, `func_80026020` an F4, each with its mode packet |
+| `0x80026D90` | `func_80028784` | | only when `0x8017BD66` is set; text (`func_80028364`, `func_80028220`, `func_800286A8`) |
+| `0x80026D98` | `func_80017680` | | **the swap**: `DrawSync`, `VSync(3)`, the environments, `DrawOTag` |
+
+The other calls added nothing in this session: `func_80016A14`, `func_80033110`,
+`func_800340F8`, `func_80034FC4`, `func_80027D18` and the other three
+`func_80026964` calls (arguments `0x1A`, `0x20`, `0x25`), `func_80026508`,
+`func_80026228`, `func_8002181C`, `func_800218D8`, `func_80021AC4` (0 and 1),
+`func_8001C8E0`, `func_8001C9C8`, `func_8001CAB8`, `func_800251C8`, `func_800255F0`
+(the cel animations). Several are gated on state not met standing in map 0.
+
+### The scene, `func_80020A80`
+
+| return address | routine | packets | what |
+|---|---|---|---|
+| `0x80020CA8` | `func_8001C100` | none | the visible-cell list |
+| `0x80020CB0`, `0x80020CB8` | `func_8001C264`, `func_8001C60C` | none | preparation, not read |
+| `0x80020D08`, `0x80020DA0` | `func_8001CB88`, `func_8001CDF8` | none | |
+| `0x80020DAC` | `func_8001F954` | FT3, now and then | a leaf: no calls |
+| `0x80020DB8` | `func_8001FD00` | FT4, 1 to 30 | a leaf; up to 30 while walking |
+| `0x80020DDC` | `func_8001D2A8` | **GT3**, 11 to 22 | **map triangles**; calls only `func_80075EC4` (8 bytes) |
+| `0x80020DE8` | `func_8001DB64` | **GT4**, 120 to 200 | **map quads**; calls only `func_80076884` (8 bytes) |
+| `0x80020DC4`, `0x80020DD0`, `0x80020DF4`, `0x80020E00` | `func_80020164`, `func_80020588`, `func_8001E5A0`, `func_8001EEAC` | none here | |
+
+The light's flicker `rand()` is at `0x80020B98` ("What runs at the drawn rate" in
+`docs/GAME_INTERNALS.md`).
+
+### The models, `func_800241D0`
+
+`func_800241D0` calls `func_80022678` (2960 bytes) from three sites; in map 0 only
+the second (`0x80024544`) drew. Every model polygon comes from **`func_80022010`**
+(1640 bytes), called by `func_80022678` at `0x80022C38`: FT4 to GT4, semi-transparent
+or not. `func_80022678`'s other callees (`func_80017D28`, `func_80034604`,
+`func_80035AA8`, `func_8001BF10`, `func_800192D4`, `func_80019DC8`) added nothing.
+`func_800251C8` is the same shape (`func_80022678` twice, then `func_80023ED8`) and
+drew nothing in map 0. `func_80021AC4` calls `func_80022010` too, at `0x80021FA0`,
+and drew nothing either.
+
+## Open
+
+- Which objects `func_800241D0`'s three sites draw, and what `func_800251C8` and
+  `func_80021AC4` draw (creatures, the hands, items are candidates).
+- The leaves `func_8001F954` and `func_8001FD00`.
+- The card screens, a fight, other areas, the area modules, `VS.EXE`.
+- The packet buffer's size and how close a frame comes to filling it.
