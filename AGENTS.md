@@ -1,5 +1,8 @@
 # AGENTS.md
 
+READBAILITY RULE!
+- Files should generally not exceed 300 lines, and should absolutly not exceed 500 lines
+
 Guidance for agents working in this repository.
 
 ## What this is
