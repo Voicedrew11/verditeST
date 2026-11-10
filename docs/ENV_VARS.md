@@ -36,6 +36,11 @@ default. Add an entry here when a switch is added to `Program.cs`.
 | `ST_SUBPIXEL` | on | `0`: every vertex snapped to a whole pixel |
 | `ST_SUBPIXEL_PROBE` | off | `1`: every 2 s, the map's counters and how far the vertices moved |
 | `ST_ZBUFFER` | on | `0`: occlusion by the ordering table alone, as the console |
+| `ST_WIDESCREEN` | 16:9 | `off` for 4:3; `16:10`, `21:9` or a number for others |
+| `ST_WIDESCREEN_PROBE` | off | `1`: every 2 s, primitives reaching the margin, tints stretched, near faces widened |
+| `ST_WIDESCREEN_EFFECTS` | on | `0`: leave the full-screen tints 320 wide |
+| `ST_WIDESCREEN_HUD` | off | `1`: move the HUD's panels out to the new edges |
+| `ST_NEARSCREEN` | on | `0`: leave libgte's division at the 320-pixel screen |
 | `ST_MOUSE` | on | `0`: no mouse look (Verdite Core's `Mouse`; also `ST_MOUSE_TURN`, `ST_MOUSE_LOOK`, `ST_MOUSE_INVERTY`, `ST_MOUSE_BUTTONS`, `ST_MOUSE_KEY`) |
 | `ST_MOUSE_SYNTH` | off | `yaw,pitch`: a synthetic hand, that step every tick for two seconds of three |
 | `ST_MOUSE_PROBE` | off | `1`: a line a second, the mouse's ticks driven, landed on their step, and any that moved undriven |

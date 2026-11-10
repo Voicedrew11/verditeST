@@ -28,6 +28,7 @@ rate (144 by default); before Phase 4 the port ran it at 60, since the runtime's
 - [docs/GEOMETRY.md](docs/GEOMETRY.md): the draw path, routine by routine (Phase 5).
 - [docs/SMOOTHING.md](docs/SMOOTHING.md): what the picture carries between ticks (Phase 6).
 - [docs/PICTURE.md](docs/PICTURE.md): the picture's switches (Phase 7).
+- [docs/WIDESCREEN.md](docs/WIDESCREEN.md): the margin, the tints, the HUD at the edges, the near polygons (Phase 9).
 - [docs/INPUT.md](docs/INPUT.md): the pad library, the button table, vibration (Phase 8).
 - [docs/ENV_VARS.md](docs/ENV_VARS.md): every `ST_*` switch.
 - [docs/TODO.md](docs/TODO.md): what is open now.

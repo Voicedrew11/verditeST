@@ -76,6 +76,12 @@ St.Subpixel.Configure(Verdite.Core.Game.Env("SUBPIXEL"), Verdite.Core.Game.Env("
 St.Subpixel.Install();
 St.ZBuffer.Configure(Verdite.Core.Game.Env("ZBUFFER"), Verdite.Core.Game.Env("ZBUFFER_PROBE"));
 St.ZBuffer.Install();
+// The margin either side of the 320-pixel screen (Phase 9, docs/WIDESCREEN.md).
+St.Widescreen.Configure(Verdite.Core.Game.Env("WIDESCREEN"), Verdite.Core.Game.Env("WIDESCREEN_PROBE"),
+                        Verdite.Core.Game.Env("WIDESCREEN_EFFECTS"), Verdite.Core.Game.Env("WIDESCREEN_HUD"));
+St.Widescreen.Install();
+St.NearScreen.Configure(Verdite.Core.Game.Env("NEARSCREEN"));
+St.NearScreen.Install();
 St.MapCoverage.Install(Verdite.Core.Game.Env("MAPCOVERAGE"));
 St.WordWatch.Install(Verdite.Core.Game.Env("WORDWATCH"));
 

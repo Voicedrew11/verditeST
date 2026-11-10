@@ -8,6 +8,9 @@ open now.
 - **By eye:** the camera and the models carried between ticks (`docs/SMOOTHING.md`):
   turning, walking and creatures moving at 144, against `ST_SMOOTH=0`; a cell popping
   in late when walking across a cell edge (about 1% of frames carry the eye there).
+- **By eye:** widescreen at 16:9, now the default (`docs/WIDESCREEN.md`): the margins
+  while turning, the tints at the edges, menus pillar-boxed; the HUD at the edges with
+  `ST_WIDESCREEN_HUD=1`, and whether it should be on.
 - **By hand:** mouse look (`docs/INPUT.md`): a click captures; turning, looking, and
   whether mouse down should look down.
 - **By hand:** vibration on a real pad (`docs/INPUT.md`): the options' vibration on,
@@ -20,6 +23,13 @@ open now.
   animations"), now at the tick's pace: against an emulator, or `ST_PACING=0`.
 - **By eye:** the picture's switches (`docs/PICTURE.md`), each against its `=0`; the
   Z-buffer most of all (decals, the HUD, fades, the menu).
+
+## Phase 9: what is left
+
+Started 2026-11-10 (`docs/WIDESCREEN.md`): 16:9 by default, the tints stretched, the
+HUD movable to the edges (off), the near polygons widened. The measured gate is met:
+the same cells at both aspects (the cull is by position), and the busiest area's
+packets peak at 33% of a buffer. Next: `MenuWorld` (the world live behind menus).
 
 ## Phase 8: what is left
 
