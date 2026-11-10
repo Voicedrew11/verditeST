@@ -23,8 +23,17 @@ namespace St;
 /// </summary>
 public static class EyeSmoothing
 {
-    const uint Scene = 0x80020A80, ModelList = 0x800241D0;
-    const uint SceneSite = 0x80026D2C, ModelListSite = 0x80026D4C;   // the draw stage's calls, + 8
+    const uint SceneSite = 0x80026D2C;   // the draw stage's call of the scene, + 8: sampled here
+
+    /// <summary>Every draw-stage call that places the world from the player's eye, and its
+    /// return address: the scene (the map's cells), the model list, the effect
+    /// <c>func_800246E4</c> and the second model list <c>func_800251C8</c>; the last two
+    /// draw through the model drawer as well, so left at the tick they stepped against
+    /// the carried world while walking.</summary>
+    static readonly (uint Routine, uint Site)[] Placers =
+    [
+        (0x80020A80, SceneSite), (0x800241D0, 0x80026D4C), (0x800246E4, 0x80026D54), (0x800251C8, 0x80026D5C),
+    ];
     const uint PlayerX = 0x80199170, PlayerY = 0x80199174, PlayerZ = 0x80199178;
     const uint LiftAAt = 0x801991F6, LiftBAt = 0x801991FA;          // s16s the eye adds to Y
 
@@ -45,6 +54,15 @@ public static class EyeSmoothing
 
     static Eye _prev, _cur, _handed;
     static bool _primed, _restore;
+    static uint _site;
+
+    // ST_SMOOTH_PROBE=1: a line a second of the model drawer's calls (func_80022678, which
+    // subtracts the player's eye) made inside each placer, carried and not.
+    const uint ModelDrawer = 0x80022678;
+    static readonly bool _probe = Verdite.Core.Game.Env("SMOOTH_PROBE")?.Trim() == "1";
+    static readonly long[] _carried = new long[4], _uncarried = new long[4];
+    static int _inside = -1;
+    static double _probeAt = -1.0;
     static long _tick = -1;
 
     static bool Active => ViewSmoothing.Enabled && FramePacing.Enabled;
@@ -59,21 +77,34 @@ public static class EyeSmoothing
     {
         SymbolRegistry.Build();
         MethodInfo Hook(string n) => typeof(EyeSmoothing).GetMethod(n, BindingFlags.Public | BindingFlags.Static)!;
-        if (SymbolRegistry.Resolve(MainLoop.Overlay, null, Scene) is not { } scene) return false;
-        if (SymbolRegistry.Resolve(MainLoop.Overlay, null, ModelList) is not { } models) return false;
-        foreach (var t in new[] { scene, models })
+        var targets = new List<MethodInfo>();
+        foreach (var (routine, _) in Placers)
+        {
+            if (SymbolRegistry.Resolve(MainLoop.Overlay, null, routine) is not { } t) return false;
+            targets.Add(t);
+        }
+        foreach (var t in targets)
         {
             HookManager.AddPre(_self, t, Hook(nameof(Before)), order: int.MinValue);
             HookManager.AddPost(_self, t, Hook(nameof(After)), order: int.MaxValue);
         }
+        if (_probe && SymbolRegistry.Resolve(MainLoop.Overlay, null, ModelDrawer) is { } drawer)
+        {
+            HookManager.AddPre(_self, drawer, Hook(nameof(ProbeModel)));
+            foreach (var t in targets)
+            {
+                HookManager.AddPre(_self, t, Hook(nameof(ProbeEnter)), order: int.MaxValue);
+                HookManager.AddPost(_self, t, Hook(nameof(ProbeLeave)), order: int.MinValue);
+            }
+        }
         HookManager.Commit();
-        return HookAttach.Installed(scene) && HookAttach.Installed(models);
+        return targets.All(HookAttach.Installed);
     }
 
     public static void Before(CpuContext c, IMemory m)
     {
         _restore = false;
-        if (c.RA is not (SceneSite or ModelListSite) || !FramePacing.InMainLoopDraw) return;
+        if (!IsPlacerSite(c.RA) || !FramePacing.InMainLoopDraw) return;
         if (!Active) { _primed = false; return; }
         var handed = Eye.Read(m);
         if (c.RA == SceneSite) Sample(handed);
@@ -81,6 +112,7 @@ public static class EyeSmoothing
         _handed = handed;
         Lerp(_prev, _cur, FramePacing.TickFraction).Write(m);
         _restore = true;
+        _site = c.RA;
     }
 
     public static void After(CpuContext c, IMemory m)
@@ -88,6 +120,37 @@ public static class EyeSmoothing
         if (!_restore) return;
         _restore = false;
         _handed.Write(m);
+    }
+
+    public static void ProbeEnter(CpuContext c, IMemory m) =>
+        _inside = FramePacing.InMainLoopDraw ? Array.FindIndex(Placers, p => p.Site == c.RA) : -1;
+
+    public static void ProbeLeave(CpuContext c, IMemory m)
+    {
+        if (_inside != Array.FindIndex(Placers, p => p.Site == c.RA) || _inside < 0) return;
+        _inside = -1;
+        if (c.RA != Placers[^1].Site) return;
+        double now = Environment.TickCount64 / 1000.0;
+        if (_probeAt < 0.0) _probeAt = now;
+        double dt = now - _probeAt;
+        if (dt < 1.0) return;
+        var parts = Placers.Select((p, k) => $"{p.Routine:X8} {_carried[k] / dt:0.0} carried {_uncarried[k] / dt:0.0} not");
+        Console.WriteLine($"[ST] eye smoothing: model draws/s inside {string.Join(", ", parts)}");
+        Console.Out.Flush();
+        _probeAt = now;
+        Array.Clear(_carried); Array.Clear(_uncarried);
+    }
+
+    public static void ProbeModel(CpuContext c, IMemory m)
+    {
+        if (_inside < 0) return;
+        if (_restore) _carried[_inside]++; else _uncarried[_inside]++;
+    }
+
+    static bool IsPlacerSite(uint ra)
+    {
+        foreach (var (_, site) in Placers) if (ra == site) return true;
+        return false;
     }
 
     /// <summary>Once a frame, at the scene: the last two ticks' eyes.</summary>

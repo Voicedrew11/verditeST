@@ -63,6 +63,17 @@ The cell cull (`func_8001C100`, passed `0x80199170`) now culls from the carried
 position too, so the "in another cell" frames above no longer differ from what is
 drawn. The acceptance test passes with it on.
 
+**Two more drawers place from the eye** (the user saw objects other than the map
+jitter while walking, 2026-11-10). The draw stage's effect `func_800246E4` (return
+`0x80026D54`) and second model list `func_800251C8` (return `0x80026D5C`) both draw
+through the model drawer `func_80022678`, which subtracts the player's position, so
+left at the tick they stepped against the carried world. The effect also reads
+`+0x248`/`+0x250` itself, for a distance to the player that scales what it draws. Both
+are now handed the carried eye too. `ST_SMOOTH_PROBE=1` adds a line a second counting the
+model drawer's calls inside each of the four, carried and not: at map 0's start the
+effect makes 160 to 240 a second (two models a frame), all carried, none not; the
+second list made none over six maps. The acceptance test passes.
+
 ## Models carried
 
 `patches/ModelSmoothing.cs`, on with the camera (`ST_SMOOTH_MODELS=0` turns the models
