@@ -19,8 +19,6 @@ open now.
   whether mouse down should look down.
 - **By hand:** vibration on a real pad (`docs/INPUT.md`): the options' vibration on,
   then a hit or a fall.
-- **To push (the user):** the fork commit `0122` (`tools/RecompOne`, commit `4f5cd57`),
-  to `Voicedrew11/verdite-recompone`; until then this copy is ahead of it.
 - **By eye:** a status flash (a full-screen tint), now up for the whole tick at 144:
   poke `801991FE 0010` and `80199200 4000` over the agent channel.
 - **By eye:** map 24's two texture animations (`docs/GAME_INTERNALS.md`, "Texture

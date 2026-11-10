@@ -49,7 +49,7 @@ Left to this plan; change any of them before Phase 0 and nothing else moves.
 | disc path | `disc/ShadowTower.cue` / `.bin` | |
 | launcher, app id | `VerditeST.Launcher`, `verditest` | data in `~/.local/share/verditest` |
 | MCP project | `ShadowTowerMcp` | |
-| shared pins | the fork at `7031630`, Verdite Core at `f1138e1` | both repos' `main` today; newer than Verdite3's pins, so the first build here is also the first build on them |
+| shared pins | the fork at `4125070`, Verdite Core at `f1138e1` | both repos' `main` (the fork's pushed 2026-11-10 with 0117 to 0122); newer than Verdite3's pins, so the first build here is also the first build on them |
 
 **Ask first** (not decided here): creating the GitHub repository and any push;
 whether the Japanese disc (`SLPS-01420`) is ever a target; pulling a fork change

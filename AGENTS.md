@@ -59,7 +59,7 @@ dotnet run --project ShadowTowerRecomp.csproj -c Release -- disc/ShadowTower.cue
 
 The assembly is `ShadowTower`, the environment-variable prefix is `ST_`, and the
 MCP project is `ShadowTowerMcp`. `tools/RecompOne` is a **subtree** of the fork
-`Voicedrew11/verdite-recompone`, pinned at `7031630`; `tools/verdite-core` is a
+`Voicedrew11/verdite-recompone`, pinned at `4125070`; `tools/verdite-core` is a
 subtree of the shared, game-agnostic `Voicedrew11/verdite-core`, pinned at
 `f1138e1`. Their sources are tracked here, so a fresh clone already has them and
 nothing needs fetching.
