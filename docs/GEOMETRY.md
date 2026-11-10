@@ -205,6 +205,13 @@ split that way and still verify at 0.
 A count is calls, not coverage: `Models2` and `HeldModel` drew nothing in map 0, so
 their drawing branches have not been compared yet.
 
+**Mismatches from the sound chip.** Over the 12-area tour (2026-11-10) `Models` read 2
+mismatches in 2,875 calls and `func_800246E4` 1 in 2,878, each one byte in
+`0x801DDBF8..0x801DDBFA`, recompiled `01`, ours `03`. `func_800241D0` calls
+`SpuGetAllKeysStatus(0x801DDBF8)`, which copies the 24 voices' key states there from
+the SPU, outside RAM: a voice that changes state between verify's two runs reads
+differently. A clock, not a transcription error; verify cannot restore the SPU.
+
 **A routine that presents a frame cannot be verified this way**: the second run
 waits for another vblank, and the sound library's and the disc queue's callbacks run
 again (`func_800214CC`, the blank frame, read thousands of bytes different, first at
