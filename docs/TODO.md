@@ -3,6 +3,57 @@
 The phases and their gates are in `docs/PORTING_PLAN.md`. This file holds what is
 open now.
 
+## Overnight run, 2026-11-10 00:40 to 13:00: what was done
+
+About 95 commits on `main`. At your word at 12:34, `main` was pushed to `origin`
+(90 commits) and the fork's `main` to `4125070`. In order:
+
+- **Pacing (Phase 5):** `VSync(n)` now waits n vblanks, so the world runs at the
+  game's 20 Hz under a 144 fps picture.
+- **Draw path in C# (Phase 7):** 57 draw routines run as C# transcriptions, checked
+  against the original by literal verify: 0 mismatches in all 23 warpable maps, and
+  over the 12-map tour all at 0 but three known bytes of sound-chip state in
+  `Models`. Verify now compares the calls each routine makes as well as RAM,
+  registers and the GTE.
+- **Warps:** door arrival points decoded; a warp now goes through the game's own
+  door code, so 23 of 36 maps take a warp alive. The acceptance test's
+  one-in-four failure is fixed (it warped during the title's load).
+- **Smoothing (Phase 6):** the camera, the models' positions, angles and animation
+  time are carried between ticks, so 144 distinct frames a second; texture
+  animations, effect timers and full-screen tints are held to the game's tick.
+- **Picture (Phase 8):** no dither, 24-bit colour, perspective-correct textures,
+  sub-pixel vertices and a Z-buffer on by default.
+- **Widescreen (Phase 9):** 16:9 by default; the world drawn live behind the
+  in-game menu.
+- **Input:** a WASD layout, mouse look, and vibration (fork patch 0122).
+- **Settings (Phase 10):** `Settings ▸ Testing` with the port's switches live and
+  kept; first-run setup from `config/onboarding.json`.
+- **GPU renderer (Phase 11), planned on Verdite3's route:** the map's cells, faces,
+  light and linear fog, and all twelve model face writers, are modelled in plain C#
+  and match the game's packets word for word over the tour (about 3 million faces, 0
+  differences), including the flicker's recolour and the near faces. Read and
+  counted: the models' light blend, and what sets it (an entity's fog mode is its
+  distance; the low flag bits are transparency). Baseline cost: under 1.4 ms a frame
+  at p95. The one ~600 ms stall per game start is the .NET compiler, not the
+  drawing, and a ReadyToRun publish takes it to 5 ms with the game playing and
+  verifying the same (`docs/GPU_COST.md`); not yet the default build. Step 1 is
+  read (`docs/GPU_CONTRACT.md`): the shared backend needs two small additions for this game, a linear 4096 fog curve and a
+  post-fog recolour.
+
+**Pushed:** `tools/RecompOne` split to `Voicedrew11/verdite-recompone` `main`
+(`7031630..4125070`: patches 0117 to 0122, the only subtree edit tonight being 0122),
+and this repository's `main`. The three commits after 12:35 (the pin, the ReadyToRun result, this summary) are local only. `tools/verdite-core`
+was unchanged.
+
+**Waiting on you:** the list under "Waiting on the user" below: mostly checks by
+eye or by hand (smoothing, widescreen, the Z-buffer and picture switches, WASD,
+mouse, vibration, the Testing tab, first-run setup), and one decision (how to reach
+the port's settings from the game's menu; a spare button is recommended).
+
+**Next for Phase 11:** the fog curve as a fork patch (with `MapLight` as its
+reference), then the near divisions' arithmetic, then wiring the map into the
+retained backend.
+
 ## Waiting on the user
 
 - **By eye:** the camera and the models carried between ticks (`docs/SMOOTHING.md`):
