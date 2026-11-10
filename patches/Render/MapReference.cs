@@ -25,7 +25,7 @@ public static class MapReference
     /// <summary>One face as the reference has it: a bulk face's key and every word of
     /// its packet but the tag's link, or a near face (<c>Words</c> null), whose packets the
     /// split writes and the reference steps over.</summary>
-    readonly record struct Expected(int Key, uint[]? Words);
+    readonly record struct Expected(int Key, uint[]? Words, string? Near = null);
 
     static readonly ModInfo _self = new() { Id = "st.mapreference", Name = "Map reference", Version = "1.0" };
     static readonly List<Expected> _expected = [];
@@ -146,9 +146,6 @@ public static class MapReference
         // The record's fifth word holds the matrix's last element in its low half only.
         bool lcm = Gte.ReadControl(16) == m.ReadU32(w) && Gte.ReadControl(20) == (m.ReadU32(w + 16) & 0xFFFF);
         Agree("colour matrix from the record", lcm);
-        if (!lcm)
-            Sample($"LCM {string.Join(" ", Enumerable.Range(16, 5).Select(r => Gte.ReadControl(r).ToString("X8")))}, " +
-                   $"record {string.Join(" ", Enumerable.Range(0, 5).Select(k => m.ReadU32(w + (uint)k * 4).ToString("X8")))}");
         return new MapLight.Inputs(colour, br, bg, bb,
             (int)Gte.ReadControl(21), (int)Gte.ReadControl(22), (int)Gte.ReadControl(23));
     }
@@ -178,7 +175,7 @@ public static class MapReference
         {
             // The near path splits the face through libgte; its packets are not modelled
             // here, only stepped over.
-            _expected.Add(new Expected(key, null));
+            _expected.Add(new Expected(key, null, NearSplits.Classify(sxy, sz)));
             return;
         }
         for (int k = 0; k < n; k++)
@@ -236,6 +233,7 @@ public static class MapReference
                 Agree("a near split starting at the cursor", start == p);
                 // A split that clips the whole face away writes nothing and leaves the head.
                 if (end != start) heads[e.Key] = new Head(start, end);
+                Count($"{_shape.Name}: {(end != start ? "drew" : "drew nothing")}, {e.Near}");
                 p = end;
                 continue;
             }

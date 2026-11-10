@@ -220,9 +220,14 @@ in the ordering table; the cursor goes in `a0` and comes back in `v0`.
 | triangles 2 | 10,513 | 10,443 | 4 (46), 12 (18), 16 (6) |
 | triangles 3 | 3,536 | 3,536 | never drawn |
 
-- **About 98.5% of near faces draw nothing**: the division clips every piece away.
-  Read by count only; whether these are faces behind the eye or beside the screen
-  is not read yet, and it decides what a GPU path that clips properly would add.
+- **About 98.5% of near faces draw nothing, and all of them are off the screen**: a
+  second run classed each by its projected corners. Every face that drew nothing
+  had its whole box outside 320 by 240 (370,159 of them); no face whose box crossed
+  the screen came back empty. The ones that drew with their box outside 320 by 240
+  (1,593) lie in the 16:9 margins `NearScreen` widens the division to. 12,628 of the
+  empty ones (3.4%) have a corner at depth 0 or under 256, crossing the eye's plane,
+  their projection saturated at the GTE's 1024: the only faces a GPU path that clips
+  at the near plane might draw where the game draws nothing, a sliver at most.
 - Pieces are the face's own kind (GT4 for a quad, GT3 for a triangle), **a level
   makes a 2 by 2 grid** (4 pieces, 16 at level 2), and they are dropped a quarter at
   a time: the counts are multiples of 4.

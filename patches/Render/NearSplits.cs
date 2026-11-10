@@ -49,4 +49,23 @@ static class NearSplits
         }
         MapReference.Agree("near splits: every packet in the face's own key", link == _headBefore && chained == packets);
     }
+
+    /// <summary>Where a near face lies, from its projected corners: a corner at the
+    /// eye's plane (SZ 0, RTPS saturating) or behind the screen's 320 by 240 box, or
+    /// beside it, or over it.</summary>
+    public static string Classify(ReadOnlySpan<uint> sxy, ReadOnlySpan<short> sz)
+    {
+        int minX = int.MaxValue, maxX = int.MinValue, minY = int.MaxValue, maxY = int.MinValue, minZ = int.MaxValue;
+        for (int k = 0; k < sxy.Length; k++)
+        {
+            int x = (short)sxy[k], y = (short)(sxy[k] >> 16);
+            minX = Math.Min(minX, x); maxX = Math.Max(maxX, x);
+            minY = Math.Min(minY, y); maxY = Math.Max(maxY, y);
+            minZ = Math.Min(minZ, (ushort)sz[k]);
+        }
+        string depth = minZ == 0 ? "a corner at SZ 0" : minZ < 0x100 ? "a corner under SZ 256" : "every SZ 256 or more";
+        string box = maxX < 0 || minX >= 320 || maxY < 0 || minY >= 240 ? "box off the screen" : "box over the screen";
+        bool saturated = minX <= -1024 || maxX >= 1023 || minY <= -1024 || maxY >= 1023;
+        return $"{depth}, {box}{(saturated ? ", a corner at the GTE's 1024 limit" : "")}";
+    }
 }
