@@ -119,6 +119,24 @@ Frame pacing's on/off is not on the tab: off is a different program path (its ho
 are never installed), so it stays `ST_PACING=0`. Nor are the routines' recompiled/C#/
 verify choices (`ST_LITERAL`), which are a session's comparison.
 
+## First-run setup
+
+`config/onboarding.json` is this game's half of Verdite Core's first-run setup
+(`tools/verdite-core/src/Onboarding/`): the display (window, aspect, frame rate), then
+three tiers (Original, Original++, Modern) for the image, motion and the mouse. Modern
+writes nothing, so it is exactly the `defaults`. There is no launcher yet, so
+`patches/Setup.cs` shows it in the game, over the title, while `verdite.setup` in
+interface.ini is below the spec's version; "Run setup again" on the Testing tab
+reopens it. Every key it writes is the Testing tab's, applied live. `ST_SETUP=1` shows
+it regardless, `0` never on its own; the acceptance test sets `0`.
+
+At boot it checks itself: each key has a live setter and, unsaved, reads its declared
+default. 2026-11-10: `10 key(s), 0 problem(s)`, and with it shown the game ran on
+under it to map 0 in play. The acceptance test passed twice with it shown and once
+with it off; a third run with it shown failed at "never reached map 1", which a run
+does now and then (see above), so the test now runs with `ST_SETUP=0`. Choosing
+through the pages is the user's to try.
+
 ## Measuring the draw path
 
 `scripts/session.py <log> [ST_X=1 ...]` boots a new game and plays the same moves

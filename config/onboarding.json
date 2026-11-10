@@ -1,0 +1,214 @@
+{
+  "_comment": "The first-run setup's display fields and tiers; read by Verdite Core's Onboarding (tools/verdite-core/src/Onboarding), shown by patches/Setup.cs. See \"First-run setup\" in docs/DEVELOPMENT.md.",
+  "version": 1,
+  "welcome": "st.setup.welcome",
+  "welcomeAgain": "st.setup.welcomeagain",
+  "defaults": {
+    "st.widescreen.aspect": "1.7777778",
+    "st.fps": "144",
+    "st.perspective": "1",
+    "st.subpixel": "1",
+    "st.zbuffer": "1",
+    "st.shading": "2",
+    "st.smooth": "1",
+    "st.smooth_models": "1",
+    "st.mouse.on": "1",
+    "st.mouse.lead": "1"
+  },
+  "display": [
+    {
+      "id": "window",
+      "label": "st.setup.window",
+      "default": 0,
+      "options": [
+        {"label": "st.setup.windowed", "set": {"Fullscreen": "False"}},
+        {"label": "st.setup.fullscreen", "set": {"Fullscreen": "True", "Borderless": "False"}},
+        {"label": "st.setup.borderless", "set": {"Fullscreen": "True", "Borderless": "True"}}
+      ]
+    },
+    {
+      "id": "aspect",
+      "label": "st.setup.aspect",
+      "tip": "st.setup.aspect.tip",
+      "suggest": "aspect",
+      "original": 0,
+      "options": [
+        {"label": "4:3", "match": 1.3333, "set": {"st.widescreen.aspect": "1.3333334"}},
+        {"label": "16:10", "match": 1.6, "set": {"st.widescreen.aspect": "1.6"}},
+        {"label": "16:9", "match": 1.7778, "set": {"st.widescreen.aspect": "1.7777778"}},
+        {"label": "21:9", "match": 2.3704, "set": {"st.widescreen.aspect": "2.3703704"}}
+      ]
+    },
+    {
+      "id": "fps",
+      "label": "st.setup.fps",
+      "tip": "st.setup.fps.tip",
+      "suggest": "refresh",
+      "slider": true,
+      "default": 3,
+      "options": [
+        {"label": "60", "match": 60, "set": {"st.fps": "60"}},
+        {"label": "90", "match": 90, "set": {"st.fps": "90"}},
+        {"label": "120", "match": 120, "set": {"st.fps": "120"}},
+        {"label": "144", "match": 144, "set": {"st.fps": "144"}},
+        {"label": "165", "match": 165, "set": {"st.fps": "165"}},
+        {"label": "240", "match": 240, "set": {"st.fps": "240"}},
+        {"label": "st.setup.uncapped", "set": {"st.fps": "0"}}
+      ]
+    }
+  ],
+  "categories": [
+    {
+      "id": "presentation",
+      "label": "st.setup.presentation",
+      "groups": [
+        {
+          "id": "image",
+          "label": "st.setup.image",
+          "tiers": [
+            {
+              "desc": "st.setup.image.original",
+              "set": {"st.perspective": "0", "st.subpixel": "0", "st.zbuffer": "0", "st.shading": "0"},
+              "label": "st.setup.tier.original"
+            },
+            {
+              "desc": "st.setup.image.originalpp",
+              "set": {"st.perspective": "1", "st.subpixel": "1", "st.zbuffer": "0", "st.shading": "1"},
+              "label": "st.setup.tier.originalpp"
+            },
+            {
+              "desc": "st.setup.image.modern",
+              "set": {"st.perspective": null, "st.subpixel": null, "st.zbuffer": null, "st.shading": null},
+              "label": "st.setup.tier.modern"
+            }
+          ]
+        },
+        {
+          "id": "motion",
+          "label": "st.setup.motion",
+          "tiers": [
+            {
+              "desc": "st.setup.motion.original",
+              "set": {"st.smooth": "0", "st.smooth_models": "0"},
+              "label": "st.setup.tier.original"
+            },
+            {
+              "desc": "st.setup.motion.smooth",
+              "set": {"st.smooth": null, "st.smooth_models": null},
+              "label": "st.setup.tier.originalpp"
+            },
+            {
+              "desc": "st.setup.motion.smooth",
+              "set": {"st.smooth": null, "st.smooth_models": null},
+              "label": "st.setup.tier.modern"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "controls",
+      "label": "st.setup.controls",
+      "groups": [
+        {
+          "id": "mouse",
+          "label": "st.setup.mouse",
+          "tiers": [
+            {
+              "desc": "st.setup.mouse.original",
+              "set": {"st.mouse.on": "0", "st.mouse.lead": "0"},
+              "label": "st.setup.tier.original"
+            },
+            {
+              "desc": "st.setup.mouse.ticked",
+              "set": {"st.mouse.on": "1", "st.mouse.lead": "0"},
+              "label": "st.setup.tier.originalpp"
+            },
+            {
+              "desc": "st.setup.mouse.modern",
+              "set": {"st.mouse.on": null, "st.mouse.lead": null},
+              "label": "st.setup.tier.modern"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "strings": {
+    "st.setup.welcome": {
+      "en": "Shadow Tower is set up to look and play its best on a modern computer. Pick a starting point; every page after it can be changed, and so can everything later under Settings.",
+      "pt-BR": "Shadow Tower está configurado para ter a melhor aparência e jogabilidade num computador moderno. Escolha um ponto de partida; cada página seguinte pode ser alterada, assim como tudo depois em Configurações.",
+      "es-419": "Shadow Tower está configurado para verse y jugarse lo mejor posible en una computadora moderna. Elige un punto de partida; cada página siguiente se puede cambiar, y todo también después en Configuración."
+    },
+    "st.setup.welcomeagain": {
+      "en": "Run through setup again. Nothing changes until the last page.",
+      "pt-BR": "Refaça a configuração. Nada muda até a última página.",
+      "es-419": "Vuelve a hacer la configuración. Nada cambia hasta la última página."
+    },
+    "st.setup.windowed": {"en": "Windowed", "pt-BR": "Janela", "es-419": "Ventana"},
+    "st.setup.fullscreen": {"en": "Fullscreen", "pt-BR": "Tela cheia", "es-419": "Pantalla completa"},
+    "st.setup.borderless": {"en": "Borderless", "pt-BR": "Sem bordas", "es-419": "Sin bordes"},
+    "st.setup.uncapped": {"en": "Uncapped", "pt-BR": "Sem limite", "es-419": "Sin límite"},
+    "st.setup.window": {"en": "Window", "pt-BR": "Janela", "es-419": "Ventana"},
+    "st.setup.aspect": {"en": "Aspect", "pt-BR": "Proporção", "es-419": "Relación de aspecto"},
+    "st.setup.aspect.tip": {
+      "en": "Wider shows more of the room, not a stretched 4:3. The game's own is 4:3.",
+      "pt-BR": "Mais largo mostra mais do ambiente, não um 4:3 esticado. O original é 4:3.",
+      "es-419": "Más ancho muestra más del entorno, no un 4:3 estirado. El original es 4:3."
+    },
+    "st.setup.fps": {"en": "Frame rate", "pt-BR": "Taxa de quadros", "es-419": "Cuadros por segundo"},
+    "st.setup.fps.tip": {
+      "en": "How often the picture is drawn. The world still runs at the game's own 20 ticks a second.",
+      "pt-BR": "Com que frequência a imagem é desenhada. O mundo continua a 20 ticks por segundo, como no jogo.",
+      "es-419": "Con qué frecuencia se dibuja la imagen. El mundo sigue a los 20 ticks por segundo del juego."
+    },
+    "st.setup.tier.original": {"en": "Original", "pt-BR": "Original", "es-419": "Original"},
+    "st.setup.tier.originalpp": {"en": "Original++", "pt-BR": "Original++", "es-419": "Original++"},
+    "st.setup.tier.modern": {"en": "Modern", "pt-BR": "Moderno", "es-419": "Moderno"},
+    "st.setup.image": {"en": "Image", "pt-BR": "Imagem", "es-419": "Imagen"},
+    "st.setup.image.original": {
+      "en": "As the console drew it: textures warp, corners snap to whole pixels, near faces sort by painter's order, and colour is dithered.",
+      "pt-BR": "Como o console desenhava: texturas distorcem, cantos encaixam em pixels inteiros, faces próximas seguem a ordem do pintor e a cor tem pontilhado.",
+      "es-419": "Como lo dibujaba la consola: las texturas se deforman, las esquinas se ajustan a píxeles enteros, las caras cercanas siguen el orden del pintor y el color tiene tramado."
+    },
+    "st.setup.image.originalpp": {
+      "en": "Textures held true and corners steady, without the crosshatch; the game's own 15-bit colour and drawing order.",
+      "pt-BR": "Texturas corretas e cantos estáveis, sem o pontilhado; a cor de 15 bits e a ordem de desenho do jogo.",
+      "es-419": "Texturas correctas y esquinas estables, sin el tramado; el color de 15 bits y el orden de dibujo del juego."
+    },
+    "st.setup.image.modern": {
+      "en": "Everything Original++ does, with 24-bit colour and a Z-buffer, so near faces stop showing through each other.",
+      "pt-BR": "Tudo do Original++, com cor de 24 bits e Z-buffer, para que faces próximas não apareçam umas através das outras.",
+      "es-419": "Todo lo de Original++, con color de 24 bits y Z-buffer, para que las caras cercanas no se vean unas a través de otras."
+    },
+    "st.setup.motion": {"en": "Motion", "pt-BR": "Movimento", "es-419": "Movimiento"},
+    "st.setup.motion.original": {
+      "en": "The camera and creatures move 20 times a second, as the game did.",
+      "pt-BR": "A câmera e as criaturas se movem 20 vezes por segundo, como no jogo.",
+      "es-419": "La cámara y las criaturas se mueven 20 veces por segundo, como en el juego."
+    },
+    "st.setup.motion.smooth": {
+      "en": "The camera and creatures drawn between the game's ticks, at the full frame rate.",
+      "pt-BR": "A câmera e as criaturas desenhadas entre os ticks do jogo, na taxa de quadros completa.",
+      "es-419": "La cámara y las criaturas dibujadas entre los ticks del juego, a la tasa de cuadros completa."
+    },
+    "st.setup.mouse": {"en": "Mouse", "pt-BR": "Mouse", "es-419": "Ratón"},
+    "st.setup.mouse.original": {
+      "en": "Keys or a pad only; the mouse does nothing.",
+      "pt-BR": "Apenas teclado ou controle; o mouse não faz nada.",
+      "es-419": "Solo teclado o control; el ratón no hace nada."
+    },
+    "st.setup.mouse.ticked": {
+      "en": "A click captures the mouse, which turns and looks through the game's own turning, on its ticks.",
+      "pt-BR": "Um clique captura o mouse, que vira e olha pelo giro do próprio jogo, nos seus ticks.",
+      "es-419": "Un clic captura el ratón, que gira y mira con el giro del propio juego, en sus ticks."
+    },
+    "st.setup.mouse.modern": {
+      "en": "As Original++, and the view turns the frame you move the mouse.",
+      "pt-BR": "Como o Original++, e a vista gira no quadro em que o mouse se move.",
+      "es-419": "Como Original++, y la vista gira en el cuadro en que mueves el ratón."
+    },
+    "st.setup.presentation": {"en": "Presentation", "pt-BR": "Apresentação", "es-419": "Presentación"},
+    "st.setup.controls": {"en": "Controls", "pt-BR": "Controles", "es-419": "Controles"}
+  }
+}

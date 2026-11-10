@@ -41,7 +41,7 @@ class Failed(Exception):
 
 class Game:
     def __init__(self, autostart, log_path, boot_exe=None):
-        env = dict(os.environ, ST_SHELL="1", ST_AUTOSTART=autostart)
+        env = dict(os.environ, ST_SHELL="1", ST_AUTOSTART=autostart, ST_SETUP="0")
         if boot_exe:
             env["ST_BOOTEXE"] = boot_exe
         self.log = open(log_path, "w")

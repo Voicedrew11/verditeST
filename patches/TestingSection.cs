@@ -91,6 +91,49 @@ public sealed class TestingSection : ISettingsSection
 
     static Kept K(string key) => Switches.First(s => s.Key == key);
 
+    /// <summary>For setup: one kept key applied live from its text (null is the
+    /// default, which the caller resolves first). False for a key this tab does not own.</summary>
+    internal static bool Apply(string key, string? text)
+    {
+        if (Switches.FirstOrDefault(s => s.Key.Equals(key, StringComparison.OrdinalIgnoreCase)) is { } k)
+        {
+            k.Set(Number(text) != 0);
+            return true;
+        }
+        if (key.Equals(FpsKey, StringComparison.OrdinalIgnoreCase)) { FramePacing.SetTarget(Number(text)); return true; }
+        if (key.Equals(ShadingKey, StringComparison.OrdinalIgnoreCase)) { SetShading((int)Number(text)); return true; }
+        if (key.Equals(Widescreen.AspectKey, StringComparison.OrdinalIgnoreCase)) { Widescreen.SetAspect((float)Number(text)); return true; }
+        return false;
+    }
+
+    /// <summary>For setup's boot check: what a kept key reads now, as setup writes it.</summary>
+    internal static string? Live(string key)
+    {
+        if (Switches.FirstOrDefault(s => s.Key.Equals(key, StringComparison.OrdinalIgnoreCase)) is { } k)
+            return k.Get() ? "1" : "0";
+        if (key.Equals(FpsKey, StringComparison.OrdinalIgnoreCase))
+            return FramePacing.TargetFps.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        if (key.Equals(ShadingKey, StringComparison.OrdinalIgnoreCase)) return Shading.ToString();
+        if (key.Equals(Widescreen.AspectKey, StringComparison.OrdinalIgnoreCase))
+            return Widescreen.Aspect.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        return null;
+    }
+
+    /// <summary>For setup's boot check: whether a variable set at boot decides this key.</summary>
+    internal static bool Overridden(string key)
+    {
+        if (Switches.FirstOrDefault(s => s.Key.Equals(key, StringComparison.OrdinalIgnoreCase)) is { } k) return !Unset(k.Env);
+        if (key.Equals(FpsKey, StringComparison.OrdinalIgnoreCase)) return !Unset("ST_FPS");
+        if (key.Equals(ShadingKey, StringComparison.OrdinalIgnoreCase)) return !Unset("ST_TRUECOLOR") || !Unset("ST_NODITHER");
+        return key.Equals(Widescreen.AspectKey, StringComparison.OrdinalIgnoreCase) && !Unset("ST_WIDESCREEN");
+    }
+
+    static double Number(string? text) =>
+        text is null ? 0
+        : bool.TryParse(text, out var b) ? (b ? 1 : 0)
+        : double.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v) ? v
+        : 0;
+
     static void Toggle(string label, Kept k, string tip)
     {
         bool v = k.Get();
@@ -145,6 +188,9 @@ public sealed class TestingSection : ISettingsSection
         Toggle("Instant mouse look", K(Mouse.LeadKey),
             "Turns the view the frame you move the mouse, instead of on the game's next tick.");
         DrawProbes();
+        ImGui.Separator();
+        if (ImGui.Button("Run setup again")) Setup.Open(inGame: true);
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip("The first-run setup's pages, applied live.");
     }
 
     static void DrawPacing()

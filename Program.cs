@@ -5,6 +5,8 @@ using Recompiled;
 // not generate one into generated/. Init and hooks go here, before Entry.Run.
 
 Verdite.Core.Game.Configure(tag: "ST");
+// The port keeps its switches as 1 and 0 in interface.ini (Settings ▸ Testing, setup).
+Verdite.Core.Kept.BoolsAsInts = true;
 
 // The runtime's log channels, through an env var:
 //     ST_LOG=bios,cd,gpu,dma,sdk,spu,mdec,irq   (or ST_LOG=all)
@@ -121,6 +123,8 @@ St.MouseLook.Configure(Verdite.Core.Game.Env("MOUSE_SYNTH"), Verdite.Core.Game.E
 St.MouseLook.Install();
 // The port's switches, live and kept (Settings ▸ Testing, docs/DEVELOPMENT.md).
 St.TestingSection.Install();
+// First-run setup from config/onboarding.json, in the game (there is no launcher yet).
+St.Setup.Install();
 
 // ST_BOOTEXE=str|title|optxt|st|end|vs starts that program instead of the movies:
 // the stub's first index, written once the stub is in memory. See "How one program

@@ -27,14 +27,17 @@ open now.
   animations"), now at the tick's pace: against an emulator, or `ST_PACING=0`.
 - **By hand:** `Settings ▸ Testing` (`docs/DEVELOPMENT.md`): each control live,
   and that the wording reads right.
+- **By hand:** first-run setup (`docs/DEVELOPMENT.md`, "First-run setup"): it opens
+  on the next start of this checkout; walk it, then check the Testing tab agrees.
 - **By eye:** the picture's switches (`docs/PICTURE.md`), each against its `=0`; the
   Z-buffer most of all (decals, the HUD, fades, the menu).
 
 ## Phase 10: what is left
 
 Started 2026-11-10: `Settings ▸ Testing` has the switches live and kept ("The Testing
-tab" in `docs/DEVELOPMENT.md`); the kept values are measured to come back. Next: the
-page in the game's own menu, first-run setup (`config/onboarding.json`).
+tab" in `docs/DEVELOPMENT.md`); the kept values are measured to come back. First-run
+setup is in (`config/onboarding.json`, shown by the game itself; no launcher yet).
+Next: the page in the game's own menu.
 
 ## Phase 9: what is left
 
