@@ -59,6 +59,13 @@ Verdite1's Z-buffer takes its depths first from its C# writers' packet records
 the only source. With the 3D writers at 99.98 to 100% (above) the packet records
 would add nothing in map 0; the triangles kept in painter's order are the HUD's.
 
+## The gate
+
+Phase 7's gate is met (2026-11-10): coverage per routine (above, 3D writers 99.98 to
+100% over 12 maps), and the 54 routines the session reaches verify at 0 with every
+switch on (again after the holds of `DrawStageTick` and `EffectTimers`). What is left
+is the user's eye.
+
 ## Not ported
 
 Verdite1's `SemiAbr` is a probe of its own retained models' blend modes, not a

@@ -86,6 +86,17 @@ every vertex, that fraction times the key's delta to the base (`IR0` = the fract
 the GTE's `GPF`, three shorts at a time). The other branch (`func_8003569C`, when the
 clip header's `+6` is set) was not read.
 
+## The arm
+
+`func_80021AC4(hand)`, called twice by the draw stage (0 and 1), draws the model the
+player holds in that hand: the u16 at `player+0x130 + 2 * hand` (`0x80199058`), `-1`
+for none, posed through `func_80035AA8` like a model and lit with the matrix at
+`0x8017BD78`. **A new game holds nothing** (both `0xFFFF`), so in every measurement
+so far it drew nothing; pressing each shoulder and face button once ran its model
+calls for about 0.75 s with nothing to draw. Carrying the arm's swing waits for a
+held weapon in a measured run: equipping one through the menu, or a save that holds
+one (`ST_AUTOSTART=load` needs the acceptance test's way through the card screen).
+
 ## Not carried yet
 
 The arm, the HUD's gauges, sprite cels (held
