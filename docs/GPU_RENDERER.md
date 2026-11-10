@@ -134,20 +134,24 @@ routines move their own cursor, the scratchpad's `+0x10`, and the scene writes i
 back to the frame's record only at its end, so calls inside the scene are spanned by
 that cursor. Without it every map packet read as the scene's.
 
+A caller's span starts where its first child's does when that child writes first, so
+a packet goes to the narrowest span holding it (the scene's own quads were read as
+the scene's until this tie was broken).
+
 Measured 2026-11-10 over `scripts/session.py` (map 0: stand, walk, turn, the menu, a
 death), a frame:
 
 | domain | packets | kinds |
 |---|---|---|
-| map bulk (`MapQuads`, `MapTriangles`) | 137 to 226 | GT4 125 to 205, GT3 12 to 21 |
+| map bulk (`MapQuads`, `MapTriangles`) | 140 to 226 | GT4 128 to 205, GT3 12 to 31 |
 | models | 34 to 96 | FT4 most, FT3, GT3, GT4; FT4S and FT3S when a creature is near |
 | HUD | 22 | 10 mode packets, 8 sprites, 2 F4, 2 FT4 |
-| map (other) | 2 to 33 | FT4, GT3: inside the scene, outside every named call |
-| (unattributed) | 2 | one `0x80` (VRAM to VRAM) and one empty packet |
-| load fade | 0.2 | FT4S |
+| the scene's own (`SceneQuads`, `SceneTriangles`) | 1 to 32 | FT4, an FT3 |
+| effects (`Effect246E4`) | 0 to 7, in the death | FT3, FT4 |
+| tints, load fade | under 1 | FT4S |
+| libgpu's own | 2 | static packets at `0x80087D6C` (empty) and `0x80087D80` (a zero-sized VRAM copy), beside `ResetGraph`'s block |
+| unattributed | **0** | |
 
-Not seen in map 0: the near path (`map near`), the scene's own faces, the held
-models, effects, tints and text. Open: what writes the "map (other)" packets inside
-the scene (the light's flicker, or `ScenePrepare` steps, are candidates) and which
-routine adds the unattributed copy (the texture animations run before the frame
-head, so not they).
+Not seen in map 0: the near path (`map near`), the held models and the text. Every
+packet of every frame in the session has an owner: Step 0.1's gate for the contexts
+this session reaches.

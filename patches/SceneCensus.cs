@@ -21,6 +21,11 @@ public static class SceneCensus
     const int MaxPackets = 1 << 17;
     const string Unattributed = "(unattributed)";
 
+    /// <summary>libgpu's data beside ResetGraph's block (0x80087C78): two static packets
+    /// linked into every frame, an empty one at 0x80087D6C and a zero-sized VRAM copy
+    /// at 0x80087D80. The library's, not the game's drawing.</summary>
+    const uint LibGpuData = 0x80087C78, LibGpuDataEnd = 0x80087E00;
+
     /// <summary>The domain of each call site, by its label in GeometryProbe.Sites;
     /// a nested call's own entry wins over its caller's.</summary>
     static readonly Dictionary<string, string> Domains = new()
@@ -48,7 +53,7 @@ public static class SceneCensus
 
     static readonly ModInfo _self = new() { Id = "st.scenecensus", Name = "Scene census", Version = "1.0" };
     static readonly Dictionary<uint, string> _domainByReturn = new();
-    static readonly Stack<(string? Domain, uint Start, bool Scene)> _calls = new();
+    static readonly Stack<(string? Domain, uint Start, uint Scratch, bool Scene)> _calls = new();
     static readonly List<Span> _spans = new();
     static readonly SortedDictionary<string, Row> _rows = new();
     static int _depth;
@@ -92,14 +97,13 @@ public static class SceneCensus
 
     // The cursor of the frame being built: the record 0x80165394 points at, +8. Inside
     // the scene the map's routines move their own, the scratchpad's +0x10, and the
-    // scene writes it back to the record at the end, so a call made inside the scene
-    // reads that one.
+    // scene writes it back to the record at the end; other calls there move the
+    // record's. A call inside the scene is spanned by whichever of the two it moved.
     const uint SceneReturn = 0x80026D2C, ScratchCursor = 0x1F800010;
     static int _inScene;
 
     static uint Cursor(IMemory m)
     {
-        if (_inScene > 0) return m.ReadU32(ScratchCursor);
         uint rec = m.ReadU32(0x80165394);
         return rec < 0x80000000u ? 0u : m.ReadU32(rec + 8u);
     }
@@ -130,18 +134,20 @@ public static class SceneCensus
     public static void Pre(CpuContext c, IMemory m)
     {
         string? domain = _depth > 0 && _domainByReturn.TryGetValue(c.RA, out var d) ? d : null;
-        _calls.Push((domain, Cursor(m), c.RA == SceneReturn));
+        _calls.Push((domain, Cursor(m), m.ReadU32(ScratchCursor), c.RA == SceneReturn));
         if (c.RA == SceneReturn) _inScene++;
     }
 
     public static void Post(CpuContext c, IMemory m)
     {
         if (_calls.Count == 0) return;
-        var (domain, start, scene) = _calls.Pop();
+        var (domain, start, scratch, scene) = _calls.Pop();
         if (scene && _inScene > 0) _inScene--;
         if (domain == null) return;
         uint end = Cursor(m);
         if (end > start) _spans.Add(new Span(start, end, domain));
+        uint scratchEnd = m.ReadU32(ScratchCursor);
+        if (_inScene > 0 && scratchEnd > scratch) _spans.Add(new Span(scratch, scratchEnd, domain));
     }
 
     static Row RowOf(string domain)
@@ -150,13 +156,15 @@ public static class SceneCensus
         return r;
     }
 
-    // The innermost (latest-starting) span holding the packet.
+    // The innermost span holding the packet: the narrowest, since a caller's span
+    // starts where its first child's does when that child writes first.
     static string OwnerOf(uint pkt)
     {
+        if (pkt >= LibGpuData && pkt < LibGpuDataEnd) return "libgpu's own";
         string best = Unattributed;
-        uint bestLo = 0;
+        uint bestWidth = uint.MaxValue;
         foreach (var s in _spans)
-            if (pkt >= s.Lo && pkt < s.Hi && s.Lo >= bestLo) { best = s.Domain; bestLo = s.Lo; }
+            if (pkt >= s.Lo && pkt < s.Hi && s.Hi - s.Lo < bestWidth) { best = s.Domain; bestWidth = s.Hi - s.Lo; }
         return best;
     }
 
