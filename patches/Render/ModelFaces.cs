@@ -18,7 +18,9 @@ sealed record ModelFaces(
     int[] Positions,
     (int Word, uint At, bool Half)[] Texture,
     int TpageWord,                       // the texture word that takes the caller's blend bits
-    ModelFaces.Fogging Fog = ModelFaces.Fogging.None)
+    ModelFaces.Fogging Fog = ModelFaces.Fogging.None,
+    uint? NearSplit = null,               // libgte's division for a face whose NCLIP passes 16384; none: no near path
+    ModelFaces.Facing Faces = ModelFaces.Facing.FirstHalf)
 {
     /// <summary>How a fogged writer forms IR0 from the corners' fog factors f0..f3.
     /// None: NCCS/NCCT, no fog. Mean: (f0 + f1 + f2) / 3 or (f0 + .. + f3) >> 2, one for
@@ -26,6 +28,15 @@ sealed record ModelFaces(
     /// smooth quad's, the four's mean for the NCDT of corners 0 to 2, then f0 alone for
     /// corner 3's own NCDS.</summary>
     public enum Fogging { None, Mean, FirstTwice, MeanThenFirst }
+
+    /// <summary>FirstHalf: kept when NCLIP of corners 0-1-2 is positive. BothHalves, a
+    /// mixed quad's, as the map's: or when NCLIP of 3-1-2 is negative; and near when
+    /// either passes 16384 the other way.</summary>
+    public enum Facing { FirstHalf, BothHalves }
+
+    /// <summary>The mixed writers fog by Mean unless <c>0x8017BE8C &amp; 0x10</c>, which
+    /// takes them to NCCS, unfogged.</summary>
+    public bool FogsBySceneFlag => NearSplit != null;
 
     /// <summary>IR0 for the colour of corner <paramref name="k"/>.</summary>
     public short Ir0(ReadOnlySpan<short> f, int k) => Fog switch
@@ -66,9 +77,22 @@ sealed record ModelFaces(
     public static readonly ModelFaces FoggedSmoothQuads = SmoothQuads with
         { Name = "fogged model GT4", Writer = 0x80018F48, Fog = Fogging.MeanThenFirst };
 
+    // ModelStep1BF10's: fogged unless the scene flag says not, with a near path, and the
+    // smooth faces' IR0 a plain mean (no corner counted twice, no fourth corner apart).
+    public static readonly ModelFaces MixedFlatTriangles = FoggedFlatTriangles with
+        { Name = "mixed model FT3", Writer = 0x8001A038, NearSplit = 0x80075AC4 };
+    public static readonly ModelFaces MixedFlatQuads = FoggedFlatQuads with
+        { Name = "mixed model FT4", Writer = 0x8001A6EC, NearSplit = 0x80076364, Faces = Facing.BothHalves };
+    public static readonly ModelFaces MixedSmoothTriangles = FoggedSmoothTriangles with
+        { Name = "mixed model GT3", Writer = 0x8001AE7C, NearSplit = 0x80075EC4, Fog = Fogging.Mean };
+    public static readonly ModelFaces MixedSmoothQuads = FoggedSmoothQuads with
+        { Name = "mixed model GT4", Writer = 0x8001B5DC, NearSplit = 0x80076884, Faces = Facing.BothHalves,
+          Fog = Fogging.Mean };
+
     public static readonly ModelFaces[] All =
     [
         FlatTriangles, FlatQuads, SmoothTriangles, SmoothQuads,
         FoggedFlatTriangles, FoggedFlatQuads, FoggedSmoothTriangles, FoggedSmoothQuads,
+        MixedFlatTriangles, MixedFlatQuads, MixedSmoothTriangles, MixedSmoothQuads,
     ];
 }

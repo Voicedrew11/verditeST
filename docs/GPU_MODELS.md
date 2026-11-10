@@ -2,8 +2,7 @@
 
 Phase 11's log for the models, beside `docs/GPU_RENDERER.md` (the map). Read
 2026-11-10 from the literal transcriptions in `patches/Draw/` and the generated
-writers; inspection, except "The face writers", whose unfogged and fogged eight are checked
-numerically.
+writers; inspection, except "The face writers", all twelve of which are checked numerically.
 
 ## The chain
 
@@ -29,8 +28,7 @@ reaches at most 4065 of 4096 toward the far colour.
 A writer with one normal (`NCDS`, `NCCS`) colours a flat face; three (`NCDT`,
 `NCCT`) a Gouraud one, the fourth corner of a quad taking an `NCDS`/`NCCS` of its
 own. The flat FT3 writer `func_800194C4` uses code `| 0x24` and length 7, the map's
-FT3 shape. Each row runs FT3, FT4, GT3, GT4 in that order: checked for the first two rows
-(below), inferred for the mixed row from its order and its GTE calls.
+FT3 shape. Each row runs FT3, FT4, GT3, GT4 in that order: checked for all three rows (below).
 
 ## The face writers
 
@@ -80,11 +78,27 @@ plain mean left about 13% of smooth faces a step off in every channel; with the
 rules above, a second run over the session: **all eight writers, 358,572 faces, 0
 differences** (fogged: 30,206 FT3s, 268,381 FT4s, 17,935 GT3s, 8,953 GT4s). In map 0
 most models are fogged (12,995 calls of each fogged writer against 1,397 unfogged).
-`ModelStep1BF10`'s mixed writers are not covered yet: map 0 never runs them
-(`ST_LITERAL_PROBE=1`, 0 runs); maps 4, 21, 23 and 24 do. Each picks `NCDS` or `NCCS`
-per face from `0x8017BE8C`, adds the scratchpad's `+0x98` to the UVs (a texture
-scroll, by the look of it) and has a near path of its own through a second vertex
-buffer at `+0x48`. Under the flicker (`0x8017BE8C & 6`) each fogged colour is then rewritten as the
+**The mixed writers** (`ModelStep1BF10`'s: `func_8001A038` FT3, `8001A6EC` FT4,
+`8001AE7C` GT3, `8001B5DC` GT4) run only in maps 4, 21, 23 and 24 (map 0: 0 runs,
+`ST_LITERAL_PROBE=1`). The same records and packets as the others, and:
+
+- `NCDS`/`NCDT` with the plain mean of the corners' fog for every corner (no corner
+  counted twice, no fourth corner apart), or `NCCS`/`NCCT` unfogged when
+  `0x8017BE8C & 0x10`;
+- a near path: a face whose `NCLIP` passes 16384 goes to libgte's division
+  (`func_80075AC4` FT3, `80076364` FT4, `80075EC4` GT3, `80076884` GT4), with the
+  scratchpad's `+0x98` added to its UVs (only there) and its vertices from `+0x48`;
+- the quads test both halves for facing and for the near path, as the map's do
+  (`NCLIP` 0-1-2 positive or 3-1-2 negative).
+
+Checked over the tour (all 12 maps): the reference steps over each near face by the
+division's cursor, and every bulk face, tag, head and cursor matched, **0
+differences**: 157,123 FT3s, 22,566 FT4s and 2,377 GT4s, with 16,203 near faces
+stepped over. Found on the way, by runs that differed: the quads' second half (a
+one-half test drifted the packets out of step), and the plain mean (the fogged
+writers' corner-0 rules left 7% of GT4s' fourth corners a step off). The GT3's
+plain mean is read, but that run drew no mixed GT3; an earlier run with the
+corner-0 rule matched 192,363 of 192,365, the 2 off by a step. Under the flicker (`0x8017BE8C & 6`) each fogged colour is then rewritten as the
 map's is ("The flicker's colour" in `GPU_RENDERER.md`): checked over the tour, 0
 differences.
 
@@ -111,5 +125,5 @@ differences.
 
 `ModelLight` (`func_80033DB8`) is not light: it fetches a pointer from a table at
 `0x80165090 + 0x834C + id * 4` and keeps it only if `func_80015258` accepts it (the
-name predates the reading). The mixed writers (`ModelStep1BF10`), the blend's records and weight, and the held
+name predates the reading). The blend's records and weight, and the held
 models' path (`HeldModel`, `func_80021AC4`, which calls the same steps) are next.

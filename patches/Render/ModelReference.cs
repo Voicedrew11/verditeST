@@ -20,7 +20,9 @@ public static class ModelReference
 {
     const uint Scratch = 0x1F800000;
 
-    readonly record struct Expected(int Key, uint[] Words);
+    /// <summary>A bulk face's key and packet words, or a near face (<c>Words</c> null)
+    /// whose packets the division writes and the reference steps over.</summary>
+    readonly record struct Expected(int Key, uint[]? Words);
 
     static readonly ModInfo _self = new() { Id = "st.modelreference", Name = "Model reference", Version = "1.0" };
     static readonly List<Expected> _expected = [];
@@ -28,6 +30,9 @@ public static class ModelReference
     static ModelFaces _shape = ModelFaces.FlatTriangles;
     static uint _cursor, _ot;
     static int _flicker;
+    static bool _fogged, _inside;
+    static uint _splitStart;
+    static readonly List<(uint Start, uint End)> _nearSpans = [];
 
     public static void Install(string? spec)
     {
@@ -46,6 +51,11 @@ public static class ModelReference
             HookManager.AddPre(_self, t, Hook("Pre" + i));
             HookManager.AddPost(_self, t, Hook(nameof(Post)));
             targets.Add(t);
+            if (ModelFaces.All[i].NearSplit is not { } at) continue;
+            if (SymbolRegistry.Resolve(MainLoop.Overlay, null, at) is not { } split) return false;
+            HookManager.AddPre(_self, split, Hook(nameof(SplitPre)));
+            HookManager.AddPost(_self, split, Hook(nameof(SplitPost)));
+            targets.Add(split);
         }
         HookManager.Commit();
         bool on = targets.All(HookAttach.Installed);
@@ -62,6 +72,18 @@ public static class ModelReference
     public static void Pre5(CpuContext c, IMemory m) => Pre(ModelFaces.All[5], c, m);
     public static void Pre6(CpuContext c, IMemory m) => Pre(ModelFaces.All[6], c, m);
     public static void Pre7(CpuContext c, IMemory m) => Pre(ModelFaces.All[7], c, m);
+    public static void Pre8(CpuContext c, IMemory m) => Pre(ModelFaces.All[8], c, m);
+    public static void Pre9(CpuContext c, IMemory m) => Pre(ModelFaces.All[9], c, m);
+    public static void Pre10(CpuContext c, IMemory m) => Pre(ModelFaces.All[10], c, m);
+    public static void Pre11(CpuContext c, IMemory m) => Pre(ModelFaces.All[11], c, m);
+
+    // A near face's packets: from the cursor at the division's call to the cursor it returns.
+    public static void SplitPre(CpuContext c, IMemory m) => _splitStart = c.A0;
+
+    public static void SplitPost(CpuContext c, IMemory m)
+    {
+        if (_inside) _nearSpans.Add((_splitStart, c.V0));
+    }
 
     static MapLight.Matrix Control(int first) => MapLight.Matrix.FromWords(Gte.ReadControl(first),
         Gte.ReadControl(first + 1), Gte.ReadControl(first + 2), Gte.ReadControl(first + 3), Gte.ReadControl(first + 4));
@@ -71,6 +93,8 @@ public static class ModelReference
         _shape = shape;
         _expected.Clear();
         _headBefore.Clear();
+        _nearSpans.Clear();
+        _inside = true;
         _ot = c.A2;
         _cursor = m.ReadU32(Scratch + 0x10);
         var light = Control(8);
@@ -78,8 +102,10 @@ public static class ModelReference
             (int)Gte.ReadControl(15), (int)Gte.ReadControl(21), (int)Gte.ReadControl(22), (int)Gte.ReadControl(23));
         uint corners = m.ReadU32(Scratch + 0x40), normals = m.ReadU32(Scratch + 0x24);
         uint rgb = m.ReadU32(Scratch + 0x60) & 0xFFFFFF;
+        int flags = m.ReadU8(0x8017BE8C);
+        _fogged = shape.Fog != ModelFaces.Fogging.None && !(shape.FogsBySceneFlag && (flags & 0x10) != 0);
         // The flicker's calls rewrite a fogged face's colours after NCDS.
-        _flicker = shape.Fog == ModelFaces.Fogging.None ? 0 : m.ReadU8(0x8017BE8C) & 6;
+        _flicker = _fogged ? flags & 6 : 0;
         int far = (short)m.ReadU16(Scratch + 4), near = (int)m.ReadU32(Scratch + 0x80);
         for (uint i = 0, q = c.A1; i < (c.A0 & 0xFFFF); i++, q += shape.RecordSize)
             Face(m, q, corners, normals, light, inputs, rgb, c.A3, near, far);
@@ -100,11 +126,18 @@ public static class ModelReference
             sum += (short)m.ReadU16(at + 4);
             fog[k] = (short)m.ReadU16(at + 6);
         }
-        if (Nclip(sxy[0], sxy[1], sxy[2]) <= 0) { MapReference.Count($"{_shape.Name}: turned away"); return; }
+        long n1 = Nclip(sxy[0], sxy[1], sxy[2]);
+        long n2 = _shape.Faces == ModelFaces.Facing.BothHalves ? Nclip(sxy[3], sxy[1], sxy[2]) : 0;
+        if (!(n1 > 0 || n2 < 0)) { MapReference.Count($"{_shape.Name}: turned away"); return; }
         // The mean depth, >> 5: a triangle's through a multiply by 0x55555556, a quad's by >> 7.
         int mean = n == 3 ? (sum >> 5) / 3 : sum >> 7;
         int key = (short)(mean + (sbyte)m.ReadU8(q + 0xA));
         if (key >= far || key <= near) { MapReference.Count($"{_shape.Name}: dropped by depth"); return; }
+        if (_shape.NearSplit != null && (n1 > 16384 || n2 < -16384))
+        {
+            _expected.Add(new Expected(key, null));
+            return;
+        }
 
         uint code = (m.ReadU8(q + 0xB) | _shape.CodeBits | (mode & 2)) << 24;
         var w = new uint[_shape.PacketSize / 4];
@@ -115,7 +148,7 @@ public static class ModelReference
         {
             uint at = normals + m.ReadU16(q + _shape.NormalsAt[k]);
             short nx = (short)m.ReadU16(at), ny = (short)m.ReadU16(at + 2), nz = (short)m.ReadU16(at + 4);
-            w[_shape.Colours[k]] = _shape.Fog == ModelFaces.Fogging.None
+            w[_shape.Colours[k]] = !_fogged
                 ? MapLight.Lit(light, inputs, nx, ny, nz, rgb | code)
                 : MapLight.Flicker(MapLight.LitFogged(light, inputs, nx, ny, nz, rgb | code, _shape.Ir0(fog, k)), _flicker);
             if (_flicker != 0) MapReference.Count($"{_shape.Name}: colours under the flicker");
@@ -129,20 +162,40 @@ public static class ModelReference
         return (int)(ax * (by - cy) + bx * (cy - ay) + cx * (ay - by));
     }
 
+    // A key's head as the walk leaves it: one packet, or anywhere in a split's packets.
+    readonly record struct Head(uint Lo, uint Hi)
+    {
+        public bool Holds(uint link) => link >= (Lo & 0xFFFFFF) && link < (Hi & 0xFFFFFF);
+    }
+
     public static void Post(CpuContext c, IMemory m)
     {
-        var last = new Dictionary<int, uint>();
+        _inside = false;
+        var heads = new Dictionary<int, Head>();
         uint p = _cursor;
+        int near = 0;
         foreach (var e in _expected)
         {
-            uint link = last.TryGetValue(e.Key, out var prev) ? prev & 0xFFFFFF : _headBefore[e.Key];
-            MapReference.Agree($"{_shape.Name}: tag", m.ReadU32(p) == ((_shape.Length << 24) | link));
+            if (e.Words == null)
+            {
+                MapReference.Count($"{_shape.Name}: near faces stepped over");
+                if (near >= _nearSpans.Count) { MapReference.Agree($"{_shape.Name}: near faces against the calls", false); break; }
+                var (start, end) = _nearSpans[near++];
+                MapReference.Agree($"{_shape.Name}: a split at the cursor", start == p);
+                if (end != start) heads[e.Key] = new Head(start, end);
+                p = end;
+                continue;
+            }
+            var head = heads.TryGetValue(e.Key, out var h) ? h : new Head(_headBefore[e.Key], _headBefore[e.Key] + 1);
+            uint tag = m.ReadU32(p);
+            MapReference.Agree($"{_shape.Name}: tag", tag >> 24 == _shape.Length && head.Holds(tag & 0xFFFFFF));
             MapReference.Agree($"{_shape.Name}: faces, every other word", Words(m, p, e.Words));
-            last[e.Key] = p;
+            heads[e.Key] = new Head(p, p + 1);
             p += _shape.PacketSize;
         }
-        foreach (var (key, at) in last)
-            MapReference.Agree($"{_shape.Name}: the key's head after", (m.ReadU32(_ot + (uint)key * 4) & 0xFFFFFF) == (at & 0xFFFFFF));
+        MapReference.Agree($"{_shape.Name}: near faces against the calls", near == _nearSpans.Count);
+        foreach (var (key, head) in heads)
+            MapReference.Agree($"{_shape.Name}: the key's head after", head.Holds(m.ReadU32(_ot + (uint)key * 4) & 0xFFFFFF));
         MapReference.Agree($"{_shape.Name}: the cursor after", m.ReadU32(Scratch + 0x10) == p);
     }
 
