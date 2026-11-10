@@ -66,6 +66,8 @@ St.StageProbe.Install(Verdite.Core.Game.Env("STAGEPROBE"));
 St.GeometryProbe.Install(Verdite.Core.Game.Env("GEOPROBE"));
 // Who sends each frame to the screen: stage 14, or a loop drawing its own.
 St.PresentProbe.Install(Verdite.Core.Game.Env("PRESENTPROBE"));
+// How much of the frame's packet buffer is spent.
+St.PrimBufferProbe.Install(Verdite.Core.Game.Env("PRIMBUF_PROBE"));
 
 // The world at the game's own 20 Hz, the picture at any rate (FramePacing), and
 // VSync(n) waiting n vblanks as the console's does (VBlankPacing), which is what

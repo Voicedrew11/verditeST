@@ -78,10 +78,32 @@ or not. `func_80022678`'s other callees (`func_80017D28`, `func_80034604`,
 drew nothing in map 0. `func_80021AC4` calls `func_80022010` too, at `0x80021FA0`,
 and drew nothing either.
 
+## The packet buffer
+
+`func_800174C4`, the frame head, flips the buffer byte at `0x8017BD52`, points
+`0x80165394` at that buffer's record in the table at `0x8016537C` (two records of
+12 bytes, `{ start, end, cursor }`) and sets the cursor to the start. It also points
+`0x80165174` at that buffer's ordering table (0x1000 entries at `0x8015D174 +
+buffer * 0x4000`, cleared with `ClearOTagR`) and `0x80165378` at a second table of
+0x40 entries (`0x80165178 + buffer * 0x100`), and zeroes eleven words from
+`0x801653AC`.
+
+| buffer | start | end | bytes |
+|---|---|---|---|
+| 0 | `0x8011C488` | `0x8013C488` | 0x20000 |
+| 1 | `0x8013C488` | `0x8015C488` | 0x20000 |
+
+Measured 2026-11-10 with `ST_PRIMBUF_PROBE=1` over `scripts/session.py`: a frame of
+play spends 0x2C00 to 0x3F00 bytes on average, **0x6708 at most** (20% of a buffer);
+the menu's frames 0x3E8C, the death prompt's 0xBD0. While the menu is up, buffer 0's
+end reads `0x80129888` (start + 0xD400) instead; what uses the rest is not read.
+Widescreen (Phase 9) widens the cull, so this is its baseline. Which writer checks the
+end, and what it does when full, is not read.
+
 ## Open
 
 - Which objects `func_800241D0`'s three sites draw, and what `func_800251C8` and
   `func_80021AC4` draw (creatures, the hands, items are candidates).
 - The leaves `func_8001F954` and `func_8001FD00`.
 - The card screens, a fight, other areas, the area modules, `VS.EXE`.
-- The packet buffer's size and how close a frame comes to filling it.
+- Who checks the packet buffer's end, and what the menu does with buffer 0's top.

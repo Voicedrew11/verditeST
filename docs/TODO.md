@@ -12,7 +12,6 @@ menu and death prompt. Next, in order:
   points, Phase 3), the area modules' own drawing, `VS.EXE`.
 - What `func_800241D0`'s three model sites, `func_800251C8` and `func_80021AC4` draw;
   the leaves `func_8001F954` and `func_8001FD00`.
-- `PrimBufferProbe`: the packet buffer's size and headroom.
 - Then Step 2: literal C# for each routine, verified with `Differential`.
 
 ## Phase 4: what is left

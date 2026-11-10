@@ -95,9 +95,10 @@ it means. It prints the player's HP and position after each move and judges noth
 the probe's lines are in the log. About 1 minute 30. `carda.sav` is not touched by
 the moves, but copy it aside anyway.
 
-`ST_GEOPROBE=1` and `ST_PRESENTPROBE=1` are the probes; the tables in
+`ST_GEOPROBE=1`, `ST_PRESENTPROBE=1` and `ST_PRIMBUF_PROBE=1` are the probes; the tables in
 `docs/GEOMETRY.md` came from them. `scripts/callsites.py st <routine>` lists a
-routine's calls with their return addresses, which is what both probes key on.
+routine's calls with their return addresses, which is what the probes key on, and `scripts/disasm.py scratch/ST.EXE <address>`
+disassembles one from the extracted executable (quicker to read than `generated/`).
 
 ## Driving the game without a person
 

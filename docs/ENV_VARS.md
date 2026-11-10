@@ -20,4 +20,5 @@ default. Add an entry here when a switch is added to `Program.cs`.
 | `ST_STAGEPROBE` | off | `1`: every five seconds, each main-loop stage's calls a second, ordering-table words it wrote, and frames it presented |
 | `ST_GEOPROBE` | off | `1`: every five seconds, the packets each of stage 14's calls (and the scene's and the models' calls) added to the ordering table, by type |
 | `ST_PRESENTPROBE` | off | `1`: every five seconds, frames presented a second by who presented them: stage 14 or a loop drawing its own |
+| `ST_PRIMBUF_PROBE` | off | `1`: every five seconds, the packet-buffer bytes a frame spent, mean and peak, and the buffer's bounds |
 | `ST_RATECENSUS` | off | seconds: with pacing on, the RAM words that change on frames no stage ran on, printed once |
