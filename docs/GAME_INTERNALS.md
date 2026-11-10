@@ -92,8 +92,8 @@ Read from stage 14 and not in the census, because nothing was rumbling:
 (`0x801CD175`, `0x801CD177`) at 0. `func_80057A68(strength)` starts them, for
 `strength / 16 + 5` frames; it is called from stages 3, 4 and 7. Held to the tick.
 
-`func_800246E4`, also in stage 14, calls `rand()` too, but only when a timer kept in
-vblanks (`0x80088204`) runs out, so it runs on the wall clock and needs nothing.
+`func_800246E4`, also in stage 14, calls `rand()` too, when a timer kept in vblanks
+(`0x80088204`) runs out: see "Effect timers" below, it needed holding after all.
 
 With the three held, the census lists only the last three rows. One area, standing:
 an area with other animations, or a fight, may show more.
@@ -108,6 +108,26 @@ Over the tour's 12 maps only map 24 has any: kind 2 with period 0 (a step every
 call) and kind 0x31 with period 2, which at 144 fps stepped 7.2 times a tick. Held to
 the tick (not run on an idle frame; VRAM keeps the last step); `DrawStageTick` logs
 each area's entries when they change.
+
+**Effect timers.** `func_800246E4` walks the visible objects (`VisibleObjects`' list)
+and, for those with an effect, compares the vblank count (`0x80088204`) with the
+object's deadline at `+0x50`; past it, the effect fires (sounds through
+`func_8005850C`, particles, `rand()`) and the deadline becomes now + 6 x the period at
+`u16 +0x4E`, plus `rand() >> 8` or `>> 6` when `+0x4D` has bit 1 or 2. Looked at once a
+tick, a short period fires 20 times a second; looked at on every frame at 144 it fired
+on every vblank. Found by the rate census over the tour (the `+0x50` word of objects in
+maps 4, 21, 23, 24 and 32) and `ST_WORDWATCH`: in map 24 one object's deadline moved
+60 times a second, 73% of them on idle frames. `patches/EffectTimers.cs` shows the
+routine the tick's vblank count on an idle frame and adds the vblanks that passed back
+after: 20 a second, none idle.
+
+**What else the census shows** over the tour (`ST_RATECENSUS=10`, a window each 10 s
+with the map): the packet buffers (the carried camera and models redraw them), work
+areas from `0x80167BCC` and `0x8016BBD0` and double buffers at `0x8015D2D4`/`0x801612D4`
+(the transformed scene, per frame by nature), records of 0x20 bytes from `0x8017BD78`
+(the light, from the carried eye), and 5-word runs every 0x50 bytes from `0x801FABA0` in
+maps 0 and 21, which no stage-14 call changes (`ST_WORDWATCH`): the sound library's,
+on the wall clock, probably.
 
 **Full-screen tints** go the other way. `func_80021994(r, g, b, strength, mode)`
 adds `colour * strength >> 12` to one of two requests at `0x8017BD66` (flags `+0`,
