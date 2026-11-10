@@ -165,20 +165,23 @@ this session reaches.
 ## The map reference
 
 `ST_MAP_REFERENCE=1` (`patches/Render/MapReference.cs`, the arithmetic in
-`MapLight.cs`): Step 2's reference for the map's quads. Before `MapQuads` runs, every
-visible cell's quads are worked out in plain C# from the records alone, without the
+`MapLight.cs`, the two face shapes in `MapFaces.cs`): Step 2's reference for the
+map's faces. Before `MapTriangles` or `MapQuads` runs, every visible cell's faces of
+its shape are worked out in plain C# from the records alone, without the
 GTE: the facing (`NCLIP` of corners 0-1-2 and 3-1-2), the drop by depth, the near
 path's choice, the order key, each corner's fog factor from its depth, the face's
 `NCCS` colour and each corner's `DPCS` colour, and every word of the GT4. After it,
 the packets it wrote are compared word by word, with each tag's link and each key's
 head in the table. A near face's packets are written by libgte's split
-(`func_80076884`); the reference steps over them by the cursor that call moves, and
+(`func_80075EC4` for a triangle, `func_80076884` for a quad); the reference steps over them by the cursor that call moves, and
 does not model them.
 
 Measured 2026-11-10 over `scripts/session.py` (map 0), 4,974 frames: **0
 differences** in any count. 892,747 bulk quads matched whole, 3,570,988 corner fog
 factors, the back colour and colour matrix against the record every frame, every tag
-and 182,969 heads; 367,547 near faces stepped over, each at the cursor. A negative control (one bit off in the reference's red)
+and 182,969 heads; 367,547 near faces stepped over, each at the cursor. With the
+triangles added, a second run: 888,372 GT4s and 102,176 GT3s matched whole, 3,860,016
+fog factors, 365,821 near quads and 24,959 near triangles stepped over, 0 differences. A negative control (one bit off in the reference's red)
 failed at the first quad. Along the way:
 
 - the fog's two quirks above;
@@ -188,8 +191,8 @@ failed at the first quad. Along the way:
 - a split that clips a face away entirely writes nothing and leaves the key's head.
 
 Not yet covered: the flicker's per-corner calls when `0x8017BE8C & 6` (colours
-skipped and counted then; not reached in map 0), the triangles (`MapTriangles`, the
-same shape), the near split's own arithmetic, and the models.
+skipped and counted then; not reached in map 0), the near splits' own arithmetic,
+the scene's own faces (`SceneQuads`, `SceneTriangles`), and the models.
 
 ## What verify compares
 

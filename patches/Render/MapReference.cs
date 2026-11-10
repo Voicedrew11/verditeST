@@ -7,25 +7,23 @@ using RecompOne.Runtime.Modding;
 namespace St;
 
 /// <summary>
-/// ST_MAP_REFERENCE=1: Phase 11 Step 2's reference for the map's quads. Before
-/// <c>MapQuads</c> (<c>func_8001DB64</c>) runs, every visible cell's quads are worked
-/// out in plain C# from the records alone (<see cref="MapLight"/> for the colours):
-/// facing, the near path, the drop, the order key, the four corners' fog and colours
-/// and the whole GT4. After it, the packets it wrote are compared with that, packet by
-/// packet, and so is each key's head in the ordering table. A diagnostic: counts and
+/// ST_MAP_REFERENCE=1: Phase 11 Step 2's reference for the map's faces, each shape in
+/// <see cref="MapFaces"/>. Before the shape's routine runs, every visible cell's faces
+/// of it are worked out in plain C# from the records alone (<see cref="MapLight"/> for
+/// the colours): facing, the near path, the drop, the order key, each corner's fog and
+/// colour and the whole packet. After it, the packets it wrote are compared with that,
+/// packet by packet, and so is each key's head in the ordering table. A diagnostic: counts and
 /// the first differences, every five seconds. See "The map reference" in
 /// docs/GPU_RENDERER.md.
 /// </summary>
 public static class MapReference
 {
-    const uint Routine = 0x8001DB64, Scratch = 0x1F800000;
+    const uint Scratch = 0x1F800000;
     const uint VisibleCount = 0x801B9E14, VisibleList = 0x801B9F16, Cells = 0x8017BED0;
     const uint SceneFlags = 0x8017BE8C;
-    const uint NearSplit = 0x80076884;
-    const int GT4 = 0x34;
 
-    /// <summary>One quad as the reference has it: a bulk quad's key and every word of
-    /// its GT4 but the tag's link, or a near face (<c>Words</c> null), whose packets the
+    /// <summary>One face as the reference has it: a bulk face's key and every word of
+    /// its packet but the tag's link, or a near face (<c>Words</c> null), whose packets the
     /// split writes and the reference steps over.</summary>
     readonly record struct Expected(int Key, uint[]? Words);
 
@@ -35,6 +33,7 @@ public static class MapReference
     static readonly SortedDictionary<string, long> _counts = [];
     static readonly List<string> _samples = [];
     static readonly List<(uint Start, uint End)> _nearSpans = [];
+    static MapFaces _shape = MapFaces.Quads;
     static uint _cursor, _ot;
     static bool _colours, _inside;
     static long _windowStart = -1;
@@ -48,21 +47,32 @@ public static class MapReference
     static bool Attach()
     {
         SymbolRegistry.Build();
-        if (SymbolRegistry.Resolve(MainLoop.Overlay, null, Routine) is not { } t) return false;
         MethodInfo Hook(string n) => typeof(MapReference).GetMethod(n, BindingFlags.Public | BindingFlags.Static)!;
-        if (SymbolRegistry.Resolve(MainLoop.Overlay, null, NearSplit) is not { } split) return false;
-        HookManager.AddPre(_self, t, Hook(nameof(Pre)));
-        HookManager.AddPost(_self, t, Hook(nameof(Post)));
-        HookManager.AddPre(_self, split, Hook(nameof(SplitPre)));
-        HookManager.AddPost(_self, split, Hook(nameof(SplitPost)));
+        var hooks = new[] { (MapFaces.Triangles, "Triangles"), (MapFaces.Quads, "Quads") };
+        var targets = new List<MethodInfo>();
+        foreach (var (shape, name) in hooks)
+        {
+            if (SymbolRegistry.Resolve(MainLoop.Overlay, null, shape.Routine) is not { } t) return false;
+            if (SymbolRegistry.Resolve(MainLoop.Overlay, null, shape.NearSplit) is not { } split) return false;
+            HookManager.AddPre(_self, t, Hook("Pre" + name));
+            HookManager.AddPost(_self, t, Hook(nameof(Post)));
+            HookManager.AddPre(_self, split, Hook(nameof(SplitPre)));
+            HookManager.AddPost(_self, split, Hook(nameof(SplitPost)));
+            targets.Add(t);
+            targets.Add(split);
+        }
         HookManager.Commit();
-        bool on = HookAttach.Installed(t) && HookAttach.Installed(split);
-        Console.WriteLine($"[ST] map reference: {(on ? "on" : "not attached")}");
+        bool on = targets.All(HookAttach.Installed);
+        Console.WriteLine($"[ST] map reference: {(on ? "on" : "not attached")}, {MapFaces.All.Length} face shapes");
         return on;
     }
 
-    public static void Pre(CpuContext c, IMemory m)
+    public static void PreTriangles(CpuContext c, IMemory m) => Pre(MapFaces.Triangles, m);
+    public static void PreQuads(CpuContext c, IMemory m) => Pre(MapFaces.Quads, m);
+
+    static void Pre(MapFaces shape, IMemory m)
     {
+        _shape = shape;
         _expected.Clear();
         _headBefore.Clear();
         _ot = m.ReadU32(Scratch);
@@ -103,10 +113,10 @@ public static class MapReference
                 var lightMatrix = MapLight.Matrix.FromWords(m.ReadU32(l), m.ReadU32(l + 4), m.ReadU32(l + 8),
                                                             m.ReadU32(l + 12), m.ReadU32(l + 16));
                 uint normals = bank + 0xC + m.ReadU32(mesh + 8);
-                uint quads = bank + 0xC + m.ReadU32(mesh + 0x10) + m.ReadU16(mesh + 0x18) * 0x14u;
-                int count = m.ReadU16(mesh + 0x1C);
+                uint faces = bank + 0xC + _shape.First(m, mesh);
+                int count = m.ReadU16(mesh + _shape.CountAt);
                 for (int q = 0; q < count; q++)
-                    Quad(m, quads + (uint)q * 0x1C, corners, normals, lightMatrix, light, rgb, nearLimit, fogNear, fogFar,
+                    Face(m, faces + (uint)q * _shape.RecordSize, corners, normals, lightMatrix, light, rgb, nearLimit, fogNear, fogFar,
                          (int)m.ReadU32(mesh + 4));
             }
             corners += m.ReadU32(mesh + 4) * 8u;
@@ -132,22 +142,24 @@ public static class MapReference
             (int)Gte.ReadControl(21), (int)Gte.ReadControl(22), (int)Gte.ReadControl(23));
     }
 
-    static void Quad(IMemory m, uint q, uint corners, uint normals, in MapLight.Matrix lightMatrix,
+    static void Face(IMemory m, uint q, uint corners, uint normals, in MapLight.Matrix lightMatrix,
                      in MapLight.Inputs light, uint rgb, int nearLimit, int fogNear, int fogFar, int vertices)
     {
         int singles = vertices / 3 * 3;
-        Span<uint> at = stackalloc uint[4];
-        Span<uint> sxy = stackalloc uint[4];
-        Span<short> sz = stackalloc short[4];
-        Span<short> fog = stackalloc short[4];
-        for (int k = 0; k < 4; k++)
+        int n = _shape.Corners;
+        Span<uint> at = stackalloc uint[n];
+        Span<uint> sxy = stackalloc uint[n];
+        Span<short> sz = stackalloc short[n];
+        Span<short> fog = stackalloc short[n];
+        for (int k = 0; k < n; k++)
         {
-            at[k] = corners + m.ReadU16(q + 0x12 + (uint)k * 2);
+            at[k] = corners + m.ReadU16(q + _shape.CornersAt + (uint)k * 2);
             sxy[k] = m.ReadU32(at[k]);
             sz[k] = (short)m.ReadU16(at[k] + 4);
             fog[k] = (short)m.ReadU16(at[k] + 6);
         }
-        long n1 = Nclip(sxy[0], sxy[1], sxy[2]), n2 = Nclip(sxy[3], sxy[1], sxy[2]);
+        // A quad is also kept when its other half (3-1-2) faces; a triangle has none.
+        long n1 = Nclip(sxy[0], sxy[1], sxy[2]), n2 = n == 4 ? Nclip(sxy[3], sxy[1], sxy[2]) : 0;
         if (!(n1 > 0 || n2 < 0)) { Count("faces turned away"); return; }
         int key = (Max(sz) >> 5) + (sbyte)m.ReadU8(q + 0xA);
         if (key >= 4096 || key < nearLimit) { Count("faces dropped by depth"); return; }
@@ -158,23 +170,20 @@ public static class MapReference
             _expected.Add(new Expected(key, null));
             return;
         }
-        for (int k = 0; k < 4; k++)
+        for (int k = 0; k < n; k++)
         {
-            int want = MapLight.FogFactor(sz[k], fogNear, fogFar, m.ReadU16(q + 0x12 + (uint)k * 2) / 8 >= singles);
+            int want = MapLight.FogFactor(sz[k], fogNear, fogFar, m.ReadU16(q + _shape.CornersAt + (uint)k * 2) / 8 >= singles);
             Agree("fog factor from depth", fog[k] == want);
             if (fog[k] != want) Sample($"fog: sz {sz[k]} near {fogNear} far {fogFar}: game {fog[k]}, reference {want}");
         }
 
-        uint code = (uint)(m.ReadU8(q + 0xB) | 0x3C) << 24;
-        uint n = normals + m.ReadU16(q + 0x10);
-        uint lit = MapLight.Lit(lightMatrix, light, (short)m.ReadU16(n), (short)m.ReadU16(n + 2),
-                                (short)m.ReadU16(n + 4), (rgb & 0xFFFFFF) | code);
-        var w = new uint[GT4 / 4];
-        w[3] = m.ReadU32(q);
-        w[6] = m.ReadU32(q + 4);
-        w[9] = m.ReadU16(q + 8);
-        w[12] = m.ReadU16(q + 0xC);
-        for (int k = 0; k < 4; k++)
+        uint code = (m.ReadU8(q + 0xB) | _shape.CodeBits) << 24;
+        uint normal = normals + m.ReadU16(q + _shape.NormalAt);
+        uint lit = MapLight.Lit(lightMatrix, light, (short)m.ReadU16(normal), (short)m.ReadU16(normal + 2),
+                                (short)m.ReadU16(normal + 4), (rgb & 0xFFFFFF) | code);
+        var w = new uint[_shape.PacketSize / 4];
+        foreach (var (word, off, half) in _shape.Texture) w[word] = half ? m.ReadU16(q + off) : m.ReadU32(q + off);
+        for (int k = 0; k < n; k++)
         {
             w[1 + k * 3] = MapLight.Fogged(lit, light, fog[k]);
             w[2 + k * 3] = sxy[k];
@@ -188,7 +197,12 @@ public static class MapReference
         return (int)(ax * (by - cy) + bx * (cy - ay) + cx * (ay - by));
     }
 
-    static int Max(ReadOnlySpan<short> v) => Math.Max(Math.Max(v[0], v[1]), Math.Max(v[2], v[3]));
+    static int Max(ReadOnlySpan<short> v)
+    {
+        int max = v[0];
+        foreach (short x in v) max = Math.Max(max, x);
+        return max;
+    }
 
     // Each key's head as the walk leaves it: one packet, or anywhere in a near split's
     // packets, whose order inside the split is not modelled.
@@ -207,7 +221,7 @@ public static class MapReference
         {
             if (e.Words == null)
             {
-                Count("near faces stepped over");
+                Count($"{_shape.Name}: near faces stepped over");
                 if (near >= _nearSpans.Count) { Agree("near faces against the split's calls", false); break; }
                 var (start, end) = _nearSpans[near++];
                 Agree("a near split starting at the cursor", start == p);
@@ -218,20 +232,20 @@ public static class MapReference
             }
             var head = heads.TryGetValue(e.Key, out var h) ? h : new Head(_headBefore[e.Key], _headBefore[e.Key] + 1);
             uint tag = m.ReadU32(p);
-            bool linked = tag >> 24 == 0x0C && head.Holds(tag & 0xFFFFFF);
+            bool linked = tag >> 24 == _shape.Length && head.Holds(tag & 0xFFFFFF);
             Agree("tag: length and the key's previous head", linked);
             if (!linked)
                 Sample($"tag {tag:X8} at {p:X8}, key {e.Key}: head {head.Lo:X8}..{head.Hi:X8}; in a near span: " +
                        _nearSpans.Any(n => (tag & 0xFFFFFF) >= (n.Start & 0xFFFFFF) && (tag & 0xFFFFFF) < (n.End & 0xFFFFFF)));
-            Agree("bulk quads, every other word", Words(m, p, e.Words));
-            if (!_colours) Count("bulk quads with colours not checked (the flicker)");
+            Agree($"{_shape.Name}: bulk faces, every other word", Words(m, p, e.Words));
+            if (!_colours) Count($"{_shape.Name}: colours not checked (the flicker)");
             heads[e.Key] = new Head(p, p + 1);
-            p += GT4;
+            p += _shape.PacketSize;
         }
         Agree("near faces against the split's calls", near == _nearSpans.Count);
         foreach (var (key, head) in heads)
             Agree("the key's head after", head.Holds(m.ReadU32(_ot + (uint)key * 4) & 0xFFFFFF));
-        Agree("the cursor after", m.ReadU32(Scratch + 0x10) == p);
+        Agree($"{_shape.Name}: the cursor after", m.ReadU32(Scratch + 0x10) == p);
         Report();
     }
 
@@ -239,13 +253,13 @@ public static class MapReference
     {
         for (int i = 1; i < words.Length; i++)
         {
-            bool colour = i % 3 == 1 && i < 12;
+            bool colour = i % 3 == 1 && i < _shape.Corners * 3;
             if (colour && !_colours) continue;
-            // The last two UVs are halfwords; the packet's other halves are not the quad's.
-            uint mask = i is 9 or 12 ? 0xFFFFu : 0xFFFFFFFFu;
+            // A halfword UV shares its word with something that is not the face's.
+            uint mask = _shape.Texture.Any(t => t.Word == i && t.Half) ? 0xFFFFu : 0xFFFFFFFFu;
             uint game = m.ReadU32(p + (uint)i * 4);
             if ((game & mask) == words[i]) continue;
-            Sample($"{(colour ? "colour" : "word")} {i} of the GT4 at {p:X8}: game {game:X8}, reference {words[i]:X8}");
+            Sample($"{(colour ? "colour" : "word")} {i} of the {_shape.Name} packet at {p:X8}: game {game:X8}, reference {words[i]:X8}");
             return false;
         }
         return true;
