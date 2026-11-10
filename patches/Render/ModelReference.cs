@@ -57,6 +57,8 @@ public static class ModelReference
             HookManager.AddPost(_self, split, Hook(nameof(SplitPost)));
             targets.Add(split);
         }
+        if (SymbolRegistry.Resolve(MainLoop.Overlay, null, 0x80017D28) is { } blend)
+            HookManager.AddPre(_self, blend, Hook(nameof(BlendPre)));
         HookManager.Commit();
         bool on = targets.All(HookAttach.Installed);
         Console.WriteLine($"[ST] model reference: {(on ? "on" : "not attached")}, {ModelFaces.All.Length} writers");
@@ -76,6 +78,14 @@ public static class ModelReference
     public static void Pre9(CpuContext c, IMemory m) => Pre(ModelFaces.All[9], c, m);
     public static void Pre10(CpuContext c, IMemory m) => Pre(ModelFaces.All[10], c, m);
     public static void Pre11(CpuContext c, IMemory m) => Pre(ModelFaces.All[11], c, m);
+
+    // ModelStep17D28's mode (a1 & 0x38) and whether its weight (a0) is the whole 4096.
+    public static void BlendPre(CpuContext c, IMemory m)
+    {
+        uint w = (uint)(short)c.A0;
+        string which = (c.A1 & 0x20) != 0 ? "0x20" : (c.A1 & 0x10) != 0 ? "0x10" : (c.A1 & 8) != 0 ? "0x08" : "none";
+        MapReference.Count($"light blend {which}: {(w == 0x1000 ? "weight 4096" : w == 0 ? "weight 0" : "weight between")}");
+    }
 
     // A near face's packets: from the cursor at the division's call to the cursor it returns.
     public static void SplitPre(CpuContext c, IMemory m) => _splitStart = c.A0;

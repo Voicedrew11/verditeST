@@ -104,17 +104,31 @@ differences.
 
 ## The light inputs
 
+- **The light record**, chosen by `ModelStep17D28` (`func_80017D28`, `a0` a weight
+  w of 4096, `a1` flags), which also sets the colour matrix (`LCM`), the back colour
+  (`BK`), the fog's near and far (the scratchpad's `+0x64`, `+0x68`, always the
+  current record's `+0x68`/`+0x6A`) and the record whose light matrix is used (the
+  scratchpad's `+0x394`). "Current" is the scene's lighting record (the pointer at
+  `0x8017BE98`, the map's own):
+
+  | `a1` | `LCM` and `BK`, element by element | light matrix from |
+  |---|---|---|
+  | `& 0x20` | `(B (4096 - w) + current w) >> 12`, B at `0x8018CB10` | B |
+  | else `& 0x10` | `(C + current) (4096 - w) >> 13`, C at `0x8018CAA4` | C |
+  | else `& 0x08` | `(D + current) w >> 13`, D at `0x8018CA38` | D |
+  | none | the current record's own | current |
+
+  Counted over the tour (`ST_MAP_REFERENCE=1`): almost every call takes the plain
+  record (weight 0, or a weight between); `& 0x08` in maps 0, 23 and 41 (1,442
+  calls); `& 0x10` and `& 0x20` never. The three fixed records lie together at
+  `0x8018CA38`, 0x6C apart. What sets `a1` and w per model is not read.
 - **The light matrix** (`LLM`, control 8 to 12), set in `ModelDraw`'s runs
-  (`patches/Draw/ModelDrawRuns.cs`, before `0x800228B4`): the three columns of a
-  3x3 matrix at `+0xA8` of the record `ModelDraw` works from, each turned by the
-  model's rotation (the matrix `+0x394` points at) through `MVMVA`, so the light's
-  directions in the model's own space. Unlike the map, whose four light matrices
-  are pre-turned per quarter turn in the lighting record.
-- **The colour matrix and back colour** (`LCM`, `BK`), set by `ModelStep17D28`
-  (`func_80017D28`): a weighted sum of two lighting records' `+0x50` matrices and
-  `+0x64` back colours, the two weights summing to 4096, each element `>> 12`; a
-  model between two records is lit by a blend of both. Which records and which
-  weight is not read.
+  (`patches/Draw/ModelDrawRuns.cs`, before `0x800228B4`): the chosen record's first
+  light matrix (`+0x394` points at it) loaded as the GTE's rotation, and the three
+  columns of the model's rotation (at `+0xA8` of the record `ModelDraw` works from)
+  put through it by `MVMVA`: the record's light times the model's rotation, so the
+  light's directions in the model's own space. The map instead keeps four light
+  matrices per record, pre-turned a quarter turn each.
 - **The far colour** (`FC`, control 21 to 23), set by each step from
   `0x8017BE8C`: `(5, 5, 5)`, `(6, 4, 2)` when `& 2`, `(2, 6, 6)` when `& 4`, the map's
   three choices.
