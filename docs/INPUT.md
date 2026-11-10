@@ -42,7 +42,9 @@ defaults, from `func_800573BC`:
 of it) and `func_8005738C` ORs `+0x32` to `+0x38`, the four face buttons, into
 `+0x3A`, the mask `func_80057744` filters presses with.
 
-What each entry drives, from the routines that read it:
+`func_80042D74` is the player's stage in play: it calls the turn and look routine
+(`func_80041D4C`), the walk (`func_800420A0`) and `func_8004162C`, then reads the face
+buttons. What each entry drives, from the routines that read it:
 
 | entry | default | read by | drives |
 |---|---|---|---|
@@ -52,7 +54,7 @@ What each entry drives, from the routines that read it:
 | `+0x2E`, `+0x30` | L2, R2 | `func_80041D4C` | looking up and down: `player+0x2CC` (and `+0x27A`) |
 | `+0x32`, `+0x34` | Triangle, Square | `func_8003F4EC`, `func_800402AC`, `func_80042900` | the hands, probably (not read) |
 | `+0x36` | Cross | `func_80042B9C`, `func_80050768` | the action: doors and what is in front |
-| `+0x38` | Circle | `func_80042D74`, `func_8005335C` | not read |
+| `+0x38` | Circle | `func_80042D74`, `func_8005335C` | in play, a new press sets the player's state (`0x80199140`) to 1, the state `func_80027D18` draws in (an item panel, by the look of it), if any of five slots (`player+0x42`, `+0x4E`, `+0x5C`, `+0x5E`, `+0x60`) holds something; a new game's are all empty |
 
 The speeds are the ones the warp zeroes on arrival (`patches/Warp.cs`), so a mouse
 look has the game's own turn and look velocities to drive (step 2).
@@ -127,7 +129,7 @@ arrows. The port's, by the button table above:
 | (none) | L2, R2 | looking up and down: the mouse's, as in Verdite3 |
 | Space, Q | Square, Triangle | the hands (the mouse's left and right buttons too) |
 | F | Cross | the action: doors, what is in front |
-| E | Circle | not read yet |
+| E | Circle | the item panel (above) |
 | Tab, Escape | Select | the menu (Escape presses Select inside the pad read) |
 | Enter | Start | |
 
