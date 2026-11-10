@@ -125,6 +125,7 @@ St.RateCensus.Install(Verdite.Core.Game.Env("RATECENSUS"));
 // The camera carried between world ticks. See "The camera carried" in docs/SMOOTHING.md.
 St.ViewSmoothing.Configure(Verdite.Core.Game.Env("SMOOTH"), Verdite.Core.Game.Env("SMOOTH_PROBE"));
 St.ViewSmoothing.Install();
+St.EyeSmoothing.Install();
 St.ModelSmoothing.Configure(Verdite.Core.Game.Env("SMOOTH"), Verdite.Core.Game.Env("SMOOTH_MODELS"),
                             Verdite.Core.Game.Env("SMOOTH_PROBE"));
 St.ModelSmoothing.Install();

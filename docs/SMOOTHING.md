@@ -43,6 +43,26 @@ previous tick's position as well and the two sets ORed.
 **By eye (the user):** turning and walking at 144, against `ST_SMOOTH=0`; and
 walking across cell edges (every 0x1000 units) for a cell popping in late.
 
+## The eye the world is placed from
+
+The user saw the view not stay smooth (2026-11-10). The camera above carries only the
+**rotation** the world is drawn with. Its position (copied to `0x8017BE58`) is not what
+places the world: the map's cell translations (`func_8001CB88`, before `ScenePrepare4`)
+and the model drawer (`func_80022678`) each subtract the **player's** position,
+`+0x248`/`+0x24C`/`+0x250` of the block at `0x80198F28`, with the s16s at `+0x2CE` and
+`+0x2D2` added to Y. Those change only on a tick. So turning was smooth and walking
+stepped at 20 Hz, in both the packet and the retained renderer (same game code).
+Measured with a temporary probe on the first published cell's translation while
+walking: it changed on 21 to 92 frames a second against 120 new cameras.
+
+`patches/EyeSmoothing.cs`, on with the camera, carries those five values between the
+last two ticks and hands the carried ones to the scene's and the model list's
+draw-stage calls (return `0x80026D2C`, `0x80026D4C`), putting the tick's back after
+each. After it: **120 of 120 frames a second** moved the cell while walking at 120 Hz.
+The cell cull (`func_8001C100`, passed `0x80199170`) now culls from the carried
+position too, so the "in another cell" frames above no longer differ from what is
+drawn. The acceptance test passes with it on.
+
 ## Models carried
 
 `patches/ModelSmoothing.cs`, on with the camera (`ST_SMOOTH_MODELS=0` turns the models
