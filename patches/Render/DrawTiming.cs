@@ -13,12 +13,15 @@ namespace St;
 /// percentile and worst in milliseconds, and calls a second. Phase 11's Step 0.3: the
 /// reference figure with the GPU path off, so the GPU path's figure has something to
 /// be compared with. Wall time on the game thread, so other probes on at the same time
-/// inflate it; measure with nothing else on. See docs/GPU_COST.md.
+/// inflate it; measure with nothing else on. The worst frame also reports the time the
+/// .NET compiler took inside it (first-use compiling). See docs/GPU_COST.md.
 /// </summary>
 public static class DrawTiming
 {
     static readonly ModInfo _self = new() { Id = "st.drawtiming", Name = "Draw timing", Version = "1.0" };
     static readonly List<double> _ms = [];
+    static double _worstJitMs, _worstMs;
+    static TimeSpan _jitAtStart;
     static readonly Stopwatch _clock = new();
     const uint Swap = 0x80017680;
     static int _depth;
@@ -47,7 +50,9 @@ public static class DrawTiming
 
     public static void Pre(CpuContext c, IMemory m)
     {
-        if (_depth++ == 0 && c.RA == MainLoop.Draw.ReturnAddress) _clock.Restart();
+        if (_depth++ != 0 || c.RA != MainLoop.Draw.ReturnAddress) return;
+        _jitAtStart = System.Runtime.JitInfo.GetCompilationTime(currentThread: true);
+        _clock.Restart();
     }
 
     // The clock stops where the frame is handed to the swap, before its wait.
@@ -55,7 +60,11 @@ public static class DrawTiming
     {
         if (_depth != 1 || !_clock.IsRunning) return;
         _clock.Stop();
-        _ms.Add(_clock.Elapsed.TotalMilliseconds);
+        double ms = _clock.Elapsed.TotalMilliseconds;
+        _ms.Add(ms);
+        // How much of the frame went to compiling methods on first use (this thread).
+        double jit = (System.Runtime.JitInfo.GetCompilationTime(currentThread: true) - _jitAtStart).TotalMilliseconds;
+        if (ms > _worstMs) (_worstMs, _worstJitMs) = (ms, jit);
         Report();
     }
 
@@ -73,9 +82,11 @@ public static class DrawTiming
         _ms.Sort();
         double mean = _ms.Average(), p95 = _ms[(int)(_ms.Count * 0.95)], worst = _ms[^1];
         Console.WriteLine($"[ST] draw timing in {AgentBeacon.Map}: {_ms.Count / s:0.0} a second, " +
-                          $"mean {mean:0.000} ms, p95 {p95:0.000} ms, worst {worst:0.000} ms");
+                          $"mean {mean:0.000} ms, p95 {p95:0.000} ms, worst {worst:0.000} ms " +
+                          $"({_worstJitMs:0.0} ms of it compiling)");
         Console.Out.Flush();
         _ms.Clear();
+        _worstMs = _worstJitMs = 0;
         _windowStart = now;
     }
 }

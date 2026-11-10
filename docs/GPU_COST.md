@@ -30,9 +30,18 @@ the picture's switches on, 16:9), windows of more than 100 frames a second:
 
 So the frame's drawing costs **under 1.4 ms at the 95th percentile everywhere**, about
 a fifth of a 144 Hz frame (6.94 ms). The means above 1 ms carry a single stall of
-about 600 ms on the first frames after a new game or an arrival (the window that
-holds a boot or a load); the next windows of the same map are back under 1 ms. Not
-read: what the stall is (JIT, a first upload, the loader's last work).
+about 600 ms; the next windows of the same map are back under 1 ms.
+
+**The stall is the .NET compiler** (measured 2026-11-10: `ST_DRAW_TIMING=1` now
+reports how much of the worst frame went to compiling methods on first use, from
+`JitInfo.GetCompilationTime` on the game thread). It comes **once a process**, on the
+first drawn frame of each boot of the tour (maps 0, 21, 32, 0, 44 in that run): 597
+to 620 ms, of which 594 to 618 ms compiling. The smaller hitches on reaching a new
+area within a boot (8 to 82 ms) are compiling too, each to within a millisecond;
+every later window's worst frame compiled nothing (0.0 ms). So the drawing has no
+stall of its own, and a GPU path will not remove it. What would: compiling ahead
+(ReadyToRun for the generated assembly) or warming the draw path at boot. Not tried;
+it changes the build, so it belongs to the packaging work, measured the same way.
 
 **Before**: timed to the end of stage 14 instead, every frame read 6.94 ms, the
 pacing's wait in the swap. A GPU figure must be taken the same way, to the swap.
