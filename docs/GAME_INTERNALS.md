@@ -109,6 +109,17 @@ call) and kind 0x31 with period 2, which at 144 fps stepped 7.2 times a tick. He
 the tick (not run on an idle frame; VRAM keeps the last step); `DrawStageTick` logs
 each area's entries when they change.
 
+**Full-screen tints** go the other way. `func_80021994(r, g, b, strength, mode)`
+adds `colour * strength >> 12` to one of two requests at `0x8017BD66` (flags `+0`,
+`+1`; blends `+2`, `+3`; colours three u16 pairs from `+4`), and stage 14's
+`func_8002181C` and `func_800218D8` draw each as a 320 by 240 quad once and clear it.
+The game asks once a tick: `func_8003C24C` for the player's status flashes, whose
+strength is `player+0x2D6` falling by `+0x2D8` a tick (also `func_80042D74` and
+`func_800500AC`). At 144 fps that is one tinted frame in seven, a flicker, so on an
+idle frame `DrawStageTick` puts the tick's request back first. Tested by poking
+`+0x2D6 = 0x1000`, `+0x2D8 = 0x40` in map 0: 64 requests over 3.2 s, and 397 idle
+frames redrawn, 461 tinted frames in all (without the hold, 64).
+
 ### The draw path
 
 What stage 14 calls, which routine writes which packets, and the loops that present
