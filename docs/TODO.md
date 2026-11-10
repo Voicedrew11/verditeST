@@ -29,6 +29,11 @@ open now.
   and that the wording reads right.
 - **By hand:** first-run setup (`docs/DEVELOPMENT.md`, "First-run setup"): it opens
   on the next start of this checkout; walk it, then check the Testing tab agrees.
+- **A decision:** the port's settings inside the game's own menu (Phase 10). The
+  menu's eight labels are images, not text (`docs/GAME_INTERNALS.md`, "The menu"), so
+  a ninth item needs a label drawn for it, in the menu's style. Alternatives: a
+  button the menu ignores (Select, L1 or R1 in the menu) opening the Testing tab, or
+  leaving it to `Settings` in the window. Recommended: the button, which needs no art.
 - **By eye:** the picture's switches (`docs/PICTURE.md`), each against its `=0`; the
   Z-buffer most of all (decals, the HUD, fades, the menu).
 
@@ -37,7 +42,7 @@ open now.
 Started 2026-11-10: `Settings ▸ Testing` has the switches live and kept ("The Testing
 tab" in `docs/DEVELOPMENT.md`); the kept values are measured to come back. First-run
 setup is in (`config/onboarding.json`, shown by the game itself; no launcher yet).
-Next: the page in the game's own menu.
+The page in the game's own menu waits on a decision ("Waiting on the user").
 
 ## Phase 9: what is left
 

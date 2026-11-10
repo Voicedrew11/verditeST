@@ -227,6 +227,25 @@ is **Load** (`func_80062C28` with state 1, tested); item 7 is a yes/no dialog
 (`func_80063078`), not Save, and what it asks is not read. Items 0 to 5 are other
 screens, not read.
 
+**The menu's loop** (`0x80058FD8..0x800591CC`, read 2026-11-10 from the disassembly)
+reads the pad block at `0x801CD180`: `+4` is the buttons pressed this frame, cleared
+by the menu as it takes one, `+0xC` the same with key repeat, `+2` held.
+
+| button | where | what |
+|---|---|---|
+| Circle `0x2000` | `+4` | leave (`func_80057CEC`, a sound) |
+| Triangle `0x1000` | `+4` | `func_80060018`, not read |
+| Cross `0x4000` | `+4` | the item under the cursor `0x1F8002DE` |
+| Down `0x40`, Up `0x10` | `+0xC` | the cursor, wrapping over 0..7 (`func_80057D10`, a sound) |
+
+Items: 0 `func_8005EC10`, 1 `func_80064FF0`, 2 `func_8005D25C` with `+2 & 0x800` (Start)
+held else `func_800675F4`, 3 `func_8005C7FC`, 4 `func_8005AD00`, 5 `func_80060334`,
+6 the card screen (load), 7 `func_80063078`. Items 2 to 4 set `0x801A8F28+0x21D` and
+`0x1F8002E5` to 1 first. Each frame ends in `func_800164B4` and `func_80029B74`.
+Select, Start, L1, R1, L2 and R2 do nothing in the loop. **The labels are images**:
+the program has no menu words in it, only `COM\ITEM.T`, `COM\EQUIP.T` and the
+`\st\itemcg` icons, so a ninth item needs art of its own (`docs/TODO.md`).
+
 `func_80062C28(a0)` is the card screen, for both directions. `func_80058DC4(a0, a1)`
 prepares it and `func_80058ED4` undoes it; **`func_80058DC4`'s `a0` picks the
 direction**: non-zero starts `0x1F8002DC` at `0x100` (save), zero at 1 (load). That
