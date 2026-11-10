@@ -206,16 +206,15 @@ public static class AgentServer
         "poke" => Poke(words),
         "dump" => Dump(words),
         "call" => QueueCall(words),
-        _ => "error: commands are state, press <a+b> [ms], warp <map> [x y z], peek <addr> [bytes], poke <addr> <hex>, dump <file>, call <addr> [a0] [a1]",
+        _ => "error: commands are state, press <a+b> [ms], warp <map> [x y z], peek <addr> [bytes], poke <addr> <hex>, dump <file>, call <addr> [a0 a1 a2 a3 stack...]",
     };
 
     static string QueueCall(string[] words)
     {
         uint address = ParseAddress(words[1]);
-        uint a0 = words.Length > 2 ? ParseAddress(words[2]) : 0;
-        uint a1 = words.Length > 3 ? ParseAddress(words[3]) : 0;
-        _calls.Enqueue((address, [a0, a1]));
-        return $"queued {address:X8}({a0:X}, {a1:X})";
+        uint[] args = words.Skip(2).Select(ParseAddress).ToArray();
+        _calls.Enqueue((address, args));
+        return $"queued {address:X8}({string.Join(", ", args.Select(a => a.ToString("X")))})";
     }
 
     // warp <map> [x y z]: patches/Warp.cs.
