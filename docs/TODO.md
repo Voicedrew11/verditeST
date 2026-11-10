@@ -3,6 +3,21 @@
 The phases and their gates are in `docs/PORTING_PLAN.md`. This file holds what is
 open now.
 
+## Phase 4: what is left
+
+The gate is met (2026-11-10, "Frame pacing" in `docs/DEVELOPMENT.md`). Still open:
+
+- **By eye (the user):** game speed against a console or an emulator; the menus and
+  fades, which now step at 20; the movies, title and opening text, whose counted
+  `VSync` waits are now honoured.
+- The census ran in one area, standing. An area with other animations, a fight, or the
+  area modules' own code called from stage 14 may show more at the drawn rate.
+- Loops that call stage 14 themselves (the menu, fades) draw at 20 under pacing.
+  Redrawing between their ticks, as Verdite3's `LoopPacing` does, waits for Phase 6.
+- Stages 2, 4 to 6, 11 and 13 are not named beyond their counterparts.
+- The Settings page for pacing (Phase 10); for now the switches are environment
+  variables.
+
 ## Phase 3: what is left
 
 The gate's test passes (`scripts/acceptance.py`, three runs, 2026-11-09). Still open:
@@ -16,7 +31,8 @@ The gate's test passes (`scripts/acceptance.py`, three runs, 2026-11-09). Still 
   game's own `VSync`). Find the loop it sits in.
 - `ST_AUTOSTART=load` takes the first save the card screen offers; picking a slot is
   not done.
-- A main-loop marker for the beacon (Verdite3's `loop`), which needs Phase 4's survey.
+- A main-loop marker for the beacon (Verdite3's `loop`). Phase 4's survey has the
+  loop (`docs/GAME_INTERNALS.md`); the marker is not added yet.
 
 ## Phase 2: what is left
 

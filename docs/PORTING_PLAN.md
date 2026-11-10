@@ -168,7 +168,7 @@ the first real entry in `docs/GAME_INTERNALS.md`. `ST/FN.` names many of them.
 Area changes, saving and the title load may stay by hand at first, as they did
 in Verdite3.
 
-## Phase 4: the main loop, pacing, and what runs at the drawn rate
+## ~~Phase 4: the main loop, pacing, and what runs at the drawn rate~~ (gate passed 2026-11-10; by-eye checks open, `docs/TODO.md`)
 
 1. **Survey `ST.EXE`'s main loop** stage by stage (`StageProbe`, `RateCensus`,
    the profiler's known sections) and write it in `GAME_INTERNALS.md` beside

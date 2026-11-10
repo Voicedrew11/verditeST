@@ -36,6 +36,54 @@ door. The area change comes after the saves because of the death on arrival
 - By eye, not checked by anything here: the picture, the movies, the menus, the save
   screens, whether the audio sounds right.
 
+## Frame pacing
+
+The world ticks at the game's own 20 Hz and the picture is drawn at any rate. On by
+default at 144 fps, as in the King's Field ports; `ST_PACING=0` turns it off. Three
+patches, all reading the stage table in `patches/MainLoop.cs` ("The main loop" in
+`docs/GAME_INTERNALS.md`):
+
+- **`patches/FramePacing.cs`**, Verdite3's mechanism on this loop. The frame gate
+  `func_8001535C` is skipped (its count zeroed). **The frame boundary** is ST.EXE's
+  `DrawOTag` after a `VSync` call; the frame is paced there to `ST_FPS`, and the world
+  clock advanced by wall time. **Stages 1 to 13 run only on a tick of the 20 Hz clock**,
+  decided once an iteration at stage 1, and only when called from the main loop's own
+  sites. Stage 14 runs every frame. A watchdog: no boundary for 500 ms and stage 1
+  ticks from the wall clock instead (`ST_PACING_NOBOUNDARY=1` tests it; it read 20.0
+  ticks a second).
+- **`patches/VBlankPacing.cs`**: `VSync(n)` waits n vblanks on a 60 Hz grid in all six
+  programs, as libetc does; the runtime's non-blocking `VSync` returns at once for any
+  mode. This is what holds the game to 20 with pacing off, and VS mode and the ending
+  to theirs. With pacing on, the main loop's own call to stage 14 is exempt (its
+  boundary is FramePacing's); loops that call stage 14 themselves, the menu and fades,
+  are held, so they draw and step at the console's 20.
+- **`patches/DrawStageTick.cs`**: what stage 14 advances once a frame, held on a frame
+  the world did not tick: the cel animations, the light's flicker `rand()` (so the
+  world's random sequence is also the console's at any rate), and the rumble's
+  countdown ("What runs at the drawn rate" in `docs/GAME_INTERNALS.md`).
+
+Smoothing between ticks is Phase 6, so at 144 the picture still changes 20 times a
+second.
+
+Measured 2026-11-10 in map 0, `ST_FPS_PROBE=1` and `ST_VBLANKPACING_PROBE=1`; "walked"
+is the distance from holding Up for one second, three times each:
+
+| run | drawn a second | world ticks a second | walked | the game's own count (`0x8017BD51`) |
+|---|---|---|---|---|
+| before (no `VSync(n)` wait, no pacing) | 60 | 60 | 9663 to 11328 | 60 |
+| `ST_PACING=0` | 20 (20.0 `VSync(3)` a second, mean wait 49.2 ms) | 20 | 4224 to 4416 | 20 |
+| `ST_FPS=60` | 60.0 | 19.7 to 20.0 | 4224 | 60 |
+| `ST_FPS=144` (the default) | 144.0 | 19.9 to 20.0 | 4224 to 4416 | 144 |
+| `ST_FPS=off` | 1650 to 2000 | 20.0 | 4224 | wraps past 255 |
+
+Packets in a frame are the same on ticked and idle frames (332 and 332 standing), so no
+gated stage feeds the picture. `VS.EXE` (`ST_BOOTEXE=vs`) holds 20.0 `VSync(3)` a
+second. The acceptance test passes with pacing on and with `ST_PACING=0`.
+
+**By eye, not checked here:** game speed against a console or an emulator, the menus
+and fades at 20, the movies, the title and the opening text with their counted waits
+honoured.
+
 ## Driving the game without a person
 
 `ST_AUTOSTART=new` or `load` boots into play with nobody at the pad

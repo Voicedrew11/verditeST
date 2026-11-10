@@ -60,6 +60,22 @@ St.AgentBeacon.Install(Verdite.Core.Game.Env("AGENT"), memory);
 St.AgentServer.Install(Verdite.Core.Game.Env("SHELL"), memory);
 St.AutoStart.Install(Verdite.Core.Game.Env("AUTOSTART"), memory);
 
+// The main loop's survey: which stages write the ordering table.
+St.StageProbe.Install(Verdite.Core.Game.Env("STAGEPROBE"));
+
+// The world at the game's own 20 Hz, the picture at any rate (FramePacing), and
+// VSync(n) waiting n vblanks as the console's does (VBlankPacing), which is what
+// holds the game to 20 with pacing off. See "Frame pacing" in docs/DEVELOPMENT.md.
+St.FramePacing.Configure(Verdite.Core.Game.Env("PACING"), Verdite.Core.Game.Env("FPS"),
+                         Verdite.Core.Game.Env("TICKRATE"), Verdite.Core.Game.Env("FPS_PROBE"));
+St.FramePacing.Install();
+St.VBlankPacing.Configure(Verdite.Core.Game.Env("VBLANKPACING"), Verdite.Core.Game.Env("VBLANKPACING_PROBE"));
+St.VBlankPacing.Install();
+// What stage 14 advances once a frame (cel animations, the light's flicker, the
+// rumble countdown), held to the world's tick under pacing.
+St.DrawStageTick.Install();
+St.RateCensus.Install(Verdite.Core.Game.Env("RATECENSUS"));
+
 // ST_BOOTEXE=str|title|optxt|st|end|vs starts that program instead of the movies:
 // the stub's first index, written once the stub is in memory. See "How one program
 // starts the next" in docs/RECOMPILATION.md.

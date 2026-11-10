@@ -9,14 +9,15 @@ findings live in `docs/`, split by what you would be doing when you need them.
 
 ## Status
 
-Phases 0 to 3 of `docs/PORTING_PLAN.md` have passed their gates, with Phase 2's
-by-eye checks still the user's and Phase 3's fuzzer not ported. The repository holds `tools/RecompOne` (the fork at `7031630` plus local
+Phases 0 to 4 of `docs/PORTING_PLAN.md` have passed their gates, with the by-eye
+checks of Phases 2 and 4 still the user's and Phase 3's fuzzer not ported. The repository holds `tools/RecompOne` (the fork at `7031630` plus local
 patches through `0121`) and `tools/verdite-core` (Verdite Core at `f1138e1`). The disc
 recompiles (4027 functions, `applied 199 patches, 0 reimplementations`).
 `scripts/acceptance.py` boots from the movies to the first area, saves, loads both
 ways, changes areas and dies, driven by `ST_AUTOSTART`, the beacon's state and `warp`;
-all 36 area modules load and run. Phase 4 is next, with Phase 3's open items in
-`docs/TODO.md`.
+all 36 area modules load and run. The world ticks at the console's 20 Hz at any drawn
+rate (144 by default); before Phase 4 the port ran it at 60, since the runtime's
+`VSync(3)` did not wait. Phase 5 is next, with the open items in `docs/TODO.md`.
 
 ## The documents
 

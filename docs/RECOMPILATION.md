@@ -173,7 +173,7 @@ routines of one library agree across all six programs (`CdSync` to `CdInit`
 | `StFreeRing` | `80016A8C` | | | | | `8001655C` |
 
 The signature bank also matched `DMACallback` at `0x8005735C` in `ST.EXE`. That is
-a thunk of the same shape through a different pointer (`*0x801A592C + 4`), the
+a thunk of the same shape through a different pointer (`*0x801B592C + 4`), the
 game's own, and is not bound. The real one calls through `*0x80087B90 + 4`, as
 `VSyncCallback` and `InterruptCallback` beside it do.
 
@@ -255,7 +255,9 @@ data, which the sweep does not reach because `make_funcmaps.py` stops there. Eac
 overlay is declared with `"skip": 0` and the base as `base`, so it covers the
 header and the two tables. `merge_branch_spans` folds the case labels back into
 their switch functions; each module resolves 112 table entries (81 and 31), 81 in
-maps 44 to 47 and 119 in map 27. The slot-dispatch code in `ST.EXE` is not read yet.
+maps 44 to 47 and 119 in map 27. One slot is read: main-loop stage 8 (`func_8005735C`)
+calls slot 1 through `*0x801B592C + 4`, which holds `0x801EB564` in map 0 ("The main
+loop" in `docs/GAME_INTERNALS.md`). The other slots' callers are not read yet.
 
 ## Indirect jumps nothing resolves
 
