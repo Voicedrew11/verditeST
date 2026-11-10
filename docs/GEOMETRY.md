@@ -41,7 +41,7 @@ Map 0's start, standing and turning, per call:
 | `0x80026D4C` | `func_800241D0` | FT4 26-76, FT3, GT3, GT4, and their S forms | **the models** (below) |
 | `0x80026D54` | `func_800246E4` | FT3 5, FT4 2.5, in one window | an effect on a timer kept in vblanks |
 | `0x80026C7C` | `func_80026964(0)` | E1-6 10, sprite 8, F4 2, FT4 2; 80 words | **the HUD**: `func_80025C24` a sprite, `func_80025E00` an FT4, `func_80026020` an F4, each with its mode packet |
-| `0x80026D90` | `func_80028784` | | only when `0x8017BD66` is set; text (`func_80028364`, `func_80028220`, `func_800286A8`) |
+| `0x80026D90` | `func_80028784` | | only when the byte at `0x8017BEA6` is set (by the entity routines `func_80054368` and `func_80054858`: a speaker, probably); text (`func_80028364`, `func_80028220`, `func_800286A8`) |
 | `0x80026D98` | `func_80017680` | | **the swap**: `DrawSync`, `VSync(3)`, the environments, `DrawOTag` |
 
 The other calls added nothing in this session: `func_80016A14`, `func_80033110`,
@@ -184,7 +184,7 @@ The tour over the 12 areas the fixed warp reaches is below the table.
 | `func_80028220` | text for func_80028784; not read | `Text28220`, `ST_TEXT28220` | 0 in 12,099 |
 | `func_80028364` | text for func_80028784 and the menu; not read | `Text28364`, `ST_TEXT28364` | 0 in 673,517 |
 | `func_800286A8` | text for func_80028784, the menu and the prompt; not read | `Text286A8`, `ST_TEXT286A8` | 0 in 18,106 |
-| `func_80028784` | the draw stage's text when 0x8017BD66 is set; not read | `Text28784`, `ST_TEXT28784` | not reached |
+| `func_80028784` | the draw stage's text when the byte at 0x8017BEA6 is set, which the entity routines func_80054368 and func_80054858 do (an NPC speaking, probably); not read | `Text28784`, `ST_TEXT28784` | not reached |
 | `func_8002948C` | the menu's last call before presenting; not read | `Draw2948C`, `ST_DRAW2948C` | 0 in 34 |
 | `func_80029618` | a window or panel, x y w h; the menu and the prompt | `Window29618`, `ST_WINDOW29618` | 0 in 6,012 |
 | `func_80033110` | called from the draw stage when the byte at 0x80199140 is 0, 5 or 6; not read | `Draw33110`, `ST_DRAW33110` | 0 in 995 |
