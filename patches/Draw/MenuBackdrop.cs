@@ -7,12 +7,12 @@ using static St.Mips;
 namespace St;
 
 /// <summary>
-/// <c>func_8002948C</c>: the menu's last call before presenting; not read. <c>ST_DRAW2948C</c>.
+/// <c>func_8002948C</c>: the menu's backdrop: LoadImage of the world's still (320x240 at 0x80136C88, taken by func_80026E04 as the menu opens) into the draw buffer's clip, then a line of text; the menu's last call before presenting. <c>ST_MENUBACKDROP</c>.
 /// </summary>
-public static class Draw2948C
+public static class MenuBackdrop
 {
-    public static readonly Literal R = new(typeof(Draw2948C), "draw-2948C", "DRAW2948C", 0x8002948C, Run,
-        "the menu's last call before presenting; not read.");
+    public static readonly Literal R = new(typeof(MenuBackdrop), "menu backdrop", "MENUBACKDROP", 0x8002948C, Run,
+        "the menu's backdrop: LoadImage of the world's still (320x240 at 0x80136C88, taken by func_80026E04 as the menu opens) into the draw buffer's clip, then a line of text; the menu's last call before presenting.");
 
     static void Replace(Action<CpuContext, IMemory> orig, CpuContext c, IMemory m) => R.Replace(orig, c, m);
 

@@ -18,7 +18,7 @@ Measured 2026-11-10 over the session (map 0: stand, walk, turn, the menu, a deat
 |---|---|---|---|
 | play | stage 14 `func_80026AFC`, swap at `0x80026D90` | every frame (144 at the default) | the world, then the HUD |
 | entering an area | `func_800214CC`, swap at `0x80021500` | 6.4 a second for about a second | nothing: it clears the table (`func_800174C4`) and swaps, a blank frame. Called from `func_8001531C` and `func_80015F0C` |
-| the menu (Select) | `func_80029B74`, direct at `0x8002A1A0` | 20 | **only the menu**: it clears the table and draws text and panels (`func_8002732C`, `func_800276BC`, `func_80026ECC`, `func_80029618`, `func_8002948C`); no world behind it. Called from `func_80058EF4` |
+| the menu (Select) | `func_80029B74`, direct at `0x8002A1A0` | 20 | **only the menu**: it clears the table and draws text and panels (`func_8002732C`, `func_800276BC`, `func_80026ECC`, `func_80029618`) over a still of the world put back each frame by `func_8002948C` (`docs/WIDESCREEN.md`, "The menus"). Called from `func_80058EF4` |
 | the death prompt | `func_8002CEF8`, direct at `0x8002D08C` | 20 | a panel and two text lines (`func_80027D18`, `func_800286A8`, `func_8002732C`, `func_80029618`) after a clear; no world. Called from `func_80063260`, the yes/no |
 
 While the menu or the death prompt is up, stage 14 runs about 3 times a second (the
@@ -106,7 +106,8 @@ buffer * 0x4000`, cleared with `ClearOTagR`) and `0x80165378` at a second table 
 Measured 2026-11-10 with `ST_PRIMBUF_PROBE=1` over `scripts/session.py`: a frame of
 play spends 0x2C00 to 0x3F00 bytes on average, **0x6708 at most** (20% of a buffer);
 the menu's frames 0x3E8C, the death prompt's 0xBD0. While the menu is up, buffer 0's
-end reads `0x80129888` (start + 0xD400) instead; what uses the rest is not read.
+end reads `0x80129888` (start + 0xD400) instead: the rest holds the menu's still of
+the world (`docs/WIDESCREEN.md`, "The menus").
 Widescreen (Phase 9) widens the cull, so this is its baseline. Which writer checks the
 end, and what it does when full, is not read.
 
@@ -180,12 +181,12 @@ The tour over the 12 areas the fixed warp reaches is below the table.
 | `func_80026ECC` | drawn by the menu at (0x6A, y); not read | `Text26ECC`, `ST_TEXT26ECC` | 0 in 216,471 |
 | `func_8002732C` | a line of text at a position; the menu and the prompt; not read | `Text2732C`, `ST_TEXT2732C` | 0 in 12,763 |
 | `func_800276BC` | text or a number at a position; the menu; not read | `Text276BC`, `ST_TEXT276BC` | 0 in 385 |
-| `func_80027D18` | a draw-stage call when the player's state is 1, and the death prompt's; not read | `Draw27D18`, `ST_DRAW27D18` | 0 in 5,973 |
+| `func_80027D18` | a rectangle's border as four flat quads (a0 the rect, a1 the colour, a2 the side and top widths, a3 = 1 semi-transparent); the player's state 1 and the death prompt | `PanelBorder`, `ST_PANELBORDER` | 0 in 5,973 |
 | `func_80028220` | text for func_80028784; not read | `Text28220`, `ST_TEXT28220` | 0 in 12,099 |
 | `func_80028364` | text for func_80028784 and the menu; not read | `Text28364`, `ST_TEXT28364` | 0 in 673,517 |
 | `func_800286A8` | text for func_80028784, the menu and the prompt; not read | `Text286A8`, `ST_TEXT286A8` | 0 in 18,106 |
 | `func_80028784` | the draw stage's text when the byte at 0x8017BEA6 is set, which the entity routines func_80054368 and func_80054858 do (an NPC speaking, probably); not read | `Text28784`, `ST_TEXT28784` | not reached |
-| `func_8002948C` | the menu's last call before presenting; not read | `Draw2948C`, `ST_DRAW2948C` | 0 in 34 |
+| `func_8002948C` | the menu's backdrop: LoadImage of the world's still (320x240 at 0x80136C88, taken by func_80026E04 as the menu opens) into the draw buffer's clip, then a line of text; the menu's last call before presenting | `MenuBackdrop`, `ST_MENUBACKDROP` | 0 in 34 |
 | `func_80029618` | a window or panel, x y w h; the menu and the prompt | `Window29618`, `ST_WINDOW29618` | 0 in 6,012 |
 | `func_80033110` | called from the draw stage when the byte at 0x80199140 is 0, 5 or 6; not read | `Draw33110`, `ST_DRAW33110` | 0 in 995 |
 | `func_80033DB8` | per entity before its model is drawn; calls func_80015258 | `ModelLight`, `ST_MODELLIGHT` | 0 in 11,164 |

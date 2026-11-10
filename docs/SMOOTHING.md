@@ -121,4 +121,4 @@ once on the tick, as on the console; there is no eased animation to carry.
 
 The arm, sprite cels (held
 to the tick by `patches/DrawStageTick.cs`, not carried), and the loops that draw
-their own frames (the menu, which has no world behind it).
+their own frames (the menu, whose backdrop is a still of the world).

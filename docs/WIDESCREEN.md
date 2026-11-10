@@ -19,17 +19,24 @@ disc. Started 2026-11-10.
 | the cell cull | nothing to widen: built from the player's position alone (below) |
 | the near polygons | `NearScreen.cs`: libgte's division's screen width widened |
 | the packet buffer | measured, below |
-| the world behind menus | nothing to port: the menu has no world behind it (below) |
+| the world behind menus | not ported: the menu's backdrop is a 320-wide still of the world (below) |
 
 ## The menus
 
-Verdite3's `MenuWorld` draws the world live behind a menu instead of the game's
-320-wide still of it. Shadow Tower has no such still. Its menu (`func_80029B74`) and
-death prompt (`func_8002CEF8`) clear the ordering table and draw only their panels
-and text (`docs/GEOMETRY.md`, "Who presents"), so the screen behind them is black
-across the margin as within the 320 columns. There is no world to keep live, and
-drawing one would be a change to the game, not a port of it. The load fade follows
-the vblank count (`0x801B5938`), so it is not held to 20 either.
+The menu's backdrop is **a still of the world**, as in Verdite3 (corrected
+2026-11-10; an hour earlier this section said there was none). As the menu opens,
+`func_80058C04` calls `func_80026E04`: `DrawSync(0)`, then `StoreImage` of the draw
+buffer's clip, 320 by 240, into `0x80136C88`, the tail of the packet buffers, which
+is why buffer 0 ends at start + `0xD400` while the menu is up. Every menu frame,
+`MenuBackdrop` (`func_8002948C`) puts it back with `LoadImage` before the panels are
+drawn over it. Measured with a probe on both calls: one `StoreImage` (return
+`0x80026E70`) on opening, then a `LoadImage` of `0,0,320,240` or `0,240,320,240` from
+`0x80136C88` a frame (return `0x80029518`).
+
+So at 16:9 the backdrop is 320 wide and the margin beside it is whatever the
+runtime keeps there. Verdite3's `MenuWorld` draws the world live behind the menu
+instead; here that is the next step. The death prompt (`func_8002CEF8`) draws no
+backdrop. The load fade follows the vblank count (`0x801B5938`), not the tick.
 
 ## The margin, the latches and the tints
 

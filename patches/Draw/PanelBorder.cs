@@ -7,12 +7,12 @@ using static St.Mips;
 namespace St;
 
 /// <summary>
-/// <c>func_80027D18</c>: a draw-stage call when the player's state is 1, and the death prompt's; not read. <c>ST_DRAW27D18</c>.
+/// <c>func_80027D18</c>: a rectangle's border as four flat quads (a0 the rect, a1 the colour, a2 the side and top widths, a3 = 1 semi-transparent); the player's state 1 and the death prompt. <c>ST_PANELBORDER</c>.
 /// </summary>
-public static class Draw27D18
+public static class PanelBorder
 {
-    public static readonly Literal R = new(typeof(Draw27D18), "draw-27D18", "DRAW27D18", 0x80027D18, Run,
-        "a draw-stage call when the player's state is 1, and the death prompt's; not read.");
+    public static readonly Literal R = new(typeof(PanelBorder), "panel border", "PANELBORDER", 0x80027D18, Run,
+        "a rectangle's border as four flat quads (a0 the rect, a1 the colour, a2 the side and top widths, a3 = 1 semi-transparent); the player's state 1 and the death prompt.");
 
     static void Replace(Action<CpuContext, IMemory> orig, CpuContext c, IMemory m) => R.Replace(orig, c, m);
 
