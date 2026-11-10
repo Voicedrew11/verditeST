@@ -112,6 +112,32 @@ view is ahead of the carried one by a whole tick, 50 ms at 20 Hz.
 **By hand (the user):** turning and looking with a mouse; whether mouse down should
 look down (`ST_MOUSE_INVERTY`).
 
+## The keyboard
+
+`patches/KeyLayout.cs`, Verdite3's layout through Verdite Core's `KeyLayoutApply`:
+RecompOne's own keys put a console on a keyboard (face buttons on Z X A S, the
+shoulders on Q W E R, the D-pad on the arrows), so walking and turning share the
+arrows. The port's, by the button table above:
+
+| key | button | the game's |
+|---|---|---|
+| W, S | Up, Down | walk |
+| A, D | L1, R1 | sidestep |
+| Left, Right | Left, Right | turn (the arrows also walk: `KeyLayoutApply`'s extras) |
+| (none) | L2, R2 | looking up and down: the mouse's, as in Verdite3 |
+| Space, Q | Square, Triangle | the hands (the mouse's left and right buttons too) |
+| F | Cross | the action: doors, what is in front |
+| E | Circle | not read yet |
+| Tab, Escape | Select | the menu (Escape presses Select inside the pad read) |
+| Enter | Start | |
+
+A fresh install gets it as the default; an existing one is migrated once, only from
+exactly RecompOne's stock keys, and `st.keys.layout` in `interface.ini` records it.
+`ST_KEYS=stock` keeps RecompOne's. Measured 2026-11-10: this checkout's
+`settings.json`, stock until then, was migrated on the first run and announced
+(`[ST] keys: WASD layout applied ...`). The keys themselves were not pressed in a
+measured run (the scripts press the pad).
+
 ## Vibration
 
 `func_80057A68(strength)` starts the motors when the byte at `0x801CD125` (the

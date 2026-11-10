@@ -48,6 +48,10 @@ RecompOne.Runtime.Events.Event.AddListener<RecompOne.Runtime.Events.OverlayLoade
 
 RecompOne.Runtime.Runtime.AppId = "verditest";
 
+// The port's keyboard layout, the default before the config loads (docs/INPUT.md).
+St.KeyLayout.Configure();
+St.KeyLayout.Install();
+
 // ST.EXE waits for a button in loops that never call VSync (func_80062C28's message
 // prompts), so the vblank handler has to run from the interrupt poll as well.
 RecompOne.Runtime.Sdk.LibEtc.VBlankFromPoll = true;

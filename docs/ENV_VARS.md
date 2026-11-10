@@ -41,6 +41,7 @@ default. Add an entry here when a switch is added to `Program.cs`.
 | `ST_WIDESCREEN_EFFECTS` | on | `0`: leave the full-screen tints 320 wide |
 | `ST_WIDESCREEN_HUD` | off | `1`: move the HUD's panels out to the new edges |
 | `ST_NEARSCREEN` | on | `0`: leave libgte's division at the 320-pixel screen |
+| `ST_KEYS` | fps | `stock`: RecompOne's own keys, not the port's WASD layout |
 | `ST_MOUSE` | on | `0`: no mouse look (Verdite Core's `Mouse`; also `ST_MOUSE_TURN`, `ST_MOUSE_LOOK`, `ST_MOUSE_INVERTY`, `ST_MOUSE_BUTTONS`, `ST_MOUSE_KEY`, and `ST_MOUSE_LEAD=0` for no instant mouse look) |
 | `ST_MOUSE_SYNTH` | off | `yaw,pitch`: a synthetic hand, that step every tick for 40 ticks of 60 |
 | `ST_MOUSE_PROBE` | off | `1`: a line a second, the mouse's ticks driven, landed on their step, and any that moved undriven |
