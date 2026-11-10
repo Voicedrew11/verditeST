@@ -38,7 +38,13 @@ occasional full-screen FT4S of `func_80021654` are written without the GTE, so t
 map has nothing to find and they draw as on the console, which is right for them.
 The 3D writers: the scene (`func_80020A80`) 92,000 to 119,000 vertices a second at
 **99.98%**, at most 19 a second missed; the models (`func_800241D0`) 19,000 to 52,000
-at **100.0%**. Other areas than map 0 are not measured.
+at **100.0%**.
+
+Over `scripts/tour.py` (the 12 maps in `patches/Arrivals.cs`, four boots after
+deaths), summed over each boot: the scene 99.98 to 100.00% of 70,000 to 3,600,000
+vertex-seconds, the models (`func_800241D0`, its `func_80022678` site b) 100.00%,
+the effects (`func_800246E4`) 100.00%, the second model list (`func_800251C8`)
+100.00%. The HUD and the tint at 0%, as in map 0.
 
 The scene's own calls own no packets in this probe: they keep the cursor in the
 scratchpad block (`docs/GEOMETRY.md`) and the scene writes it back once, so its row
