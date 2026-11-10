@@ -276,7 +276,7 @@ public static class MapReference
 
     internal static void Count(string what) => _counts[what] = _counts.GetValueOrDefault(what) + 1;
 
-    static void Sample(string s)
+    internal static void Sample(string s)
     {
         if (_samples.Count < 12) _samples.Add(s);
     }
