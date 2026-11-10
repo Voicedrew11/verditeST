@@ -292,3 +292,68 @@ call order until a context reaches them (Step 0.2's list).
 
 Verify now covers what Verdite3's `NativeScene` verify and its supplemental verifier
 do together: Step 2's reference comparison is complete for the paths exercised.
+
+## The retained map
+
+Step 3.1 and Step 4's map half, built 2026-11-10 (`patches/Render/GpuWorld.cs`,
+`RetainedMap.cs`, `RetainedMeshes.cs`, `PacketFilter.cs`), on by `ST_GPU_WORLD=1`
+(off by default until the user has looked; `shadow` publishes without taking any
+packet off).
+
+**The shape.** The runtime's retained backend was built for Verdite3's 80 by 80 tile
+grid (`SetStatic`, halves, chunks). This map is cells on a 0x1000 grid with a byte
+coordinate each, and each cell is a mesh of the area's bank at a quarter turn: the
+shape of a model, not of a tile. So every visible cell is a **model instance**
+(`RetainedScene.AddInstance`) of a mesh kept in the runtime's stores: its faces as
+corners in the mesh's own space (`AddMesh`), its vertices as a rigid pose
+(`AddPose`), built once per content and hashed every time they are asked for (a mesh
+rewritten in place is rebuilt; none was in the session). No `SetStatic`, no halves.
+
+**The frame's world is its view space.** `GpuWorld` begins a retained frame at the
+scene's entry (`func_80020A80`) with the identity view, and each cell is placed by
+the very rotation (`0x8017BDB8 + turn * 0x20`) and translation (the scene's table,
+`ScenePrepare4`'s `a0`, 16 bytes a visible cell) the GTE projects it with. Nothing
+world-sized passes through a float, and the camera smoothing, the carried eye and
+the widescreen projection are whatever the game's own matrices already hold.
+`Tile` instances: no depth range, the GPU's near plane and each face's plane against
+the eye in place of the game's near split, which libgte's division did on the CPU.
+
+**Light and fog.** Per cell: the record's light matrix at the cell's turn
+(`+turn * 0x14`), its colour matrix (`+0x50`) and back colour (`+0x64`, `<< 4`), the
+face RGB from the scratchpad's `+0x44`, and the fog's near and far (`+0x68`,
+`+0x6A`) on runtime `0123`'s curve 7 (`LinearFogFactor`, not held); the scene's own
+flat cells (`+4 & 3 == 0`) on curve 0. **Not modelled**: the far colour, `(5, 5, 5)`
+in 8-bit terms where the GPU fogs toward black, at most 5 of 255 at full fog; and the
+mesh's last one or two vertices' cap at 4065 (below). The flicker (`0x8017BE8C & 6`,
+maps 24 and 32) recolours every corner after the fog: a frame under it keeps the
+map's packets, counted as `map:flicker-recolour`.
+
+**The packets.** The four face routines (`SceneTriangles`, `SceneQuads`,
+`MapTriangles`, `MapQuads`) run as the game wrote them, near splits included, and
+`PacketFilter` then takes what each linked back off the table (every entry that
+changed is walked from its new head to its old one) and rewinds the cursor. Their
+other effects (scratchpad, GTE, counters) stay the game's. Blended faces are kept as
+packets, re-linked in the order they were linked; the session's meshes have none.
+The four routines' packets in the session: 1,036,641 taken off, 0 kept, 0 frames
+fallen back; 4,875 GPU draws, 0 missed, 291,713 cell instances.
+
+**Checked against the game** (`ST_GPU_WORLD_CHECK=1`, `patches/Render/RetainedCheck.cs`,
+over `scripts/session.py`, 2026-11-10): each vertex placed as the world shader places
+it, compared with the corner buffer `ScenePrepare4` filled the same frame; each face's
+colour lit as the shader lights it (floats) against `MapLight.Lit`; each corner's
+fog factor on curve 7 against the factor the game wrote.
+
+| | result |
+|---|---|
+| vertices | 4,070,317 |
+| depth | worst 1 unit (float against the GTE's integers) |
+| screen position, where the screen can show it | 930 (0.02%) more than one pixel and two units of the GTE's truncation off, worst 2.1 px; the GTE truncates the view position to whole units before the divide, worth `H / z` pixels each near the eye (26,464 within that), and its reciprocal is a pixel or two off hundreds of pixels past the screen's edge |
+| fog factor | 3,942,208 the same; 10,963 (0.28%) the game held at 4065 where the curve gives 4066 or more (a mesh's last one or two vertices, `RTPS` singly); 0 other |
+| face colour | 2,442,930 faces, **0** a step off in any channel |
+| faces the game drops by key, the GPU draws | 0 far; 5,890 (0.24%) with a corner within 128 units of the eye (key under the near limit, 4): the GPU clips them at its near plane |
+
+So the map's light, fog and placement are the game's; what differs is the precision
+(the GPU's floats against the GTE's whole units), the fog's far colour, the cap on a
+mesh's last vertices, and faces within 128 units of the eye. **Not checked**: the
+GPU's own output (the drawn picture), which is the user's to judge, and every map
+but 0.

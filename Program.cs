@@ -97,6 +97,9 @@ St.SceneCensus.Install(Verdite.Core.Game.Env("SCENE_CENSUS"));
 St.MapReference.Install(Verdite.Core.Game.Env("MAP_REFERENCE"));
 St.ModelReference.Install(Verdite.Core.Game.Env("MAP_REFERENCE"));
 St.DrawTiming.Install(Verdite.Core.Game.Env("DRAW_TIMING"));
+// The retained world (Phase 11): the map and models drawn on the GPU from kept meshes.
+St.GpuWorld.Configure(Verdite.Core.Game.Env("GPU_WORLD"), Verdite.Core.Game.Env("GPU_WORLD_PROBE"));
+St.GpuWorld.Install();
 St.WordWatch.Install(Verdite.Core.Game.Env("WORDWATCH"));
 
 // The draw path's routines in C# (patches/Draw/): ST_LITERAL=1|0|verify, or one
