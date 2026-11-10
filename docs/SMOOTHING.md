@@ -51,9 +51,23 @@ with something moving carried 32 to 303 entity draws a second at 144 fps, one or
 moving entities on every frame; snaps came in two windows only (44 and 39), around area
 loads. Most windows had nothing moving. The acceptance test passes with it on.
 
-Not measured: a creature followed on purpose (none was approached), and its **pose**:
-the animation frame is still the tick's, so a walking creature glides between ticks
-with its legs held. The poses are next.
+**Poses.** The model drawer builds a pose from the u16 at `+0x2A`, passed to
+`func_80034604`/`func_80035AA8` with the pose state at `+0xA4` (per-entity pose slots
+of 0x94 bytes, allocated by `func_800152D0`; not read further). Sampled in map 2, an
+animating entity's `+0x2A` stepped by 128 to 1,280 between samples a few ticks apart
+and wrapped at 0x1000 (3328, then 384), so it is a **clip time**, and since the drawer
+takes the time itself, carrying it as an angle is carried gives the poses between
+ticks. A step over 0x300 snaps (a new clip). `+0x94` is a scale (three shorts into
+`ScaleMatrix`), not carried.
+
+Measured with `ST_SMOOTH_PROBE=1`, which hashes the packets the model list writes each
+frame: over the tour, map 24 read a median of **144 distinct model packets a second**
+with 576 entity draws carried a second; with `ST_SMOOTH_MODELS=0` the same visit read
+none, but creatures do not act the same from run to run, so the pair is not a clean
+comparison. In maps 44 to 46 an entity was carried on every frame and its packets did
+not change: it was not in view. A creature followed on purpose is still to do, and
+whether the pose routine interpolates between keys or steps between them is not read
+(if it steps, a carried time shows the key changing on the right frame, no smoother).
 
 ## Not carried yet
 
