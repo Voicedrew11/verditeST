@@ -35,12 +35,16 @@ def inline_temps(line: str) -> str:
     indent, inner = m.groups()
     temps = {}
     while t := TEMP.match(inner):
-        temps[t.group(1)] = t.group(2)
+        temps[t.group(1)] = substitute(t.group(2), temps)  # a temporary may read an earlier one
         inner = inner[t.end():]
+    return indent + substitute(inner, temps).strip()
+
+
+def substitute(text: str, temps: dict[str, str]) -> str:
     for name, expr in temps.items():
         plain = re.fullmatch(r"[\w.]+", expr) or re.fullmatch(r"\([^()]*\)", expr)
-        inner = re.sub(rf"\b{name}\b", expr if plain else f"({expr})", inner)
-    return indent + inner.strip()
+        text = re.sub(rf"\b{name}\b", expr if plain else f"({expr})", text)
+    return text
 
 
 def clean(line: str) -> str | None:
@@ -63,6 +67,7 @@ def main() -> None:
     lines = [l for l in (clean(l) for l in body(src, f"func_{addr}")) if l is not None]
     out = f'''using RecompOne.Runtime.Context;
 using RecompOne.Runtime.Memory;
+using RecompOne.Runtime.Dispatch;
 using Recompiled;
 using static St.Mips;
 

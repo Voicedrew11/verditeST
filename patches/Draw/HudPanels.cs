@@ -1,5 +1,6 @@
 using RecompOne.Runtime.Context;
 using RecompOne.Runtime.Memory;
+using RecompOne.Runtime.Dispatch;
 using Recompiled;
 using static St.Mips;
 

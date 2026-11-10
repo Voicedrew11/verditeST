@@ -119,7 +119,27 @@ verify reads 0. Verify was checked once by planting a wrong constant in
 
 | routine | class, switch | verified (2026-11-10, `scripts/session.py`) |
 |---|---|---|
-| `func_80026964`, the HUD's panel list | `HudPanels`, `ST_HUDPANELS` | 0 mismatches in 7,123 calls |
+| `func_80026964`, the HUD's panel list | `HudPanels`, `ST_HUDPANELS` | 0 in 6,163 calls |
+| `func_80025C24`, a HUD sprite | `HudSprite`, `ST_HUDSPRITE` | 0 in 48,933 (the menu's text too) |
+| `func_80025E00`, a HUD FT4 | `HudQuad`, `ST_HUDQUAD` | 0 in 12,325 |
+| `func_80026020`, a HUD F4 | `HudFill`, `ST_HUDFILL` | 0 in 12,325 |
+| `func_8001DB64`, the map's GT4s | `MapQuads`, `ST_MAPQUADS` | 0 in 3,083 |
+| `func_8001D2A8`, the map's GT3s | `MapTriangles`, `ST_MAPTRIANGLES` | 0 in 3,083 |
+| `func_8001FD00`, the scene's FT4s | `SceneQuads`, `ST_SCENEQUADS` | 0 in 3,083 |
+| `func_8001F954`, the scene's FT3s | `SceneTriangles`, `ST_SCENETRIANGLES` | 0 in 3,083 |
+| `func_80022010`, every model polygon | `ModelPolygons`, `ST_MODELPOLYGONS` | 0 in 1,322 |
+
+`scripts/verify_summary.py <log>` sums a run's verify lines. The acceptance test
+passes with all of them on (2026-11-10).
+
+The map writers each have **two packet paths**, kept in `MapQuadsPackets.cs` and
+`MapTrianglesPackets.cs` so no file passes the length rule: the ordinary one writes
+the GT4 or GT3 at the cursor; the near one (`NearQuad` from `0x8001DF7C`,
+`NearTriangle` from `0x8001D60C`) puts the corners' colours on the stack with the
+screen's 320 by 240 and, when `0x8017BE8C & 6`, calls through `FP` once a corner.
+It is probably the near-polygon clip or subdivision; it is not read, and **whether the
+session reaches it is not measured**, so its 0 mismatches may be vacuous. A counter
+on it, and a scene with walls close to the eye, are next.
 
 ## Open
 
