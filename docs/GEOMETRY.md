@@ -152,6 +152,10 @@ verify reads 0. Verify was checked once by planting a wrong constant in
 `scripts/verify_summary.py <log>` sums a run's verify lines. The acceptance test
 passes with all 29 on (2026-11-10), and play still draws 144 frames and 20 ticks a
 second. The names with numbers in them are placeholders until the routine is read.
+`scripts/split_literal.py` moves a long transcription's straight-line runs (no label,
+`goto`, brace or poll) into `<Class>Runs.cs`, each named after the label before it,
+so no file passes 500 lines; `ModelDraw`, `SceneStep1EEAC` and `SceneStep1E5A0` are
+split that way and still verify at 0.
 A count is calls, not coverage: `Models2` and `HeldModel` drew nothing in map 0, so
 their drawing branches have not been compared yet.
 
