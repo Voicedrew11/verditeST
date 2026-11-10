@@ -89,7 +89,8 @@ two seconds of every three; `ST_MOUSE_PROBE=1`), standing in map 0:
 - **The hand stopping:** 0 ticks moved either angle without the hand, in every
   window of both runs.
 
-The acceptance test passes with it attached. **Not measured**: a real pointer
+The acceptance test passed three runs of four with it attached; the fourth's save
+screen did not finish (`docs/DEVELOPMENT.md`, "What is still open"). **Not measured**: a real pointer
 (capture, sensitivity), the buttons, the lead (Instant mouse look: not wired, the
 drawn view is carried between ticks without the hand's motion since the last one).
 **By hand (the user):** turning and looking with a mouse; whether mouse down should

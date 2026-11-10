@@ -35,6 +35,12 @@ door. The area change comes after the saves because of the death on arrival
   after), so map 1 was never reached. The next three runs passed. Calls wait for a
   vblank from the game's own `VSync`; which loop withheld it is not read, nor whether
   `ST_LITERAL=0` changes the rate.
+- **Another failure, once in four runs on 2026-11-10** (just after mouse look went
+  in): "the prompts ran out before the screen finished". The save screen's set-up
+  and screen calls both returned, the walk had moved the player as it should, and the
+  Cross presses never finished the screen. The next three runs passed. Whether the
+  mouse's pad listener (`Mouse.Install`, on the libpad read since the fork's `0120`)
+  plays a part is not known; nothing captured the pointer in the run.
 
 - A load lands up to `0x2630` in height (Y, not Z as written before) from the
   position read just before saving. The menu load and the title load differ by that
