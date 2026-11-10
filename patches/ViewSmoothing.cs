@@ -111,7 +111,7 @@ public static class ViewSmoothing
             _snaps++;
         }
 
-        var view = Lerp(_prev, _cur, FramePacing.TickFraction);
+        var view = MouseLook.Lead(Lerp(_prev, _cur, FramePacing.TickFraction), _cur);
         _handed = handed;
         view.Write(m, _pos, _rot);
         _restore = true;

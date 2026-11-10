@@ -90,9 +90,25 @@ two seconds of every three; `ST_MOUSE_PROBE=1`), standing in map 0:
   window of both runs.
 
 The acceptance test passed three runs of four with it attached; the fourth's save
-screen did not finish (`docs/DEVELOPMENT.md`, "What is still open"). **Not measured**: a real pointer
-(capture, sensitivity), the buttons, the lead (Instant mouse look: not wired, the
-drawn view is carried between ticks without the hand's motion since the last one).
+screen did not finish (`docs/DEVELOPMENT.md`, "What is still open").
+
+### Instant mouse look (the lead)
+
+The camera's pitch and yaw, as stage 10 hands them to the camera set-up, are the
+player's `+0x278` and `+0x27A` exactly (read on every tick of a synthetic turn). So
+`MouseLook.Lead`, called by `ViewSmoothing` on every drawn frame, draws the tick's
+angles plus the hand's motion since (`Mouse.Pending`), pitch held to the game's limit,
+in place of the carried angles: a turn shows on the next frame instead of a tick
+later. Only on an axis the mouse drives (it drove the last tick, or has moved since),
+so a pad turn keeps the carried view. `Mouse.Lead`, on by default (`ST_MOUSE_LEAD=0`).
+
+Measured 2026-11-10 with the synthetic hand at 51 a tick (it leads by its step times
+the tick's fraction, and runs 40 ticks of every 60 so the lead knows what the next tick
+applies), 2,000 frames at 144 fps: drawn yaw stepped 1 to 9 a frame (7 in 1,210),
+**0 backward, no jump at a tick**; with the lead off, 3 to 9 a frame. With the lead the
+view is ahead of the carried one by a whole tick, 50 ms at 20 Hz.
+
+**Not measured**: a real pointer (capture, sensitivity), the buttons.
 **By hand (the user):** turning and looking with a mouse; whether mouse down should
 look down (`ST_MOUSE_INVERTY`).
 

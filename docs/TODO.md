@@ -36,8 +36,8 @@ packets peak at 33% of a buffer. Next: `MenuWorld` (the world live behind menus)
 Started 2026-11-10 (`docs/INPUT.md`): step 1 read. The game is digital only, has a
 twelve-entry button table, and drives two motors; the runtime's rumble is fixed in
 the fork (`0122`). Mouse look drives the game's own velocities, and the measured gate
-is met (a synthetic hand lands its step every tick and stops dead). Next: the lead
-(Instant mouse look), `KeyLayout`, `MenuMouse`, the settings page (Phase 10).
+is met (a synthetic hand lands its step every tick and stops dead). Instant mouse look leads
+the drawn view by the hand's motion since the tick. Next: `KeyLayout`, `MenuMouse`, the settings page (Phase 10).
 
 ## Phase 7: what is left
 
