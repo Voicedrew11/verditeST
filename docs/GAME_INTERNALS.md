@@ -125,7 +125,8 @@ after: 20 a second, none idle.
 with the map): the packet buffers (the carried camera and models redraw them), work
 areas from `0x80167BCC` and `0x8016BBD0` and double buffers at `0x8015D2D4`/`0x801612D4`
 (the transformed scene, per frame by nature), records of 0x20 bytes from `0x8017BD78`
-(the light, from the carried eye), and 5-word runs every 0x50 bytes from `0x801FABA0` in
+(a MATRIX's size, next to the camera set-up's `0x8017BE58`; changed while turning, by
+no single stage-14 call; not traced further), and 5-word runs every 0x50 bytes from `0x801FABA0` in
 maps 0 and 21, which no stage-14 call changes (`ST_WORDWATCH`): the sound library's,
 on the wall clock, probably.
 
