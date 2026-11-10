@@ -54,8 +54,11 @@ RecompOne.Runtime.Sdk.LibEtc.VBlankFromPoll = true;
 
 var memory = new PSMemory();
 
-// The command channel: press buttons and read memory from a script.
+// What a script needs to know (ST_AGENT=1 prints it), the command channel that
+// answers with it, and booting into play with nobody at the pad.
+St.AgentBeacon.Install(Verdite.Core.Game.Env("AGENT"), memory);
 St.AgentServer.Install(Verdite.Core.Game.Env("SHELL"), memory);
+St.AutoStart.Install(Verdite.Core.Game.Env("AUTOSTART"), memory);
 
 // ST_BOOTEXE=str|title|optxt|st|end|vs starts that program instead of the movies:
 // the stub's first index, written once the stub is in memory. See "How one program

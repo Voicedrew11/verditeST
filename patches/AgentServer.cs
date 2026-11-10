@@ -24,6 +24,21 @@ public static class AgentServer
     const int MaxPeekBytes = 4096;
     const uint GameStackFloor = 0x80000000;
 
+    // func_80044EE8 loads the area whose map number is in the byte at AreaRequest,
+    // with the four bytes after it 0. A door writes the arrival point into the player
+    // block while the module loads (func_80050768, at 0x800525E8); the warp writes it
+    // with the request. See "Changing areas" in docs/GAME_INTERNALS.md.
+    const uint AreaRequest = 0x801B5924;
+    const uint LoadArea = 0x80044EE8;
+
+    // The maps with an area module, FDAT.T entry 10n+2 (config/st.json); the others'
+    // entries are not modules.
+    static readonly HashSet<int> Maps =
+    [
+        0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 20,
+        21, 23, 24, 25, 26, 27, 28, 30, 32, 33, 37, 38, 40, 41, 44, 45, 46, 47,
+    ];
+
     static readonly Dictionary<string, ushort> Buttons = new(StringComparer.OrdinalIgnoreCase)
     {
         ["Select"] = Controller.Select, ["Start"] = Controller.Start,
@@ -43,9 +58,6 @@ public static class AgentServer
     // Written and read on the game thread only.
     static ushort _heldBits;
     static long _heldUntilMs;
-    static long _frames;
-    static string _program = "";
-    static string _area = "";
     static readonly Queue<(uint Address, uint A0, uint A1)> _calls = new();
     static bool _calling;
 
@@ -55,7 +67,6 @@ public static class AgentServer
         if (port == 0) return;
         _memory = memory;
 
-        Event.AddListener<OverlayLoadedEvent>(OnOverlayLoaded);
         Event.AddListener<VSyncEvent>(OnVSync);
         Event.AddListener<PadReadEvent>(OnPadRead);
 
@@ -83,16 +94,9 @@ public static class AgentServer
         return port;
     }
 
-    static void OnOverlayLoaded(OverlayLoadedEvent e)
-    {
-        if (e.Name.StartsWith("fdat", StringComparison.Ordinal)) _area = e.Name;
-        else _program = e.Name;
-    }
-
     // Game thread.
     static void OnVSync(VSyncEvent e)
     {
-        _frames++;
         while (_requests.TryDequeue(out var request))
             request.Reply.TrySetResult(ExecuteGuarded(request.Words));
         RunQueuedCalls(e);
@@ -201,13 +205,14 @@ public static class AgentServer
 
     static string Execute(string[] words) => words[0].ToLowerInvariant() switch
     {
-        "state" => $"program={_program} area={_area} frames={_frames}",
+        "state" => AgentBeacon.Snapshot(),
+        "warp" => Warp(words),
         "press" => Press(words),
         "peek" => Peek(words),
         "poke" => Poke(words),
         "dump" => Dump(words),
         "call" => QueueCall(words),
-        _ => "error: commands are state, press <a+b> [ms], peek <addr> [bytes], poke <addr> <hex>, dump <file>, call <addr> [a0] [a1]",
+        _ => "error: commands are state, press <a+b> [ms], warp <map> [x y z], peek <addr> [bytes], poke <addr> <hex>, dump <file>, call <addr> [a0] [a1]",
     };
 
     static string QueueCall(string[] words)
@@ -217,6 +222,33 @@ public static class AgentServer
         uint a1 = words.Length > 3 ? ParseAddress(words[3]) : 0;
         _calls.Enqueue((address, a0, a1));
         return $"queued {address:X8}({a0:X}, {a1:X})";
+    }
+
+    // warp <map> [x y z]. The area module loads over the next few frames; state's map
+    // says when it is in. Without a point the player keeps their coordinates, which in
+    // another map is usually no floor: map 0's start in map 1 is a death on arrival.
+    static string Warp(string[] words)
+    {
+        int map = int.Parse(words[1], CultureInfo.InvariantCulture);
+        if (!Maps.Contains(map)) throw new ArgumentException($"map {map} has no area module");
+        if (AgentBeacon.Program != "st") throw new InvalidOperationException("warp needs ST.EXE running");
+        if (words.Length is not (2 or 5)) throw new ArgumentException("warp takes a map and optionally x y z");
+
+        string arrival = "where the player stands";
+        if (words.Length == 5)
+        {
+            int x = int.Parse(words[2], CultureInfo.InvariantCulture);
+            int y = int.Parse(words[3], CultureInfo.InvariantCulture);
+            int z = int.Parse(words[4], CultureInfo.InvariantCulture);
+            _memory.WriteU32(AgentBeacon.PosX, (uint)x);
+            _memory.WriteU32(AgentBeacon.PosY, (uint)y);
+            _memory.WriteU32(AgentBeacon.PosZ, (uint)z);
+            arrival = $"({x}, {y}, {z})";
+        }
+        _memory.WriteU8(AreaRequest, (byte)map);
+        _memory.WriteU32(AreaRequest + 1, 0);
+        _calls.Enqueue((LoadArea, 0, 0));
+        return $"warping to map {map} at {arrival}";
     }
 
     static string Press(string[] words)

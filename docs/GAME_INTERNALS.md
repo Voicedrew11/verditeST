@@ -37,14 +37,38 @@ sector is read as a 3-word header, 0x200 words of data and 0x46 words discarded.
 
 ## The player
 
-Found 2026-11-09 by comparing RAM across walking and turning.
+One block at `0x80198F28`, used by most of `ST.EXE` through that base address. The
+position was found by comparing RAM across walking and turning; HP and MP by matching
+the save against RAM (the save stores 752 and 550 once each, and the block holds both
+twice) and then by the routines that change them; the axes by the door code, which
+writes all three.
 
-| address | what |
-|---|---|
-| `0x80199170` | X position, 32-bit |
-| `0x80199174` | Z position, 32-bit |
-| `0x80199190` | heading |
-| `0x80199140` | byte: the in-world action runs only when it is 0 |
+| address | offset | what |
+|---|---|---|
+| `0x80198F28` | `+0x000` | u16, maximum HP (752 in a new game) |
+| `0x80198F2A` | `+0x002` | u16, HP |
+| `0x80198F2C` | `+0x004` | u16, maximum MP (550) |
+| `0x80198F2E` | `+0x006` | u16, MP |
+| `0x80198F8A` | `+0x062` | 14 u16s drawn as a list with bars by `func_8002E94C` (62, 128, 50, 50, 98, 59, 57, then 50s): attributes, not named yet |
+| `0x80199140` | `+0x218` | byte, the player's state: 0 free to act (the in-world action runs only then), 4 dead |
+| `0x80199170` | `+0x248` | X, s32 |
+| `0x80199174` | `+0x24C` | Y, s32: the height of the eye, larger is lower. Recorded as Z before 2026-11-09 |
+| `0x80199178` | `+0x250` | Z, s32 |
+| `0x80199190` | `+0x268` | heading, u16: `func_8003BD14` masks it with `0x7FF`; one press of Left took it from 0 to `0xFDE0` |
+
+Positions are 0x1000 to a cell. A new game starts at (`0x40000`, `0x415C0`,
+`0x3F000`).
+
+- **`func_8003CF28(delta)`** adds `delta` to HP, clamps it to the maximum, and at 0 or
+  below stores 0 and calls **`func_8003BD14`**, which sets the state byte to 4 and
+  starts the fall (`+0x17A`, `+0x17C`). `func_8003CF94(delta)` is the same for MP,
+  without the death.
+- **Dying**, tested: with the state at 4 the game waits; the next Cross goes to
+  `TITLE.EXE`, and Start there begins a new game at full HP.
+- `ST/FN.` on the disc is a debug start-up file (floor, appear location, HP and MP "0:
+  from the equipment", 999 of each item, a "super mode flag"). Nothing in `ST.EXE` or
+  `VS.EXE` names it, so the retail game does not read it. Some of its text turns up in
+  a save, as leftover buffer contents.
 
 ## Pad state
 
@@ -89,5 +113,23 @@ The save is one file per slot, `BASLUS-00863FS_ST01` and so on, 2 blocks.
 
 `func_80044EE8` loads an area: it takes the map number from the byte at `0x801B5924`
 (and four more bytes after it, 0 is fine) and drives the state machine at
-`0x801B5920` (`func_800456F8`) until the module is in. `func_80050768` and
-`func_80052894` are its callers in play. The module is `FDAT.T` entry `10n+2`.
+`0x801B5920` (`func_800456F8`) until the module is in. Its only direct caller is
+start-up, `func_80014A30` at `0x80014B84`. The module is `FDAT.T` entry `10n+2`; 36
+of the 48 map numbers have one (`config/st.json`).
+
+**A door** is handled by `func_80050768`, which walks the area's object records
+(0xF0 of 0x58 bytes from `0x801C2230`) and switches on a type; `0xED` and `0xEF`
+take the door branch at `0x80052338`. Which byte holds the type is not confirmed:
+`+0x05` looks like one. The branch saves the player's cell into
+`+0x220..+0x22A` of the player block, calls `func_80045044` with the target map, then,
+while the module loads, writes the arrival point from the record: cell bytes
+biased by 0x40, times 0x1000, plus a signed fine offset times 0x80, and 0x640 off the
+height for the eye (`0x800525D0..0x80052628`). The record's field offsets are not
+pinned down yet. Read as `+0x05`, map 0's records have types `0xE0`, `0xEC` and
+`0x32` and no door of either kind, so its way into map 1 would be something else.
+
+**Arriving with no floor is a death.** Loading map 1 with the player at map 0's start
+coordinates drops the height by `0x39D0` at once and kills the player within a second.
+Phase 2's acceptance test changed area that way before saving, so it saved a dead
+player; that save loads the position from the title but no area module, which the
+test, judging by position alone, did not notice.

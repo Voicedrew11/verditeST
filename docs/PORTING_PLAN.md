@@ -155,7 +155,7 @@ is: boot to an area, change areas, save, load both ways. **By eye:** the
 picture, the movies, the menus, the save screens, and whether the audio sounds
 right.
 
-## Phase 3: drive it without a person
+## ~~Phase 3: drive it without a person~~ (gate passed 2026-11-09; the fuzzer and arrival points open, `docs/TODO.md`)
 
 Port the agent harness before any enhancement, as both later ports did:
 `AgentBeacon`, `AgentServer` (the command channel), `AutoStart`, the scripted
