@@ -99,7 +99,10 @@ The gate's test passes (`scripts/acceptance.py`, three runs, 2026-11-09). Still 
   warp that lands on a floor in any map, which needs the next item.
 - **Arrival points**: 12 of 36 maps hold (2026-11-10, `patches/Arrivals.cs`); in the
   rest the decoded door points kill the player ("Arrival points" in
-  `docs/GAME_INTERNALS.md`). Why some doors' points are wrong is the next question.
+  `docs/GAME_INTERNALS.md`). Walking through real doors (`scripts/door_walk.py`) found
+  two points that hold (18, 47) but need a warp that marks the door it lands in, and
+  showed map 13 kills on arrival through its real door too. Stopped after two tries
+  at 41 → 30, which does not open.
 - ~~After the in-game menu load, `call` and `warp` stop running.~~ No longer
   reproduces (2026-11-10, `docs/DEVELOPMENT.md`).
 - `ST_AUTOSTART=load` takes the first save the card screen offers; picking a slot is

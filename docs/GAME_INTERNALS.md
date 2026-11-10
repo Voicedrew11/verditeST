@@ -280,6 +280,12 @@ signed fine offsets (times 0x80), `+0x4F` the arrival heading (times 0x400, to
 `player+0x26A`). Before loading, the branch saves the player's map, cell and offset
 in the cell into `player+0x220..+0x22A`, and marks every record of the same type.
 
+Corrected 2026-11-10 from the branch itself: an **ED** door opens only while the
+action button (the pad table's `+0x36`) is **held** and `player+0x26A` is within
+0x190 of `+0x20`; an **EF** door opens on the trigger alone. Then the byte at `+0x50`
+must be 0: it is set on the doors just arrived through, so a door does not fire again
+until the player has left its box.
+
 ### Arrival points
 
 `scripts/door_census.py` warped into all 36 maps on 2026-11-10 and read every record
@@ -306,7 +312,25 @@ killed the player: in 5, 6, 14, 15, 25, 33 the height dropped by about 0x3BD0 (a
 in 3, 8, 9, 10, 11, 12, 13, 28, 30, 37, 40 it did not change and HP still went to 0,
 and 17, 26 and 47 never finished loading (a death in the map before). So the decode
 is right for some doors and not others; the height byte's bias, or a field the door
-code sets elsewhere, is the suspect. Not read further.
+code sets elsewhere, is the suspect.
+
+**Walking through real doors** (`scripts/door_walk.py`, 2026-11-10): the player stood
+at a door's trigger in a map that holds, facing it, Cross held, and the game's own door
+code did the rest. Of the six ED/EF doors from reachable maps into unreached ones:
+
+| door | result |
+|---|---|
+| 24 → 18 (EF) | arrived at (268288, 262592, 222208), alive 8 s later |
+| 32 → 47 (ED) | arrived at (262144, 260288, 259072), alive 8 s later |
+| 38 → 13 (EF) | arrived at (323584, 260544, 233472) and **died there, height unchanged**: the decoded point's symptom, so map 13's deaths are not a decode error |
+| 24 → 20 (EF) | went to `STR.EXE`: a movie plays on the way in |
+| 23 → 25 (ED) | the player died at the trigger in map 23 first |
+| 41 → 30 (ED) | did not open, twice (at the trigger, facing it, Cross held 600 ms, after stepping out of the box and back) |
+
+The two good points do not serve `warp`: warped to 18's point, the player stood in the
+trigger of the EF door back to 24, which fired at once, since a warp marks no door.
+`patches/Arrivals.cs` keeps its 12 maps; a warp that marks the arrival's doors as the
+door code does (`+0x50`) would let it use these.
 
 **Arriving with no floor is a death.** Loading map 1 with the player at map 0's start
 coordinates drops the height by `0x39D0` at once and kills the player within a second.
