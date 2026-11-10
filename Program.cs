@@ -66,6 +66,9 @@ St.StageProbe.Install(Verdite.Core.Game.Env("STAGEPROBE"));
 St.GeometryProbe.Install(Verdite.Core.Game.Env("GEOPROBE"));
 // Who sends each frame to the screen: stage 14, or a loop drawing its own.
 St.PresentProbe.Install(Verdite.Core.Game.Env("PRESENTPROBE"));
+// The draw path's routines in C# (patches/Draw/): ST_LITERAL=1|0|verify, or one
+// routine's own ST_<NAME>. See "The draw path in C#" in docs/GEOMETRY.md.
+St.Literal.InstallAll();
 // How much of the frame's packet buffer is spent.
 St.PrimBufferProbe.Install(Verdite.Core.Game.Env("PRIMBUF_PROBE"));
 

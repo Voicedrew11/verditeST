@@ -21,4 +21,8 @@ default. Add an entry here when a switch is added to `Program.cs`.
 | `ST_GEOPROBE` | off | `1`: every five seconds, the packets each of stage 14's calls (and the scene's and the models' calls) added to the ordering table, by type |
 | `ST_PRESENTPROBE` | off | `1`: every five seconds, frames presented a second by who presented them: stage 14 or a loop drawing its own |
 | `ST_PRIMBUF_PROBE` | off | `1`: every five seconds, the packet-buffer bytes a frame spent, mean and peak, and the buffer's bounds |
+| `ST_LITERAL` | 1 | `0`: every draw routine in `patches/Draw/` on its recompiled body; `verify`: both run and compared, the recompiled result kept |
+| `ST_<NAME>` | `ST_LITERAL` | one draw routine's mode, `1`, `0` or `verify`; the names are in "The draw path in C#" in `docs/GEOMETRY.md` |
+| `ST_LITERAL_PROBE` | off | `1`: every five seconds, how many times each draw routine ran in C# |
+| `ST_LITERAL_DUMP` | none | a directory: the first mismatch of each routine under verify writes the entry, recompiled and transcribed RAM there |
 | `ST_RATECENSUS` | off | seconds: with pacing on, the RAM words that change on frames no stage ran on, printed once |

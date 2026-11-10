@@ -100,6 +100,27 @@ end reads `0x80129888` (start + 0xD400) instead; what uses the rest is not read.
 Widescreen (Phase 9) widens the cull, so this is its baseline. Which writer checks the
 end, and what it does when full, is not read.
 
+## The draw path in C#
+
+Each routine is transcribed literally into `patches/Draw/`: the same reads and stores
+in the same order, callees called directly so their hooks still fire. Verdite1's
+`Literal` (`patches/Draw/Literal.cs`, `LiteralVerify.cs`, `Mips.cs`) runs them:
+`ST_LITERAL=1|0|verify` for all, `ST_<NAME>` for one, on by default. Verify runs the
+recompiled routine and the transcription from one state and compares RAM outside a
+stack window, the scratchpad, every register, the GTE and the interrupt poll's
+countdown; **the recompiled result stands**. `ST_LITERAL_PROBE=1` counts runs.
+
+`scripts/transcribe.py` writes the first draft from `generated/`: it strips the PGXP
+bookkeeping and the recompiler's temporaries and keeps everything else, labels and
+`goto`s included. It is tidied by hand afterwards; nothing it writes is trusted until
+verify reads 0. Verify was checked once by planting a wrong constant in
+`HudPanels` (`0x61` for `0x60`): it reported 24 bytes from `0x8011C48D`, recompiled
+`60`, ours `61`.
+
+| routine | class, switch | verified (2026-11-10, `scripts/session.py`) |
+|---|---|---|
+| `func_80026964`, the HUD's panel list | `HudPanels`, `ST_HUDPANELS` | 0 mismatches in 7,123 calls |
+
 ## Open
 
 - Which objects `func_800241D0`'s three sites draw, and what `func_800251C8` and
