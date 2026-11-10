@@ -37,7 +37,8 @@ Measured 2026-11-10, `ST_WIDESCREEN_PROBE=1`, 144 fps:
   18.7%. The game leaves the screen edge to the GPU, so the margin has a picture.
 - **Tints**: with a status flash poked on (`+0x2D6`), 144 stretched a second, one
   a frame (the tint is held for the tick, `DrawStageTick`); 0 in play otherwise.
-- Pacing held 144.0 fps; the acceptance test passes at 16:9.
+- Pacing held 144.0 fps; the acceptance test passes at 16:9, and the 54 draw
+  routines the session reaches verify at 0 with it and `NearScreen` on.
 
 ## The HUD at the screen edges
 
