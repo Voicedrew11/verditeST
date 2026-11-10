@@ -155,3 +155,27 @@ death), a frame:
 Not seen in map 0: the near path (`map near`), the held models and the text. Every
 packet of every frame in the session has an owner: Step 0.1's gate for the contexts
 this session reaches.
+
+## What verify compares
+
+Read 2026-11-10 from `patches/Draw/LiteralVerify.cs`, against Verdite3's
+`NativeScene` verify (its `GPU_RENDERER.md`, "Native reference unit"). An earlier
+draft of `RENDERER_PLAN.md` said this port's verify compared RAM only; it compares:
+
+- all of RAM but the 0x2000 bytes below the stack pointer at entry;
+- the scratchpad, every word;
+- every CPU register (`at` to `ra`, `lo`, `hi`), not only the callee-saved;
+- the GTE's whole state;
+- the interrupt-poll countdown, and the BIOS `rand()` seed (restored, so both runs
+  draw the same numbers); a call during which a slow poll ran is counted as
+  interrupted, not compared.
+
+**The stack window** is the routine's own frame and its callees': by the MIPS
+convention nothing below the stack pointer survives a return (there is no red
+zone), so it is dead when the caller resumes. Verdite3 compares an 8 KB window
+there; here it is excluded on that argument, which stands as long as no routine
+reads below its caller's stack pointer.
+
+**Not compared: the order of the calls a routine makes** and their arguments,
+which Verdite3's supplemental verifier checks. Two routines with the same end state
+but a different call order would pass here. That is the one gap for Step 2.

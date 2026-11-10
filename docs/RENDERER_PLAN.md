@@ -35,9 +35,9 @@ on reading source this port does not have. Verdite3's rules hold here:
   map's coverage (99.98% of the scene's packets, 100% of the models'). Every
   presenting loop is named (`GEOMETRY.md`, "Who presents").
 - **Literal C#**: 57 draw routines in `patches/Draw/`, `ST_LITERAL=1|0|verify`, each
-  at 0 mismatches over the session and the 12-map tour. Verify compares RAM; it does
-  not yet compare the scratchpad, callee-saved registers or the GTE as Verdite3's
-  `NativeScene` does.
+  at 0 mismatches over the session and the 12-map tour. Verify already compares
+  what Verdite3's `NativeScene` does (`docs/GPU_RENDERER.md`, "What verify compares"),
+  but for the order of the calls a routine makes.
 - **Corpus driving**: `warp <map>` (12 of 36 maps hold an arrival point), the
   beacon with `loop`, `menu` and `loading`, `scripts/tour.py`.
 - **On packets**: pacing, the camera and models carried, the picture switches, the
@@ -90,8 +90,9 @@ strategy once. Shared changes are fork patches.
 ## Step 2: native submission and references
 
 A `NativeScene`-style unit: replace hooks on the map walk, the model list and the
-submitters, literal to the register, scratchpad, RAM, GTE and call order, with a
-verify that compares all of them (Verdite3's verifier, extended past RAM). The
+submitters, literal to the register, scratchpad, RAM, GTE and call order. The
+literal verify already compares all of those but the call order; that is the one
+addition. The
 reference records transforms, normals, unclamped light, fog, facing decisions and
 table keys at the original operations, as instrumentation, not a renderer.
 
