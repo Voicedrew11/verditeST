@@ -20,7 +20,11 @@ namespace St;
 ///   motors stop): not run on an idle frame;
 /// - the texture animations <c>func_80016A14</c> steps in VRAM (<c>MoveImage</c>,
 ///   <c>LoadImage</c>) off a countdown per entry: not run on an idle frame, since VRAM
-///   keeps the last step. A line each time the area's count of entries changes.
+///   keeps the last step. A line each time the area's count of entries changes;
+/// - the other way round, the two full-screen tints <c>func_8002181C</c> and
+///   <c>func_800218D8</c>, which draw once and clear their request: on an idle frame
+///   the tick's request is put back first, so the tint stays up for the whole tick, as
+///   a frame shown for three vblanks keeps it on the console.
 ///
 /// Found by <see cref="RateCensus"/> and by reading stage 14. See "What runs at the
 /// drawn rate" in docs/GAME_INTERNALS.md.
@@ -56,6 +60,14 @@ public static class DrawStageTick
     const uint Area = 0x801B5929;
     static int _textureCount = -1;
 
+    /// <summary>The tints' requests: flags at <c>+0</c>/<c>+1</c>, blends <c>+2</c>/<c>+3</c>,
+    /// colours three u16 pairs from <c>+4</c>; <c>func_8002181C</c> runs first.</summary>
+    const uint TintA = 0x8002181C, TintB = 0x800218D8;
+    const uint TintRequest = 0x8017BD66;
+    const int TintBytes = 0x10;
+    static readonly byte[] _tint = new byte[TintBytes];
+    public static long TintsRedrawn;
+
     static uint _celCounter;
     static readonly byte[] _cels = new byte[CelEntries];
     static bool _celsHeld;
@@ -76,11 +88,12 @@ public static class DrawStageTick
             && HookManager.AddPost(_self, rand, M(nameof(AfterRand)))) targets.Add(rand);
         if (Resolve(RumbleCountdown) is { } rumble && HookManager.AddPre(_self, rumble, M(nameof(BeforeRumble)))) targets.Add(rumble);
         if (Resolve(TextureAnimations) is { } tex && HookManager.AddPre(_self, tex, M(nameof(BeforeTextures)))) targets.Add(tex);
+        if (Resolve(TintA) is { } tint && HookManager.AddPre(_self, tint, M(nameof(BeforeTint)))) targets.Add(tint);
         HookManager.Commit();
 
         int hooked = targets.Count(HookAttach.Installed);
-        Console.WriteLine($"[ST] draw stage tick: {hooked}/4 held (cels, flicker rand, rumble countdown, texture animations)");
-        return hooked == 4;
+        Console.WriteLine($"[ST] draw stage tick: {hooked}/5 held (cels, flicker rand, rumble countdown, texture animations, tints)");
+        return hooked == 5;
     }
 
     public static void BeforeCels(CpuContext c, IMemory m)
@@ -112,6 +125,18 @@ public static class DrawStageTick
     }
 
     public static bool BeforeRumble(CpuContext c, IMemory m) => !FramePacing.DrawingIdleFrame;
+
+    public static void BeforeTint(CpuContext c, IMemory m)
+    {
+        if (!FramePacing.DrawingIdleFrame)
+        {
+            for (uint i = 0; i < TintBytes; i++) _tint[i] = m.ReadU8(TintRequest + i);
+            return;
+        }
+        if ((_tint[0] | _tint[1]) == 0) return;
+        for (uint i = 0; i < TintBytes; i++) m.WriteU8(TintRequest + i, _tint[i]);
+        TintsRedrawn++;
+    }
 
     public static bool BeforeTextures(CpuContext c, IMemory m)
     {
