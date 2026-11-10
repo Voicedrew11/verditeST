@@ -139,5 +139,5 @@ differences.
 
 `ModelLight` (`func_80033DB8`) is not light: it fetches a pointer from a table at
 `0x80165090 + 0x834C + id * 4` and keeps it only if `func_80015258` accepts it (the
-name predates the reading). The blend's records and weight, and the held
+name predates the reading). What sets a model's blend flags and weight, and the held
 models' path (`HeldModel`, `func_80021AC4`, which calls the same steps) are next.
