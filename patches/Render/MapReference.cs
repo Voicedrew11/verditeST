@@ -35,7 +35,8 @@ public static class MapReference
     static readonly List<(uint Start, uint End)> _nearSpans = [];
     static MapFaces _shape = MapFaces.Quads;
     static uint _cursor, _ot;
-    static bool _colours, _inside;
+    static int _flicker;
+    static bool _inside;
     static long _windowStart = -1;
 
     public static void Install(string? spec)
@@ -81,8 +82,8 @@ public static class MapReference
         _headBefore.Clear();
         _ot = m.ReadU32(Scratch);
         _cursor = m.ReadU32(Scratch + 0x10);
-        // The flicker's calls rewrite each corner's colour after DPCS; not modelled.
-        _colours = (m.ReadU8(SceneFlags) & 6) == 0;
+        // The flicker's calls rewrite each fogged corner's colour after DPCS.
+        _flicker = m.ReadU8(SceneFlags) & 6;
         _nearSpans.Clear();
         _inside = true;
         Walk(m);
@@ -193,7 +194,7 @@ public static class MapReference
         foreach (var (word, off, half) in _shape.Texture) w[word] = half ? m.ReadU16(q + off) : m.ReadU32(q + off);
         for (int k = 0; k < n; k++) w[_shape.Positions[k]] = sxy[k];
         if (_shape.Colouring == MapFaces.Shading.Flat) w[_shape.Colours[0]] = lit;
-        else for (int k = 0; k < n; k++) w[_shape.Colours[k]] = MapLight.Fogged(lit, light, fog[k]);
+        else for (int k = 0; k < n; k++) w[_shape.Colours[k]] = MapLight.Flicker(MapLight.Fogged(lit, light, fog[k]), _flicker);
         _expected.Add(new Expected(key, w));
     }
 
@@ -245,7 +246,7 @@ public static class MapReference
                 Sample($"tag {tag:X8} at {p:X8}, key {e.Key}: head {head.Lo:X8}..{head.Hi:X8}; in a near span: " +
                        _nearSpans.Any(n => (tag & 0xFFFFFF) >= (n.Start & 0xFFFFFF) && (tag & 0xFFFFFF) < (n.End & 0xFFFFFF)));
             Agree($"{_shape.Name}: bulk faces, every other word", Words(m, p, e.Words));
-            if (!_colours) Count($"{_shape.Name}: colours not checked (the flicker)");
+            if (_flicker != 0) Count($"{_shape.Name}: faces under the flicker");
             heads[e.Key] = new Head(p, p + 1);
             p += _shape.PacketSize;
         }
@@ -261,7 +262,6 @@ public static class MapReference
         for (int i = 1; i < words.Length; i++)
         {
             bool colour = _shape.Colours.Contains(i);
-            if (colour && !_colours) continue;
             // A halfword UV shares its word with something that is not the face's.
             uint mask = _shape.Texture.Any(t => t.Word == i && t.Half) ? 0xFFFFu : 0xFFFFFFFFu;
             uint game = m.ReadU32(p + (uint)i * 4);

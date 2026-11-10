@@ -92,4 +92,25 @@ static class MapLight
         if (single && f >= 4066) f = 4065;
         return f < 0 ? 0 : f;
     }
+
+    /// <summary>The flickering light's rewrite of a fogged corner colour, after DPCS or
+    /// NCDS (<c>func_8001DAE0</c>/<c>8001DB20</c> for the map, <c>func_80018440</c>/
+    /// <c>80018480</c> for the models): with <c>0x8017BE8C &amp; 2</c> the blue held under
+    /// 0x56 and the colour made (3b, 2b, b), warm; else with <c>&amp; 4</c> the red held
+    /// and the colour made (r, 3r, 3r), cold. The code byte is kept.</summary>
+    public static uint Flicker(uint rgbc, int sceneFlags)
+    {
+        uint code = rgbc & 0xFF000000u;
+        if ((sceneFlags & 2) != 0)
+        {
+            uint b = Math.Min((rgbc >> 16) & 0xFF, 0x55u);
+            return code | (b << 16) | ((2 * b) << 8) | (3 * b);
+        }
+        if ((sceneFlags & 4) != 0)
+        {
+            uint r = Math.Min(rgbc & 0xFF, 0x55u);
+            return code | ((3 * r) << 16) | ((3 * r) << 8) | r;
+        }
+        return rgbc;
+    }
 }

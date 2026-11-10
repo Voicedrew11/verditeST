@@ -27,7 +27,7 @@ public static class ModelReference
     static readonly Dictionary<int, uint> _headBefore = [];
     static ModelFaces _shape = ModelFaces.FlatTriangles;
     static uint _cursor, _ot;
-    static bool _colours;
+    static int _flicker;
 
     public static void Install(string? spec)
     {
@@ -78,8 +78,8 @@ public static class ModelReference
             (int)Gte.ReadControl(15), (int)Gte.ReadControl(21), (int)Gte.ReadControl(22), (int)Gte.ReadControl(23));
         uint corners = m.ReadU32(Scratch + 0x40), normals = m.ReadU32(Scratch + 0x24);
         uint rgb = m.ReadU32(Scratch + 0x60) & 0xFFFFFF;
-        // The flicker's calls rewrite a fogged face's colour after NCDS; not modelled.
-        _colours = shape.Fog == ModelFaces.Fogging.None || (m.ReadU8(0x8017BE8C) & 6) == 0;
+        // The flicker's calls rewrite a fogged face's colours after NCDS.
+        _flicker = shape.Fog == ModelFaces.Fogging.None ? 0 : m.ReadU8(0x8017BE8C) & 6;
         int far = (short)m.ReadU16(Scratch + 4), near = (int)m.ReadU32(Scratch + 0x80);
         for (uint i = 0, q = c.A1; i < (c.A0 & 0xFFFF); i++, q += shape.RecordSize)
             Face(m, q, corners, normals, light, inputs, rgb, c.A3, near, far);
@@ -117,7 +117,8 @@ public static class ModelReference
             short nx = (short)m.ReadU16(at), ny = (short)m.ReadU16(at + 2), nz = (short)m.ReadU16(at + 4);
             w[_shape.Colours[k]] = _shape.Fog == ModelFaces.Fogging.None
                 ? MapLight.Lit(light, inputs, nx, ny, nz, rgb | code)
-                : MapLight.LitFogged(light, inputs, nx, ny, nz, rgb | code, _shape.Ir0(fog, k));
+                : MapLight.Flicker(MapLight.LitFogged(light, inputs, nx, ny, nz, rgb | code, _shape.Ir0(fog, k)), _flicker);
+            if (_flicker != 0) MapReference.Count($"{_shape.Name}: colours under the flicker");
         }
         _expected.Add(new Expected(key, w));
     }
@@ -149,7 +150,6 @@ public static class ModelReference
     {
         for (int i = 1; i < words.Length; i++)
         {
-            if (!_colours && _shape.Colours.Contains(i)) continue;
             uint mask = _shape.Texture.Any(t => t.Word == i && t.Half) ? 0xFFFFu : 0xFFFFFFFFu;
             uint game = m.ReadU32(p + (uint)i * 4);
             if ((game & mask) == words[i]) continue;

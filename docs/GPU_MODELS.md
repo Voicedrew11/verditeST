@@ -84,9 +84,9 @@ most models are fogged (12,995 calls of each fogged writer against 1,397 unfogge
 (`ST_LITERAL_PROBE=1`, 0 runs); maps 4, 21, 23 and 24 do. Each picks `NCDS` or `NCCS`
 per face from `0x8017BE8C`, adds the scratchpad's `+0x98` to the UVs (a texture
 scroll, by the look of it) and has a near path of its own through a second vertex
-buffer at `+0x48`. The flicker's calls through
-`0x8017BE8C & 6` would rewrite a fogged colour after `NCDS`; colours are then not
-compared, and map 0 never sets it.
+buffer at `+0x48`. Under the flicker (`0x8017BE8C & 6`) each fogged colour is then rewritten as the
+map's is ("The flicker's colour" in `GPU_RENDERER.md`): checked over the tour, 0
+differences.
 
 ## The light inputs
 

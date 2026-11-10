@@ -206,9 +206,16 @@ and the models.
 
 **Over the tour** (`scripts/tour.py` with `ST_MAP_REFERENCE=1`, 2026-11-10): maps 0, 2,
 4, 21, 23, 24, 32, 38, 41, 44 and 46 (45 never loaded this run), about 3 million map
-and model faces matched, **0 differences** in any count. Maps 24 and 32 run the
-flicker (`0x8017BE8C & 6`), so their map faces' colours were skipped and counted
-(132,879 and 6,942), not checked.
+and model faces matched, **0 differences** in any count.
+
+**The flicker's colour** (`0x8017BE8C & 6`, maps 24 and 32): after `DPCS`, each map
+corner's colour word goes through `func_8001DAE0` when `& 2`: blue held under 0x56,
+then the colour made `(3b, 2b, b)`, warm; else `func_8001DB20` when `& 4`: red held,
+then `(r, 3r, 3r)`, cold. The models' fogged writers call copies of the two
+(`func_80018440`, `80018480`) after `NCDS`. So under the flicker the fogged colour
+keeps only one channel's brightness, recoloured; `MapLight.Flicker`. A second tour
+(all 12 maps): 101,487 map GT4s and 42,429 GT3s under the flicker matched whole with
+it, and the fogged models' colour words too, **0 differences**.
 
 ## The near splits
 
