@@ -30,6 +30,8 @@ rate (144 by default); before Phase 4 the port ran it at 60, since the runtime's
 - [docs/PICTURE.md](docs/PICTURE.md): the picture's switches (Phase 7).
 - [docs/WIDESCREEN.md](docs/WIDESCREEN.md): the margin, the tints, the HUD at the edges, the near polygons (Phase 9).
 - [docs/RENDERER_PLAN.md](docs/RENDERER_PLAN.md): Phase 11, the retained GPU renderer, on Verdite3's route (planned work).
+- [docs/GPU_RENDERER.md](docs/GPU_RENDERER.md): Phase 11's findings for the map: records, projection, light and fog, the census, the reference, verify.
+- [docs/GPU_MODELS.md](docs/GPU_MODELS.md): Phase 11's findings for the models' light and fog.
 - [docs/INPUT.md](docs/INPUT.md): the pad library, the button table, vibration (Phase 8).
 - [docs/ENV_VARS.md](docs/ENV_VARS.md): every `ST_*` switch.
 - [docs/TODO.md](docs/TODO.md): what is open now.

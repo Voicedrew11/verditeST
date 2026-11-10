@@ -62,9 +62,11 @@ The world's families, as known:
 **Read 2026-11-10** ("The map's records and colours" in `docs/GPU_RENDERER.md`): the
 map's cells, meshes and quads, the projection, the lighting record, and the colour:
 `NCCS` per face with the cell's rotated light matrix, then a linear fog in depth
-computed on the CPU toward one of three far colours. **Still unknown**: the
-vertex record and how a cell is placed; the triangles' record; the models' light
-inputs (`ModelPolygons` uses `MVMVA`/`RTPS`).
+computed on the CPU toward one of three far colours. The models' light
+is read too (`docs/GPU_MODELS.md`): per vertex `RTPS` and a CPU fog factor held at
+4065, per face `NCDS`/`NCDT` or `NCCS`/`NCCT` by the mesh's flag, the light matrix
+turned into model space, the colour matrix a blend of two lighting records.
+**Still unknown**: the models' face records and the blend's records and weight.
 
 ## Step 0: close the inventory, establish the baseline
 

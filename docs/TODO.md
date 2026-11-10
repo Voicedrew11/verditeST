@@ -50,7 +50,9 @@ routine makes: 0 mismatches over the session. The map reference
 (`ST_MAP_REFERENCE=1`) works out every bulk face of the map in plain C#, the scene's flat
 cells included, light and fog too, and matches the game's packets word for word.
 The near splits are measured: pieces in the face's own key, and the 98.5% that
-draw nothing are all off the screen. Next: the models' light inputs; the census and call
+draw nothing are all off the screen. The models' light is read
+(`docs/GPU_MODELS.md`, inspection only). Next: the models' face records, then a
+model reference like the map's; the census and call
 order in the contexts not reached (held models, text, tints, the flicker).
 
 ## Phase 10: what is left
