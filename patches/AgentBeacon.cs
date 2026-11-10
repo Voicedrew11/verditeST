@@ -135,7 +135,8 @@ public static class AgentBeacon
     public static string Snapshot()
     {
         string head = $"\"program\":\"{_program}\",\"map\":{_map},\"frames\":{Frames}," +
-                      $"\"loop\":{(LoopLive ? "true" : "false")},\"menu\":{(MenuLive ? "true" : "false")}";
+                      $"\"loop\":{(LoopLive ? "true" : "false")},\"menu\":{(MenuLive ? "true" : "false")}," +
+                      $"\"loading\":{(_program == "st" && _memory.ReadU16(Warp.Loader) != 0 ? "true" : "false")}";
         if (!InGame) return $"{{{head},\"inGame\":false}}";
 
         var m = _memory;

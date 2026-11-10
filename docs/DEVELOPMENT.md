@@ -29,12 +29,14 @@ door. The area change comes after the saves because of the death on arrival
 
 ## What is still open
 
-- **The test failed once in four runs on 2026-11-10** (after the draw routines went to
-  C# and `warp` took arrival points): in the second process, the queued call for
-  `warp 1` never ran (the log shows `warp 0`'s `80044EE8` returning and nothing
-  after), so map 1 was never reached. The next three runs passed. Calls wait for a
-  vblank from the game's own `VSync`; which loop withheld it is not read, nor whether
-  `ST_LITERAL=0` changes the rate.
+- ~~**"never reached map 1", about one run in four.**~~ Found and fixed 2026-11-10:
+  the test sent `warp 0` while the title's load was still bringing map 0 in. The map
+  byte at `0x801B5924` was not 0 yet, so the same-map move became a real area request
+  (a second `func_80045044` call in every run's log), and the test, seeing map 0, sent
+  `warp 1` into a loader still busy with it, which drops a request. Now `warp`
+  answers `busy` while the loader (`0x801B5920`) runs, the beacon has `loading`, and
+  the test waits for it to be idle and sends again on `busy`. Four runs passed, each
+  with the one area call.
 - **Another failure, once in four runs on 2026-11-10** (just after mouse look went
   in): "the prompts ran out before the screen finished". The save screen's set-up
   and screen calls both returned, the walk had moved the player as it should, and the
@@ -172,11 +174,12 @@ about once a second, and a line on every program or area load. The same JSON is 
 command channel's `state`:
 
 ```json
-{"program":"st","map":0,"frames":1576,"loop":true,"menu":false,"inGame":true,"hp":752,"maxHp":752,"mp":550,
+{"program":"st","map":0,"frames":1576,"loop":true,"menu":false,"loading":false,"inGame":true,"hp":752,"maxHp":752,"mp":550,
  "maxMp":550,"dead":false,"pos":[262144,267712,258048],"heading":0}
 ```
 
-`map` is -1 outside `ST.EXE`; outside an area only the first six fields are there.
+`map` is -1 outside `ST.EXE`; outside an area only the first seven fields are there.
+`loading` is the area loader's state (`0x801B5920`) not idle.
 `loop` is the main loop seen turning in the last second, `menu` the in-game menu's
 loop: both call stage 1 (`func_800164B4`), told apart by the return address.
 Measured 2026-11-10: `true,false` in play, `false,true` with the menu open, and

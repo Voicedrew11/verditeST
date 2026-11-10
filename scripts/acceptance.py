@@ -97,9 +97,17 @@ class Game:
         raise Failed(f"never {what}: {self.state()}")
 
     def warp(self, map_number, arrival=()):
-        self.send(" ".join(["warp", str(map_number), *map(str, arrival)]))
+        # The loader drops a request made while it is busy, so wait for it to be idle,
+        # and send again while the channel answers busy.
+        self.wait_until("the area loader idle", lambda state: not state.get("loading", False), 40)
+        for _ in range(20):
+            reply = self.send(" ".join(["warp", str(map_number), *map(str, arrival)]))
+            if "busy" not in reply:
+                break
+            time.sleep(0.5)
         self.wait_until(f"reached map {map_number}",
-                        lambda state: state["map"] == map_number and state["inGame"], 40)
+                        lambda state: state["map"] == map_number and state["inGame"]
+                        and not state.get("loading", False), 40)
         before = self.state()["frames"]
         time.sleep(1)
         if self.state()["frames"] - before < 20:

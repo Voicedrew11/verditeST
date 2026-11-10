@@ -54,7 +54,7 @@ then points at slot 0). Measured 2026-11-10 with `ST_MENUWORLD_PROBE=1`: 20 pass
 second, 0x3958 bytes of packets of 0x216F0, and inside the menu the slots read the
 game's own `08 FFFFFF`. After the menu closes, slot 0's flags read `09` or `0A` with
 the pass on or off, run to run. The acceptance test passed 2 of 3 with it on and 2
-of 2 off; its one failure is the "never reached map 1" that runs off show too. The death prompt (`func_8002CEF8`) draws no
+of 2 off; its one failure was the busy-loader race fixed since (`docs/DEVELOPMENT.md`). The death prompt (`func_8002CEF8`) draws no
 backdrop. The load fade follows the vblank count (`0x801B5938`), not the tick.
 
 ## The margin, the latches and the tints

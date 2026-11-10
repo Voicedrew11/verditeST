@@ -17,7 +17,7 @@ static class Warp
     public const uint RequestArea = 0x80045044;
 
     /// <summary>u16, the loader's state (0 idle), then the map in at <c>+4</c>.</summary>
-    const uint Loader = 0x801B5920;
+    public const uint Loader = 0x801B5920;
     const uint CurrentMap = Loader + 4;
 
     // Game thread and command thread both touch this; a lock keeps it whole.
@@ -31,6 +31,9 @@ static class Warp
         int map = int.Parse(words[1], CultureInfo.InvariantCulture);
         if (!Arrivals.Maps.Contains(map)) throw new ArgumentException($"map {map} has no area module");
         if (AgentBeacon.Program != "st") throw new InvalidOperationException("warp needs ST.EXE running");
+        // A request made while the loader is still bringing an area in is dropped by
+        // it, and the map number at +4 is not yet the new one.
+        if (memory.ReadU16(Loader) != 0) throw new InvalidOperationException("busy: the area loader is running; try again");
         if (words.Length is not (2 or 5)) throw new ArgumentException("warp takes a map and optionally x y z");
 
         (int X, int Y, int Z)? point = null;

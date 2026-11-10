@@ -125,8 +125,8 @@ The gate's test passes (`scripts/acceptance.py`, three runs, 2026-11-09). Still 
   at 41 → 30, which does not open.
 - ~~After the in-game menu load, `call` and `warp` stop running.~~ No longer
   reproduces (2026-11-10, `docs/DEVELOPMENT.md`).
-- The acceptance test fails at "never reached map 1" about one run in four
-  (2026-11-10, with and without the new patches); the warp to map 1 is not read yet.
+- ~~The acceptance test fails at "never reached map 1" about one run in four.~~ A
+  warp sent into a busy loader (2026-11-10, `docs/DEVELOPMENT.md`); fixed.
 - `ST_AUTOSTART=load` takes the first save the card screen offers; picking a slot is
   not done.
 - ~~A main-loop marker for the beacon.~~ Added with a menu marker (2026-11-10,
