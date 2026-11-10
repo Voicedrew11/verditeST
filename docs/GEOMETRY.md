@@ -146,9 +146,9 @@ The tour over the 12 areas the fixed warp reaches is below the table.
 | `func_8001C100` | the visible-cell list, from the eye's cell outwards | `VisibleCells`, `ST_VISIBLECELLS` | 0 in 2,236 |
 | `func_8001C264` | the scene's first preparation pass after the cell list; writes no packet | `ScenePrepare1`, `ST_SCENEPREPARE1` | 0 in 2,236 |
 | `func_8001C60C` | the scene's second preparation pass; writes no packet | `ScenePrepare2`, `ST_SCENEPREPARE2` | 0 in 2,236 |
-| `func_8001C8E0` | a draw-stage call after the scene; calls func_8001C88C; not read | `Draw1C8E0`, `ST_DRAW1C8E0` | 0 in 1,131 |
-| `func_8001C9C8` | a draw-stage call after the scene; calls func_8001C88C; not read | `Draw1C9C8`, `ST_DRAW1C9C8` | 0 in 1,131 |
-| `func_8001CAB8` | a draw-stage call after the scene; calls func_8001C88C; not read | `Draw1CAB8`, `ST_DRAW1CAB8` | 0 in 1,131 |
+| `func_8001C8E0` | the visible-entity list: model records (0xD4 bytes from 0x801BA138) of kind 1 or 5 in a visible cell, up to 12 indices at 0x801C0238 + 0x6104 | `VisibleEntities`, `ST_VISIBLEENTITIES` | 0 in 1,131 |
+| `func_8001C9C8` | the visible-object list: the area's 0xF0 object records (0x58 bytes from 0x801C2230) in a visible cell, up to 0x60 | `VisibleObjects`, `ST_VISIBLEOBJECTS` | 0 in 1,131 |
+| `func_8001CAB8` | the visible list of 64 records of 0x30 bytes from 0x801CAE08 in this area (+0x2C) and a visible cell | `VisibleAreaRecords`, `ST_VISIBLEAREARECORDS` | 0 in 1,131 |
 | `func_8001CB88` | the scene's third preparation pass; writes no packet | `ScenePrepare3`, `ST_SCENEPREPARE3` | 0 in 2,236 |
 | `func_8001CDF8` | the scene's fourth preparation pass; writes no packet | `ScenePrepare4`, `ST_SCENEPREPARE4` | 0 in 2,241 |
 | `func_8001D2A8` | the map's GT3s, every visible cell's triangles | `MapTriangles`, `ST_MAPTRIANGLES` | 0 in 2,246 |
@@ -189,9 +189,9 @@ The tour over the 12 areas the fixed warp reaches is below the table.
 | `func_80029618` | a window or panel, x y w h; the menu and the prompt | `Window29618`, `ST_WINDOW29618` | 0 in 6,012 |
 | `func_80033110` | called from the draw stage when the byte at 0x80199140 is 0, 5 or 6; not read | `Draw33110`, `ST_DRAW33110` | 0 in 995 |
 | `func_80033DB8` | per entity before its model is drawn; calls func_80015258 | `ModelLight`, `ST_MODELLIGHT` | 0 in 11,164 |
-| `func_800340F8` | a draw-stage call; a leaf; not read | `Draw340F8`, `ST_DRAW340F8` | 0 in 1,116 |
+| `func_800340F8` | marks 16 slots of 0x18 bytes at 0x8016768C in use for the frame (flags 5); the pose code's, probably | `MarkClipSlots`, `ST_MARKCLIPSLOTS` | 0 in 1,116 |
 | `func_80034604` | a model step in func_80022678 and func_80021AC4; not read | `ModelStep34604`, `ST_MODELSTEP34604` | not reached |
-| `func_80034FC4` | a draw-stage call; a leaf; not read | `Draw34FC4`, `ST_DRAW34FC4` | 0 in 1,116 |
+| `func_80034FC4` | marks 16 slots of 0x3C bytes at 0x8016780C in use for the frame (flags 9); the pose states func_80035008 frees, probably | `MarkPoseSlots`, `ST_MARKPOSESLOTS` | 0 in 1,116 |
 | `func_80035AA8` | a model step in func_80022678 and func_80021AC4; not read | `ModelStep35AA8`, `ST_MODELSTEP35AA8` | 0 in 1,714 |
 
 `scripts/verify_summary.py <log>` sums a run's verify lines. The acceptance test

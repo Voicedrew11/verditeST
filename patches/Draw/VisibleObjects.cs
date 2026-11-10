@@ -7,12 +7,12 @@ using static St.Mips;
 namespace St;
 
 /// <summary>
-/// <c>func_8001C9C8</c>: a draw-stage call after the scene; calls func_8001C88C; not read. <c>ST_DRAW1C9C8</c>.
+/// <c>func_8001C9C8</c>: the visible-object list: of the area's 0xF0 object records (0x58 bytes from 0x801C2230), those in a visible cell, up to 0x60, the count at + 0x7274. <c>ST_VISIBLEOBJECTS</c>.
 /// </summary>
-public static class Draw1C9C8
+public static class VisibleObjects
 {
-    public static readonly Literal R = new(typeof(Draw1C9C8), "draw-1C9C8", "DRAW1C9C8", 0x8001C9C8, Run,
-        "a draw-stage call after the scene; calls func_8001C88C; not read.");
+    public static readonly Literal R = new(typeof(VisibleObjects), "visible objects", "VISIBLEOBJECTS", 0x8001C9C8, Run,
+        "the visible-object list: of the area's 0xF0 object records (0x58 bytes from 0x801C2230), those in a visible cell, up to 0x60, the count at + 0x7274.");
 
     static void Replace(Action<CpuContext, IMemory> orig, CpuContext c, IMemory m) => R.Replace(orig, c, m);
 

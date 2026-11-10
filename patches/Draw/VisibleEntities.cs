@@ -7,12 +7,12 @@ using static St.Mips;
 namespace St;
 
 /// <summary>
-/// <c>func_8001C8E0</c>: a draw-stage call after the scene; calls func_8001C88C; not read. <c>ST_DRAW1C8E0</c>.
+/// <c>func_8001C8E0</c>: the visible-entity list: of the 64 model records (0xD4 bytes from 0x801BA138), those of kind 1 or 5 whose cell (+0x26) is in the visible-cell list (func_8001C88C), up to 12, as indices at 0x801C0238 + 0x6104, the count at + 0x6100; the rest have +4 cleared. <c>ST_VISIBLEENTITIES</c>.
 /// </summary>
-public static class Draw1C8E0
+public static class VisibleEntities
 {
-    public static readonly Literal R = new(typeof(Draw1C8E0), "draw-1C8E0", "DRAW1C8E0", 0x8001C8E0, Run,
-        "a draw-stage call after the scene; calls func_8001C88C; not read.");
+    public static readonly Literal R = new(typeof(VisibleEntities), "visible entities", "VISIBLEENTITIES", 0x8001C8E0, Run,
+        "the visible-entity list: of the 64 model records (0xD4 bytes from 0x801BA138), those of kind 1 or 5 whose cell (+0x26) is in the visible-cell list (func_8001C88C), up to 12, as indices at 0x801C0238 + 0x6104, the count at + 0x6100; the rest have +4 cleared.");
 
     static void Replace(Action<CpuContext, IMemory> orig, CpuContext c, IMemory m) => R.Replace(orig, c, m);
 

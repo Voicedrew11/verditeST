@@ -7,12 +7,12 @@ using static St.Mips;
 namespace St;
 
 /// <summary>
-/// <c>func_800340F8</c>: a draw-stage call; a leaf; not read. <c>ST_DRAW340F8</c>.
+/// <c>func_800340F8</c>: marks the frame start for 16 slots of 0x18 bytes at 0x8016768C: a slot with any flag but bit 2 set gets flags 5; the pose code's, probably. <c>ST_MARKCLIPSLOTS</c>.
 /// </summary>
-public static class Draw340F8
+public static class MarkClipSlots
 {
-    public static readonly Literal R = new(typeof(Draw340F8), "draw-340F8", "DRAW340F8", 0x800340F8, Run,
-        "a draw-stage call; a leaf; not read.");
+    public static readonly Literal R = new(typeof(MarkClipSlots), "mark clip slots", "MARKCLIPSLOTS", 0x800340F8, Run,
+        "marks the frame start for 16 slots of 0x18 bytes at 0x8016768C: a slot with any flag but bit 2 set gets flags 5; the pose code's, probably.");
 
     static void Replace(Action<CpuContext, IMemory> orig, CpuContext c, IMemory m) => R.Replace(orig, c, m);
 
