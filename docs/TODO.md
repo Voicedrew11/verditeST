@@ -25,8 +25,16 @@ open now.
   poke `801991FE 0010` and `80199200 4000` over the agent channel.
 - **By eye:** map 24's two texture animations (`docs/GAME_INTERNALS.md`, "Texture
   animations"), now at the tick's pace: against an emulator, or `ST_PACING=0`.
+- **By hand:** `Settings ▸ Testing` (`docs/DEVELOPMENT.md`): each control live,
+  and that the wording reads right.
 - **By eye:** the picture's switches (`docs/PICTURE.md`), each against its `=0`; the
   Z-buffer most of all (decals, the HUD, fades, the menu).
+
+## Phase 10: what is left
+
+Started 2026-11-10: `Settings ▸ Testing` has the switches live and kept ("The Testing
+tab" in `docs/DEVELOPMENT.md`); the kept values are measured to come back. Next: the
+page in the game's own menu, first-run setup (`config/onboarding.json`).
 
 ## Phase 9: what is left
 

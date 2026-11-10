@@ -138,6 +138,13 @@ public static class FramePacing
         HookAttach.OnOverlayLoad("pacing", Attach, "See \"Frame pacing\" in docs/DEVELOPMENT.md.");
     }
 
+    /// <summary>The drawn rate, live (Settings ▸ Testing): 0 is uncapped.</summary>
+    public static void SetTarget(double fps)
+    {
+        TargetFps = fps <= 0.0 ? 0.0 : Math.Clamp(fps, 5.0, 1000.0);
+        if (Enabled && _inGame) RecompOne.Runtime.Runtime.TargetFps = HostCeiling();
+    }
+
     // RecompOne's own ceiling paces per VSync call; it is only a backstop here.
     static double HostCeiling() => Uncapped ? 0.0 : Math.Max(60.0, TargetFps * 2.0);
 

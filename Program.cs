@@ -119,6 +119,8 @@ Verdite.Core.Mouse.Configure(St.MouseLook.Game);
 Verdite.Core.Mouse.Install();
 St.MouseLook.Configure(Verdite.Core.Game.Env("MOUSE_SYNTH"), Verdite.Core.Game.Env("MOUSE_PROBE"));
 St.MouseLook.Install();
+// The port's switches, live and kept (Settings ▸ Testing, docs/DEVELOPMENT.md).
+St.TestingSection.Install();
 
 // ST_BOOTEXE=str|title|optxt|st|end|vs starts that program instead of the movies:
 // the stub's first index, written once the stub is in memory. See "How one program

@@ -25,7 +25,7 @@ public static class NearScreen
     static readonly uint[] Entries = [0x80075EC4, 0x80076884];
     const uint StockWidth = 320u;
 
-    public static bool Enabled { get; private set; } = true;
+    public static bool Enabled { get; set; } = true;
 
     /// <summary>Faces handed to a division, and those whose width was widened.</summary>
     public static long Faces, Widened;

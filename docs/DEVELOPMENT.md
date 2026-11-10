@@ -99,6 +99,26 @@ second. The acceptance test passes with pacing on and with `ST_PACING=0`.
 and fades at 20, the movies, the title and the opening text with their counted waits
 honoured.
 
+## The Testing tab
+
+`Settings ▸ Testing` (`patches/TestingSection.cs`, Phase 10) has the port's switches,
+live: the frame rate (or uncapped), the vblank hold, camera and model smoothing, the
+shading (dither, none, 24-bit), the aspect, the HUD at the edges, the near polygons,
+perspective, sub-pixel, the Z-buffer, mouse look and instant mouse look, and three
+console probes. Each control writes the same state its `ST_*` variable sets.
+
+The choices are kept in `interface.ini` under `[RecompOne]` (`st.fps`, `st.smooth`,
+`st.zbuffer`, `st.shading` and so on; the aspect is Widescreen's own
+`st.widescreen.aspect`) and put back on `RuntimeReadyEvent`, **unless the variable is
+set**, which wins. Checked 2026-11-10: `st.smooth=0`, `st.zbuffer=0`, `st.fps=90` came
+back as three restored values (the models drawn at 90.0 a second, the camera's probe
+silent); with `ST_ZBUFFER=1` set, two. A line appended at the end of the file lands in
+ImGui's own sections and is not read.
+
+Frame pacing's on/off is not on the tab: off is a different program path (its hooks
+are never installed), so it stays `ST_PACING=0`. Nor are the routines' recompiled/C#/
+verify choices (`ST_LITERAL`), which are a session's comparison.
+
 ## Measuring the draw path
 
 `scripts/session.py <log> [ST_X=1 ...]` boots a new game and plays the same moves

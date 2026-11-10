@@ -47,7 +47,7 @@ public static class VBlankPacing
         Description = "VSync(n) waits n vblanks, as the console's did.",
     };
 
-    public static bool Enabled { get; private set; } = true;
+    public static bool Enabled { get; set; } = true;
     static bool _probe;
 
     /// <summary>libetc's <c>VSync</c> in each program (docs/RECOMPILATION.md). Each is a

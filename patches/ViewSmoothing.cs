@@ -58,6 +58,9 @@ public static class ViewSmoothing
 
     static bool Active => _enabled && FramePacing.Enabled;
 
+    /// <summary>The switch, live (Settings ▸ Testing).</summary>
+    public static bool Enabled { get => _enabled; set => _enabled = value; }
+
     public static void Configure(string? mode, string? probe)
     {
         _enabled = mode?.Trim() is not ("0" or "off");

@@ -49,6 +49,9 @@ public static class ModelSmoothing
     static uint _cursorBefore;
     static ulong _lastHash;
 
+    /// <summary>The switch, live (Settings ▸ Testing).</summary>
+    public static bool Enabled { get => _enabled; set => _enabled = value; }
+
     public static void Configure(string? smooth, string? models, string? probe)
     {
         _enabled = smooth?.Trim() is not ("0" or "off") && models?.Trim() is not ("0" or "off");
