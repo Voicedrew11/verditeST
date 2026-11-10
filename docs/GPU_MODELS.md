@@ -97,8 +97,9 @@ differences**: 157,123 FT3s, 22,566 FT4s and 2,377 GT4s, with 16,203 near faces
 stepped over. Found on the way, by runs that differed: the quads' second half (a
 one-half test drifted the packets out of step), and the plain mean (the fogged
 writers' corner-0 rules left 7% of GT4s' fourth corners a step off). The GT3's
-plain mean is read, but that run drew no mixed GT3; an earlier run with the
-corner-0 rule matched 192,363 of 192,365, the 2 off by a step. Under the flicker (`0x8017BE8C & 6`) each fogged colour is then rewritten as the
+plain mean, read first, is checked by a later tour (2026-11-10, the run of "What each
+caller passes"): **38,784 mixed GT3s, 3,777 near ones stepped over, 0 differences**
+(an earlier run with the corner-0 rule left 2 of 192,365 a step off). Under the flicker (`0x8017BE8C & 6`) each fogged colour is then rewritten as the
 map's is ("The flicker's colour" in `GPU_RENDERER.md`): checked over the tour, 0
 differences.
 
