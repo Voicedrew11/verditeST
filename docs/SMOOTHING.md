@@ -97,8 +97,15 @@ calls for about 0.75 s with nothing to draw. Carrying the arm's swing waits for 
 held weapon in a measured run: equipping one through the menu, or a save that holds
 one (`ST_AUTOSTART=load` needs the acceptance test's way through the card screen).
 
+## The HUD's gauges
+
+Nothing to carry: dropping HP from 752 to 300 by poke changed one byte of the HUD's
+panel records (`0x8007F3F4`, 0x14 bytes each: record 15's `+2`, `0xD0` to `0x90`) in
+the first 50 ms sample, and nothing more over the next two seconds. The gauge steps
+once on the tick, as on the console; there is no eased animation to carry.
+
 ## Not carried yet
 
-The arm, the HUD's gauges, sprite cels (held
+The arm, sprite cels (held
 to the tick by `patches/DrawStageTick.cs`, not carried), and the loops that draw
 their own frames (the menu, which has no world behind it).

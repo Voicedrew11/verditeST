@@ -27,8 +27,9 @@ Verdite1's picture is left to port; the rest is the user's eye.
 
 Started 2026-11-10: the camera and the models' positions and angles are carried
 (`docs/SMOOTHING.md`). The poses blend between keys,
-so the carried clip time smooths them. Next: the HUD's gauges; the arm
-needs a held weapon in a measured run (a new game holds none). The cell
+so the carried clip time smooths them. The HUD's gauges step
+once, with nothing to carry. Left: the arm, which needs a held weapon in a measured run
+(a new game holds none), and a creature followed on purpose. The cell
 cull trails the carried eye on about 1% of walking frames (`docs/SMOOTHING.md`).
 
 ## Phase 5: what is left
