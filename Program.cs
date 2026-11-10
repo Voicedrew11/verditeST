@@ -96,6 +96,7 @@ St.MapCoverage.Install(Verdite.Core.Game.Env("MAPCOVERAGE"));
 St.SceneCensus.Install(Verdite.Core.Game.Env("SCENE_CENSUS"));
 St.MapReference.Install(Verdite.Core.Game.Env("MAP_REFERENCE"));
 St.ModelReference.Install(Verdite.Core.Game.Env("MAP_REFERENCE"));
+St.DrawTiming.Install(Verdite.Core.Game.Env("DRAW_TIMING"));
 St.WordWatch.Install(Verdite.Core.Game.Env("WORDWATCH"));
 
 // The draw path's routines in C# (patches/Draw/): ST_LITERAL=1|0|verify, or one

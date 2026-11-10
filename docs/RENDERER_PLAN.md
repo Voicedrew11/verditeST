@@ -77,7 +77,8 @@ turned into model space, the colour matrix a blend of two lighting records.
    the area modules' own drawing, `VS.EXE`, a held weapon. Listed as open, not
    covered.
 3. A reference performance figure with the GPU path off, so a zero with it on
-   cannot mean a probe failed to attach.
+   cannot mean a probe failed to attach. Measured 2026-11-10 (`docs/GPU_COST.md`):
+   under 1.4 ms a frame at the 95th percentile in every toured map.
 
 **Gate**: every known emitter has an owner and a verification route.
 

@@ -17,6 +17,7 @@ Most on/off switches and `ST_FPS` are also on `Settings ▸ Testing`, kept in
 | `ST_MENUWORLD_PROBE` | off | `1`: a line a second while the menu is up: passes, packet bytes, game-memory bytes put back |
 | `ST_SCENE_CENSUS` | off | `1`: every five seconds, a frame's packets by the domain that wrote them ("The scene census" in `docs/GPU_RENDERER.md`) |
 | `ST_MAP_REFERENCE` | off | `1`: the map's quads worked out in plain C# before `MapQuads` runs and compared with its packets, every five seconds ("The map reference" in `docs/GPU_RENDERER.md`) |
+| `ST_DRAW_TIMING` | off | `1`: stage 14's time to its swap, per map, every five seconds: mean, p95, worst (`docs/GPU_COST.md`) |
 | `ST_SETUP` | when due | `1`: show the first-run setup at boot regardless; `0`: never on its own ("First-run setup" in `docs/DEVELOPMENT.md`) |
 | `ST_SHELL` | off | `1` or a port: the command channel, see "Driving the game without a person" in `docs/DEVELOPMENT.md` |
 | `ST_PACING` | on | `0`: frame pacing off; the game keeps its own pace, which `VBlankPacing` holds to 20 |

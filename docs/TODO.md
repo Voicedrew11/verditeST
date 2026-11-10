@@ -54,7 +54,8 @@ draw nothing are all off the screen. The models' light is read
 (`docs/GPU_MODELS.md`, inspection only). The models' unfogged and fogged face writers (eight) match a plain-C# reference word
 for word, the fogged ones' IR0 rules read. Over the tour, 0 differences in 11 maps.
 The flicker's colour is modelled and checked, and all twelve model writers match
-over the tour. The blend's modes are read and counted (`docs/GPU_MODELS.md`). Next: what sets a
+over the tour. The blend's modes are read and counted (`docs/GPU_MODELS.md`). The baseline cost is
+measured (`docs/GPU_COST.md`, under 1.4 ms a frame at p95). Next: what sets a
 model's blend flags and weight, the near divisions' own arithmetic; the census and call
 order in the contexts not reached (held models, text, tints, the flicker).
 
