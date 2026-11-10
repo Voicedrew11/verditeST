@@ -100,8 +100,8 @@ The gate's test passes (`scripts/acceptance.py`, three runs, 2026-11-09). Still 
 - **Arrival points**: 12 of 36 maps hold (2026-11-10, `patches/Arrivals.cs`); in the
   rest the decoded door points kill the player ("Arrival points" in
   `docs/GAME_INTERNALS.md`). Why some doors' points are wrong is the next question.
-- After the in-game menu load, `call` and `warp` stop running (no vblank from the
-  game's own `VSync`). Find the loop it sits in.
+- ~~After the in-game menu load, `call` and `warp` stop running.~~ No longer
+  reproduces (2026-11-10, `docs/DEVELOPMENT.md`).
 - `ST_AUTOSTART=load` takes the first save the card screen offers; picking a slot is
   not done.
 - A main-loop marker for the beacon (Verdite3's `loop`). Phase 4's survey has the

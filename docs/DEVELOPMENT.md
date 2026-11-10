@@ -25,7 +25,7 @@ The save step enters the game's own save screen through `call`, because the in-w
 trigger is not found yet (`docs/GAME_INTERNALS.md`). Area changes use `warp`, not a
 door. The area change comes after the saves because of the death on arrival
 ("Changing areas" in `docs/GAME_INTERNALS.md`), and in the second process because
-`call` stops running after the in-game menu load (below).
+`call` stopped running after the in-game menu load once; it no longer does (below).
 
 ## What is still open
 
@@ -45,9 +45,9 @@ door. The area change comes after the saves because of the death on arrival
 - A load lands up to `0x2630` in height (Y, not Z as written before) from the
   position read just before saving. The menu load and the title load differ by that
   much. Not explained; the test compares X and Z only, within `0x800`.
-- After the in-game menu load, queued calls (and so `warp`) stop running: they wait for
-  a vblank from the game's own `VSync`, so the game is probably sitting in a loop
-  without one. Not read.
+- ~~After the in-game menu load, queued calls (and so `warp`) stop running.~~ Does not
+  reproduce on 2026-11-10: after the acceptance test's save and menu load, a queued
+  `call 80057B10` returned within seconds and frames kept advancing.
 - By eye, not checked by anything here: the picture, the movies, the menus, the save
   screens, whether the audio sounds right.
 
