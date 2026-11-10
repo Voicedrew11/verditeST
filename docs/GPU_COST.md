@@ -39,9 +39,16 @@ first drawn frame of each boot of the tour (maps 0, 21, 32, 0, 44 in that run): 
 to 620 ms, of which 594 to 618 ms compiling. The smaller hitches on reaching a new
 area within a boot (8 to 82 ms) are compiling too, each to within a millisecond;
 every later window's worst frame compiled nothing (0.0 ms). So the drawing has no
-stall of its own, and a GPU path will not remove it. What would: compiling ahead
-(ReadyToRun for the generated assembly) or warming the draw path at boot. Not tried;
-it changes the build, so it belongs to the packaging work, measured the same way.
+stall of its own, and a GPU path will not remove it. **Compiling ahead removes it** (tried 2026-11-10, a copy outside the repository):
+`dotnet publish ShadowTowerRecomp.csproj -c Release -r linux-x64 --self-contained
+false -p:PublishReadyToRun=true` takes about a minute and a 41 MB `ShadowTower.dll`.
+Over `scripts/session.py` the first drawn frame took **5.1 ms (3.8 ms compiling)**
+against 607.6 ms (604.9) for the normal build, and the next window's worst 1.2 ms
+against 82.7 ms; every later window the same. The run played the same (the same HP
+and position at each step), hooks attach, and `ST_LITERAL=verify` read 54 routines
+at 0 mismatches. Not yet made the build's default: it belongs to packaging, and
+`scripts/acceptance.py` runs `bin/Release/net10.0/ShadowTower.dll`, which a publish does
+not replace.
 
 **Before**: timed to the end of stage 14 instead, every frame read 6.94 ms, the
 pacing's wait in the swap. A GPU figure must be taken the same way, to the swap.
