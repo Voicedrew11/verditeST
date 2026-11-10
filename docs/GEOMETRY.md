@@ -137,9 +137,11 @@ The map writers each have **two packet paths**, kept in `MapQuadsPackets.cs` and
 the GT4 or GT3 at the cursor; the near one (`NearQuad` from `0x8001DF7C`,
 `NearTriangle` from `0x8001D60C`) puts the corners' colours on the stack with the
 screen's 320 by 240 and, when `0x8017BE8C & 6`, calls through `FP` once a corner.
-It is probably the near-polygon clip or subdivision; it is not read, and **whether the
-session reaches it is not measured**, so its 0 mismatches may be vacuous. A counter
-on it, and a scene with walls close to the eye, are next.
+It is probably the near-polygon clip or subdivision; it is not read. **Both paths run
+in the session**: `Literal.Taken` counts a path under `ST_LITERAL_PROBE=1`, and over
+five seconds of map 0 it read about 110,000 ordinary quads to 50,000 near ones, and
+13,000 ordinary triangles to 3,000 near ones, so their 0 mismatches are not vacuous.
+What is called through `FP` is not read.
 
 ## Open
 

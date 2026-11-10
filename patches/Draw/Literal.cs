@@ -169,6 +169,19 @@ public sealed partial class Literal
             _probeMark[r] = r.Runs;
             return $"{r.Name} {d}";
         });
-        Console.WriteLine($"[ST] literal probe (5 s): {string.Join(", ", parts)}");
+        var paths = _paths.Select(kv => $"{kv.Key} {kv.Value}").ToList();
+        _paths.Clear();
+        Console.WriteLine($"[ST] literal probe (5 s): {string.Join(", ", parts)}" +
+                          (paths.Any() ? $"; paths: {string.Join(", ", paths)}" : ""));
+        Console.Out.Flush();
+    }
+
+    static readonly Dictionary<string, long> _paths = [];
+
+    /// <summary>Counts a branch of a transcription taken in C#, for ST_LITERAL_PROBE: a
+    /// path that never runs has verified nothing.</summary>
+    public static void Taken(string path)
+    {
+        if (Probe && Verifying == 0) _paths[path] = _paths.GetValueOrDefault(path) + 1;
     }
 }

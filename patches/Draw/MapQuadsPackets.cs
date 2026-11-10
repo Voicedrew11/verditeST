@@ -14,6 +14,7 @@ public static partial class MapQuads
 {
     static void NearQuad(CpuContext c, PSMemory mem)
     {
+        Literal.Taken("map quads near");
         c.V0 = 0x00000140u;
         mem.WriteU32((c.SP + 0x14u), c.V0);
         c.V0 = 0x000000F0u;
@@ -211,6 +212,7 @@ public static partial class MapQuads
 
     static void Quad(CpuContext c, PSMemory mem)
     {
+        Literal.Taken("map quads ordinary");
         c.V0 = mem.ReadU32((c.S0 + 0x1BCu));
         mem.WriteU32((c.S0 + 0x10u), c.V1);
         c.V0 = c.V0 + 0x1u;

@@ -13,6 +13,7 @@ public static partial class MapTriangles
 {
     static void NearTriangle(CpuContext c, PSMemory mem)
     {
+        Literal.Taken("map triangles near");
         c.V0 = 0x00000140u;
         mem.WriteU32((c.SP + 0x14u), c.V0);
         c.V0 = 0x000000F0u;
@@ -181,6 +182,7 @@ public static partial class MapTriangles
 
     static void Triangle(CpuContext c, PSMemory mem)
     {
+        Literal.Taken("map triangles ordinary");
         c.V0 = mem.ReadU32((c.S1 + 0x1BCu));
         mem.WriteU32((c.S1 + 0x10u), c.V1);
         c.V0 = c.V0 + 0x1u;
