@@ -7,12 +7,12 @@ using static St.Mips;
 namespace St;
 
 /// <summary>
-/// <c>func_80021654</c>: an FT4S over the scene, now and then (a tint or flash, probably). <c>ST_OVERLAY21654</c>.
+/// <c>func_80021654</c>: the area load's fade: while the loader (0x801B5920) runs, a full-screen FT4S whose shade follows the vblanks since 0x801B5938, over 0x78 of them. <c>ST_LOADFADE</c>.
 /// </summary>
-public static class Overlay21654
+public static class LoadFade
 {
-    public static readonly Literal R = new(typeof(Overlay21654), "overlay 21654", "OVERLAY21654", 0x80021654, Run,
-        "an FT4S over the scene, now and then (a tint or flash, probably).");
+    public static readonly Literal R = new(typeof(LoadFade), "load fade", "LOADFADE", 0x80021654, Run,
+        "the area load's fade: while the loader (0x801B5920) runs, a full-screen FT4S whose shade follows the vblanks since 0x801B5938, over 0x78 of them.");
 
     static void Replace(Action<CpuContext, IMemory> orig, CpuContext c, IMemory m) => R.Replace(orig, c, m);
 

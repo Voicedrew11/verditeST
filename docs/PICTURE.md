@@ -34,7 +34,7 @@ The probes hook every program's `DrawOTag` and `PutDrawEnv` (the six columns of
 **The misses by writer** (`ST_MAPCOVERAGE=1`, `MapCoverage.cs`, the same session):
 every miss is a 2D packet. The HUD's panels (`func_80026964`'s `HudQuad`, `HudFill`
 and its own F4: four polygons a frame, about 2,300 vertices a second) and the
-occasional full-screen FT4S of `func_80021654` are written without the GTE, so the
+full-screen FT4S of the load fade (`func_80021654`) are written without the GTE, so the
 map has nothing to find and they draw as on the console, which is right for them.
 The 3D writers: the scene (`func_80020A80`) 92,000 to 119,000 vertices a second at
 **99.98%**, at most 19 a second missed; the models (`func_800241D0`) 19,000 to 52,000

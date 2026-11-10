@@ -36,7 +36,7 @@ Map 0's start, standing and turning, per call:
 |---|---|---|---|
 | `0x80026B30` | `func_800176A8` | none | **the camera**: the eye's position (16 bytes, stage 10's first buffer) to `0x8017BE58`, its angles (the second) to `0x8017BE68`, `RotMatrix` into `0x8017BD78`; then `func_80049CD4` and `func_800498CC` |
 | `0x80026B74` | `func_800174C4` | removes the last frame's | **frame head**: clears the ordering table |
-| `0x80026D14` | `func_80021654` | FT4S, now and then | |
+| `0x80026D14` | `func_80021654` | FT4S, now and then | the area load's fade |
 | `0x80026D2C` | `func_80020A80` | GT4 120-200, GT3 11-22, FT4 1-30 | **the scene** (below) |
 | `0x80026D4C` | `func_800241D0` | FT4 26-76, FT3, GT3, GT4, and their S forms | **the models** (below) |
 | `0x80026D54` | `func_800246E4` | FT3 5, FT4 2.5, in one window | an effect on a timer kept in vblanks |
@@ -160,9 +160,9 @@ The tour over the 12 areas the fixed warp reaches is below the table.
 | `func_80020164` | a scene step between the scene's own quads and the map's; wrote no packet in map 0 | `SceneStep20164`, `ST_SCENESTEP20164` | 0 in 2,241 |
 | `func_80020588` | a scene step before the map's triangles; wrote no packet in map 0 | `SceneStep20588`, `ST_SCENESTEP20588` | 0 in 2,243 |
 | `func_80020A80` | the scene: the light's flicker, the visible-cell list, the map's preparation, then its quads and triangles and the scene's own | `Scene`, `ST_SCENE` | 0 in 1,131 |
-| `func_80021654` | an FT4S over the scene, now and then (a tint or flash, probably) | `Overlay21654`, `ST_OVERLAY21654` | 0 in 1,117 |
-| `func_8002181C` | a draw-stage call; calls func_80021518 with 320 by 240; not read | `Draw2181C`, `ST_DRAW2181C` | 0 in 1,117 |
-| `func_800218D8` | a draw-stage call; calls func_80021518 with 320 by 240; not read | `Draw218D8`, `ST_DRAW218D8` | 0 in 1,117 |
+| `func_80021654` | the area load's fade: while the loader (0x801B5920) runs, a full-screen FT4S whose shade follows the vblanks since 0x801B5938, over 0x78 of them | `LoadFade`, `ST_LOADFADE` | 0 in 1,117 |
+| `func_8002181C` | a full-screen FT4 of 320 by 240 (func_80021518) in the colour at 0x8017BD6A, 6E, 72 and the blend at 0x8017BD68, for one frame when the byte at 0x8017BD66 is set, which it clears | `ScreenTintA`, `ST_SCREENTINTA` | 0 in 1,117 |
+| `func_800218D8` | the second full-screen tint, from the bytes after ScreenTintA's (flag 0x8017BD67, colour 0x8017BD6C, 70, 74, blend 0x8017BD69) | `ScreenTintB`, `ST_SCREENTINTB` | 0 in 1,117 |
 | `func_80021AC4` | a model drawn with func_80022010 from the draw stage, called twice (0 and 1): a hand each, probably; drew nothing in map 0 | `HeldModel`, `ST_HELDMODEL` | 0 in 2,236 |
 | `func_80022010` | every model polygon: FT3 to GT4, semi-transparent or not; called by func_80022678 and func_80021AC4 | `ModelPolygons`, `ST_MODELPOLYGONS` | 0 in 1,718 |
 | `func_80022678` | one model: its matrix, light and pose, then func_80022010 for its polygons | `ModelDraw`, `ST_MODELDRAW` | 0 in 1,030 |
