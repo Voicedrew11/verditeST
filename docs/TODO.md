@@ -13,8 +13,9 @@ open now.
 ## Phase 7: what is left
 
 Started 2026-11-10: no dither, 24-bit colour, perspective and sub-pixel are on
-(`docs/PICTURE.md`), the address map hitting 98.5% in map 0. Next: the misses by
-writer, other areas; the Z-buffer is on from the map's depths, packet records next.
+(`docs/PICTURE.md`), the address map hitting 98.5% in map 0; the Z-buffer is on from
+the map's depths. The misses are all the HUD's 2D packets (3D: 99.98 to 100%), so the
+packet records are not needed there. Next: other areas, semi-transparency order.
 
 ## Phase 6: what is left
 

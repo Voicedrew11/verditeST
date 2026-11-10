@@ -20,7 +20,7 @@ public static class GeometryProbe
 
     // The draw stage's callees and the scene's (func_80020A80), with the return address
     // each call site leaves in RA (scripts/callsites.py). Indented labels are the scene's.
-    static readonly (string Label, uint Callee, uint Return)[] Sites =
+    internal static readonly (string Label, uint Callee, uint Return)[] Sites =
     [
         ("176A8", 0x800176A8, 0x80026B30),
         ("16A14", 0x80016A14, 0x80026B38),

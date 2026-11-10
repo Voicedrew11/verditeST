@@ -31,8 +31,18 @@ The probes hook every program's `DrawOTag` and `PutDrawEnv` (the six columns of
 - With all four on, the 54 draw routines the session reaches verify at 0 mismatches,
   and the acceptance test passes.
 
-Which routines the 1.5% of misses come from is not measured (Verdite1's `MapCoverage`
-does it by writer); nor is any other area than map 0.
+**The misses by writer** (`ST_MAPCOVERAGE=1`, `MapCoverage.cs`, the same session):
+every miss is a 2D packet. The HUD's panels (`func_80026964`'s `HudQuad`, `HudFill`
+and its own F4: four polygons a frame, about 2,300 vertices a second) and the
+occasional full-screen FT4S of `func_80021654` are written without the GTE, so the
+map has nothing to find and they draw as on the console, which is right for them.
+The 3D writers: the scene (`func_80020A80`) 92,000 to 119,000 vertices a second at
+**99.98%**, at most 19 a second missed; the models (`func_800241D0`) 19,000 to 52,000
+at **100.0%**. Other areas than map 0 are not measured.
+
+The scene's own calls own no packets in this probe: they keep the cursor in the
+scratchpad block (`docs/GEOMETRY.md`) and the scene writes it back once, so its row
+holds all of them.
 
 - **Z-buffer:** 55,000 to 87,000 triangles a second depth-tested, 97.9 to 98.7% of
   those submitted; about 1,150 a second keep painter's order. No depth clears. Play
@@ -40,8 +50,8 @@ does it by writer); nor is any other area than map 0.
 
 Verdite1's Z-buffer takes its depths first from its C# writers' packet records
 (`PacketDepth`); this port's writers keep none yet, so the address map's depths are
-the only source. Recording them in `MapQuads`, `MapTriangles` and `ModelPolygons` is
-next if the misses show.
+the only source. With the 3D writers at 99.98 to 100% (above) the packet records
+would add nothing in map 0; the triangles kept in painter's order are the HUD's.
 
 ## Not ported yet
 
