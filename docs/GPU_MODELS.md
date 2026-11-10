@@ -121,7 +121,7 @@ differences.
   Counted over the tour (`ST_MAP_REFERENCE=1`): almost every call takes the plain
   record (weight 0, or a weight between); `& 0x08` in maps 0, 23 and 41 (1,442
   calls); `& 0x10` and `& 0x20` never. The three fixed records lie together at
-  `0x8018CA38`, 0x6C apart. What sets `a1` and w per model is not read.
+  `0x8018CA38`, 0x6C apart. Who sets `a1` and w: "What each caller passes", below.
 - **The light matrix** (`LLM`, control 8 to 12), set in `ModelDraw`'s runs
   (`patches/Draw/ModelDrawRuns.cs`, before `0x800228B4`): the chosen record's first
   light matrix (`+0x394` points at it) loaded as the GTE's rotation, and the three
@@ -135,9 +135,38 @@ differences.
 - **The face colour** (`RGBC`) and the normals: per face, from the model's data;
   not read.
 
+## What each caller passes
+
+`ModelDraw` takes the weight and the flags on the stack (its caller's `sp + 0x24`
+and `+ 0x2C`) and hands them to `ModelStep17D28` as `a0` and `a1 & 0xFF`, the same
+flags then picking the step: `0x80` fogged, `0x40` mixed (with the near path), neither
+unfogged. It clears `0x40` itself when the packet buffer is short of room. Ten call
+sites in four routines; read from the disassembly, then counted over the tour
+(`ST_MAP_REFERENCE=1`, "model draw from" lines, all 12 maps, 0 differences):
+
+| caller | flags | weight | over the tour |
+|---|---|---|---|
+| the model list `func_800241D0` (entities) | the entity's `+0x1E`: its low six bits, plus `0x40` or `0x80` by distance (below) | `4096 - ` the entity's `+0x34`, or `+0x36` when its `+0x1C & 0x300000` | `0x80` 16,771, `0x8D` 1,481 (maps 0, 24, 41): the only `& 0x08` |
+| the effects `func_800246E4` (two sites) | the first site its `+3`; the second's source not read | its `+0x16` | `0x00`, `0x04`, `0x40`, `0x80`, all weight 0, about 73,000 |
+| the second list `func_800251C8` | its `+0x24` byte | 0 | `0x80`, 812 (maps 24, 32) |
+| the cels `func_800255F0` (three sites) | its byte at `+0` | its `+0xB`, or 0 | `0x0F` in map 24, 426, weight 0, between and 4096 |
+
+**The entities' fog mode is a distance.** The list squares two radii in the scene
+block, `0x8017BE94` (near) and `0x8017BE90` (far), and compares the entity's `+0x3C`
+(a squared distance) with them: within the near radius `0x40` (mixed: fogged, and
+near faces split); between the two neither (lit, no fog); past the far one `0x80`
+(fogged). The bits `0x20`/`0x10`/`0x08` (the light blend) and `4`, `2`, `1` come from
+the entity's own `+0x1E`. Only the cels' `0x0F` and the entities' `0x8D` carry a
+blend bit over the tour, so the blend matters for a few entities and map 24's cels.
+
+For the backend (`docs/GPU_CONTRACT.md`): the fog mode is a per-instance choice made
+each frame from distance, and the blend a per-instance LCM/BK; both are inputs the
+port reads at the call, not state to model.
+
 ## Not read yet
 
 `ModelLight` (`func_80033DB8`) is not light: it fetches a pointer from a table at
 `0x80165090 + 0x834C + id * 4` and keeps it only if `func_80015258` accepts it (the
-name predates the reading). What sets a model's blend flags and weight, and the held
-models' path (`HeldModel`, `func_80021AC4`, which calls the same steps) are next.
+name predates the reading). The held models' path (`HeldModel`, `func_80021AC4`)
+calls `ModelStep17D28` with weight 0 and no flags: the scene's record, always. What
+the low flag bits `4`, `2`, `1` do is next.

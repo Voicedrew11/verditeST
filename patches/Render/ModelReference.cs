@@ -59,6 +59,8 @@ public static class ModelReference
         }
         if (SymbolRegistry.Resolve(MainLoop.Overlay, null, 0x80017D28) is { } blend)
             HookManager.AddPre(_self, blend, Hook(nameof(BlendPre)));
+        if (SymbolRegistry.Resolve(MainLoop.Overlay, null, 0x80022678) is { } draw)
+            HookManager.AddPre(_self, draw, Hook(nameof(DrawPre)));
         HookManager.Commit();
         bool on = targets.All(HookAttach.Installed);
         Console.WriteLine($"[ST] model reference: {(on ? "on" : "not attached")}, {ModelFaces.All.Length} writers");
@@ -85,6 +87,16 @@ public static class ModelReference
         uint w = (uint)(short)c.A0;
         string which = (c.A1 & 0x20) != 0 ? "0x20" : (c.A1 & 0x10) != 0 ? "0x10" : (c.A1 & 8) != 0 ? "0x08" : "none";
         MapReference.Count($"light blend {which}: {(w == 0x1000 ? "weight 4096" : w == 0 ? "weight 0" : "weight between")}");
+    }
+
+    // ModelDraw's caller (by return address) and the weight and flags it passes on the
+    // stack (+0x24, +0x2C), which reach ModelStep17D28 as a0 and a1 & 0xFF.
+    public static void DrawPre(CpuContext c, IMemory m)
+    {
+        short w = (short)m.ReadU32(c.SP + 0x24);
+        uint flags = m.ReadU32(c.SP + 0x2C) & 0xFF;
+        string weight = w == 0x1000 ? "4096" : w == 0 ? "0" : w < 0 ? "negative" : "between";
+        MapReference.Count($"model draw from {c.RA:X8}: flags 0x{flags:X2}, weight {weight}");
     }
 
     // A near face's packets: from the cursor at the division's call to the cursor it returns.

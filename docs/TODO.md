@@ -57,8 +57,10 @@ The flicker's colour is modelled and checked, and all twelve model writers match
 over the tour. The blend's modes are read and counted (`docs/GPU_MODELS.md`). The baseline cost is
 measured (`docs/GPU_COST.md`, under 1.4 ms a frame at p95). Step 1 is read
 (`docs/GPU_CONTRACT.md`): a linear 4096 fog curve and a post-cue recolour are the two
-runtime additions this game needs. Next: what sets a
-model's blend flags and weight, the near divisions' own arithmetic; the census and call
+runtime additions this game needs. What sets each
+model's blend and fog mode is read and counted (`docs/GPU_MODELS.md`, "What each
+caller passes": the entities' fog mode by distance). Next: the low flag bits, the
+near divisions' own arithmetic; the census and call
 order in the contexts not reached (held models, text, tints, the flicker).
 
 ## Phase 10: what is left
