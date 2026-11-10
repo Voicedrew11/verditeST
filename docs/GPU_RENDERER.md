@@ -80,9 +80,15 @@ quarter turn, rebuilt every frame: standing in map 0 at heading 0, the first rea
 `[0 0 -1; 0 1 0; 1 0 0]` in 4.12. The vertices are 8-byte `SVECTOR`s in the mesh's
 own space, three to an `RTPT`.
 
-**The fog is linear in depth, computed on the CPU.** For each corner the pass writes
-`IR0 = (SZ - near) * 4096 / (far - near)` over the word at `+6`, truncating, and 0
-when negative (`DPCS` saturates the top). It is not the GTE's `DQA`/`DQB` curve.
+**The fog is linear in depth, computed on the CPU.** For each corner `ScenePrepare4`
+writes `IR0 = (SZ - near) * 4096 / (far - near)` over the word at `+6`, truncating,
+with near and far from the scratchpad's `+0x64` and `+0x68` (equal to the record's,
+below). It is not the GTE's `DQA`/`DQB` curve. Two quirks, found by the map
+reference: the result is kept in 16 bits and read back signed, then 0 when negative,
+so a corner far enough past the far depth to pass 32767 wraps to no fog; and a mesh's
+vertices go through `RTPT` three at a time, the last one or two through `RTPS` singly,
+and only those are held under 4066 (to 4065). Past 4096 `DPCS` carries the colour
+beyond the far colour, clamped per channel.
 
 **The lighting record**, pointed at by the scratchpad's `+0x3C4` (`0x8018C960` in map
 0, from a table indexed at `0x80165090 + 0x18000 + 0x6E08`), read standing in map 0:
@@ -90,7 +96,7 @@ when negative (`DPCS` saturates the top). It is not the GTE's `DQA`/`DQB` curve.
 | offset | what | map 0 |
 |---|---|---|
 | `+0x00` | four light matrices, 0x14 bytes each, one per quarter turn | |
-| `+0x50` | the colour matrix (`LCM`, control 16 to 20) | `0x800 0x800 0x900` ... |
+| `+0x50` | the colour matrix (`LCM`, control 16 to 20); the fifth word's top half is not part of it | `0x800 0x800 0x900` ... |
 | `+0x64..+0x66` | the back colour, a byte each, `<< 4` (control 13 to 15) | `80 80 80` |
 | `+0x68` | s16, the fog's near depth | `0x4000` |
 | `+0x6A` | s16, the fog's far depth | `0x5000` |
@@ -155,6 +161,35 @@ death), a frame:
 Not seen in map 0: the near path (`map near`), the held models and the text. Every
 packet of every frame in the session has an owner: Step 0.1's gate for the contexts
 this session reaches.
+
+## The map reference
+
+`ST_MAP_REFERENCE=1` (`patches/Render/MapReference.cs`, the arithmetic in
+`MapLight.cs`): Step 2's reference for the map's quads. Before `MapQuads` runs, every
+visible cell's quads are worked out in plain C# from the records alone, without the
+GTE: the facing (`NCLIP` of corners 0-1-2 and 3-1-2), the drop by depth, the near
+path's choice, the order key, each corner's fog factor from its depth, the face's
+`NCCS` colour and each corner's `DPCS` colour, and every word of the GT4. After it,
+the packets it wrote are compared word by word, with each tag's link and each key's
+head in the table. A near face's packets are written by libgte's split
+(`func_80076884`); the reference steps over them by the cursor that call moves, and
+does not model them.
+
+Measured 2026-11-10 over `scripts/session.py` (map 0), 4,974 frames: **0
+differences** in any count. 892,747 bulk quads matched whole, 3,570,988 corner fog
+factors, the back colour and colour matrix against the record every frame, every tag
+and 182,969 heads; 367,547 near faces stepped over, each at the cursor. A negative control (one bit off in the reference's red)
+failed at the first quad. Along the way:
+
+- the fog's two quirks above;
+- the near path runs every frame in map 0, about 74 faces a frame (near the
+  player, through `func_80076884`); its packets count as map bulk in the census, whose
+  "map near" is the scene's other routines, `SceneStep1E5A0`/`1EEAC`;
+- a split that clips a face away entirely writes nothing and leaves the key's head.
+
+Not yet covered: the flicker's per-corner calls when `0x8017BE8C & 6` (colours
+skipped and counted then; not reached in map 0), the triangles (`MapTriangles`, the
+same shape), the near split's own arithmetic, and the models.
 
 ## What verify compares
 

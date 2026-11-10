@@ -46,9 +46,11 @@ it is a recompilation like this one). Read: the map's cells, meshes, faces,
 projection, lighting record and linear fog (`docs/GPU_RENDERER.md`). The scene
 census (`ST_SCENE_CENSUS=1`) gives every packet of the session an owner, 0
 unattributed. Verify compares RAM, scratchpad, registers, GTE and the calls each
-routine makes: 0 mismatches over the session. Next: Step 2's reference records
-(transforms, light, fog, table keys at the original operations), and the census
-and call order in the contexts not reached (near path, held models, text, tints).
+routine makes: 0 mismatches over the session. The map reference
+(`ST_MAP_REFERENCE=1`) works out every bulk quad in plain C#, light and fog
+included, and matches the game's packets word for word. Next: the same for the
+triangles and the near split, then the models' light inputs; the census and call
+order in the contexts not reached (held models, text, tints, the flicker).
 
 ## Phase 10: what is left
 
