@@ -1793,6 +1793,7 @@ internal static class GlShaders
             int curve = int(cue.z + 0.5);
             if (uFogOn == 0 || curve == 0) return 1.0;
             if (curve == 5) return clamp(1.0 - linearDepthCue(z, cue.xy) / 4096.0, 0.0, 1.0);
+            if (curve == 6 || curve == 7) return clamp(1.0 - linearFogFactor(z, cue.xy, curve == 6) / 4096.0, 0.0, 1.0);
             float q = min(uCueH * 65536.0 / max(z, 1.0), 131071.0);
             float ir0 = clamp((cue.x * q + cue.y) / 4096.0, 0.0, 4096.0);
             float w = curve == 1 ? max(ir0 - 800.0, 0.0) * 2.0
@@ -1880,7 +1881,9 @@ internal static class GlShaders
             if (uFogOn != 0 && curve != 0 && uWorldPerPixel != 0) {
                 float q = min(uCueH * 65536.0 / max(z, 1.0), 131071.0);
                 vLit = color;
-                vFog = curve == 5 ? linearDepthCue(z, cue.xy) : (cue.x * q + cue.y) / 4096.0;
+                vFog = curve == 5 ? linearDepthCue(z, cue.xy)
+                     : curve == 6 || curve == 7 ? linearFogFactor(z, cue.xy, curve == 6)
+                     : (cue.x * q + cue.y) / 4096.0;
                 vCue = cue.xy;
                 vLight = uint(curve) << 24;
             } else {
@@ -1918,7 +1921,7 @@ internal static class GlShaders
                 clutBase = ivec2((inClut & 0x3f) * 16, (inClut >> 6) & 0x1ff);
             }
         }
-        """.Replace("//@model", ModelGlsl).Replace("//@linearDepthCue", LinearDepthCue.Glsl);
+        """.Replace("//@model", ModelGlsl).Replace("//@linearDepthCue", LinearDepthCue.Glsl + LinearFogFactor.Glsl);
 
     public const string PrimVs = """
         #version 330 core
@@ -2502,6 +2505,8 @@ internal static class GlShaders
         float fogRaw() {
             gFogAtDepth = false;
             if (((vLight >> 24) & 7u) == 5u) return linearDepthCue(fogDepth() * 65536.0, vCue);
+            uint fc = (vLight >> 24) & 7u;
+            if (fc == 6u || fc == 7u) return linearFogFactor(fogDepth() * 65536.0, vCue, fc == 6u);
             if (uCueFromZ <= 0.0 || vDepth <= 0.0) return vFog;
             gFogAtDepth = uRadialFog != 0;
             float q = min(uCueFromZ / max(fogDepth(), 1.0 / 65536.0), 131071.0);
@@ -2511,7 +2516,7 @@ internal static class GlShaders
         float cueWeight() {
             uint curve = (vLight >> 24) & 7u;
             float fog = gNbOn ? gNbW : fogRaw();
-            bool level = gCueScale < 1.0 && curve != 0u && curve != 5u && !gFogAtDepth;
+            bool level = gCueScale < 1.0 && curve != 0u && curve < 5u && !gFogAtDepth;
             float raw = level ? levelCue(fog, curve) : fog;
             float ir0 = clamp(raw, 0.0, 4096.0);
             float w = gNbOn ? fog
@@ -2519,7 +2524,7 @@ internal static class GlShaders
                  : curve == 2u ? (ir0 < 2800.0 ? ir0 : 3.0 * ir0 - 5600.0)
                  : curve == 3u ? ir0 * 0.5
                  : curve == 4u ? (level ? (ir0 < 2800.0 ? ir0 : 3.0 * ir0 - 5600.0) : fog)
-                 : curve == 5u ? fog
+                 : curve >= 5u ? fog
                  : 0.0;
             // 0074. The authored curve over the game's.
             if (uAtmosOn != 0 && uAtmosShape != vec2(1.0) && w > 0.0)
@@ -2875,7 +2880,7 @@ internal static class GlShaders
             FragColor = vec4(quant5(c8), max(texel.a, uSetMask));
             BlendColor = texel.a >= 0.5 ? uBlend : uBlendOpaque;
         }
-        """.Replace("//@linearDepthCue", LinearDepthCue.Glsl).Replace("//@neighbourBlend", NeighbourBlend.Glsl)
+        """.Replace("//@linearDepthCue", LinearDepthCue.Glsl + LinearFogFactor.Glsl).Replace("//@neighbourBlend", NeighbourBlend.Glsl)
             .Replace("//@distanceFade", DistanceFade.Glsl);
     
     public const string FullscreenVs120 = """

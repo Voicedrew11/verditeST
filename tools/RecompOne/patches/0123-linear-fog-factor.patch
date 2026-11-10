@@ -1,0 +1,140 @@
+diff --git a/RecompOne.Runtime/Gpu/Backends/Common/GlShaders.cs b/RecompOne.Runtime/Gpu/Backends/Common/GlShaders.cs
+index 50fce8f..9124233 100644
+--- a/RecompOne.Runtime/Gpu/Backends/Common/GlShaders.cs
++++ b/RecompOne.Runtime/Gpu/Backends/Common/GlShaders.cs
+@@ -1793,6 +1793,7 @@ internal static class GlShaders
+             int curve = int(cue.z + 0.5);
+             if (uFogOn == 0 || curve == 0) return 1.0;
+             if (curve == 5) return clamp(1.0 - linearDepthCue(z, cue.xy) / 4096.0, 0.0, 1.0);
++            if (curve == 6 || curve == 7) return clamp(1.0 - linearFogFactor(z, cue.xy, curve == 6) / 4096.0, 0.0, 1.0);
+             float q = min(uCueH * 65536.0 / max(z, 1.0), 131071.0);
+             float ir0 = clamp((cue.x * q + cue.y) / 4096.0, 0.0, 4096.0);
+             float w = curve == 1 ? max(ir0 - 800.0, 0.0) * 2.0
+@@ -1880,7 +1881,9 @@ internal static class GlShaders
+             if (uFogOn != 0 && curve != 0 && uWorldPerPixel != 0) {
+                 float q = min(uCueH * 65536.0 / max(z, 1.0), 131071.0);
+                 vLit = color;
+-                vFog = curve == 5 ? linearDepthCue(z, cue.xy) : (cue.x * q + cue.y) / 4096.0;
++                vFog = curve == 5 ? linearDepthCue(z, cue.xy)
++                     : curve == 6 || curve == 7 ? linearFogFactor(z, cue.xy, curve == 6)
++                     : (cue.x * q + cue.y) / 4096.0;
+                 vCue = cue.xy;
+                 vLight = uint(curve) << 24;
+             } else {
+@@ -1918,7 +1921,7 @@ internal static class GlShaders
+                 clutBase = ivec2((inClut & 0x3f) * 16, (inClut >> 6) & 0x1ff);
+             }
+         }
+-        """.Replace("//@model", ModelGlsl).Replace("//@linearDepthCue", LinearDepthCue.Glsl);
++        """.Replace("//@model", ModelGlsl).Replace("//@linearDepthCue", LinearDepthCue.Glsl + LinearFogFactor.Glsl);
+ 
+     public const string PrimVs = """
+         #version 330 core
+@@ -2502,6 +2505,8 @@ internal static class GlShaders
+         float fogRaw() {
+             gFogAtDepth = false;
+             if (((vLight >> 24) & 7u) == 5u) return linearDepthCue(fogDepth() * 65536.0, vCue);
++            uint fc = (vLight >> 24) & 7u;
++            if (fc == 6u || fc == 7u) return linearFogFactor(fogDepth() * 65536.0, vCue, fc == 6u);
+             if (uCueFromZ <= 0.0 || vDepth <= 0.0) return vFog;
+             gFogAtDepth = uRadialFog != 0;
+             float q = min(uCueFromZ / max(fogDepth(), 1.0 / 65536.0), 131071.0);
+@@ -2511,7 +2516,7 @@ internal static class GlShaders
+         float cueWeight() {
+             uint curve = (vLight >> 24) & 7u;
+             float fog = gNbOn ? gNbW : fogRaw();
+-            bool level = gCueScale < 1.0 && curve != 0u && curve != 5u && !gFogAtDepth;
++            bool level = gCueScale < 1.0 && curve != 0u && curve < 5u && !gFogAtDepth;
+             float raw = level ? levelCue(fog, curve) : fog;
+             float ir0 = clamp(raw, 0.0, 4096.0);
+             float w = gNbOn ? fog
+@@ -2519,7 +2524,7 @@ internal static class GlShaders
+                  : curve == 2u ? (ir0 < 2800.0 ? ir0 : 3.0 * ir0 - 5600.0)
+                  : curve == 3u ? ir0 * 0.5
+                  : curve == 4u ? (level ? (ir0 < 2800.0 ? ir0 : 3.0 * ir0 - 5600.0) : fog)
+-                 : curve == 5u ? fog
++                 : curve >= 5u ? fog
+                  : 0.0;
+             // 0074. The authored curve over the game's.
+             if (uAtmosOn != 0 && uAtmosShape != vec2(1.0) && w > 0.0)
+@@ -2875,7 +2880,7 @@ internal static class GlShaders
+             FragColor = vec4(quant5(c8), max(texel.a, uSetMask));
+             BlendColor = texel.a >= 0.5 ? uBlend : uBlendOpaque;
+         }
+-        """.Replace("//@linearDepthCue", LinearDepthCue.Glsl).Replace("//@neighbourBlend", NeighbourBlend.Glsl)
++        """.Replace("//@linearDepthCue", LinearDepthCue.Glsl + LinearFogFactor.Glsl).Replace("//@neighbourBlend", NeighbourBlend.Glsl)
+             .Replace("//@distanceFade", DistanceFade.Glsl);
+     
+     public const string FullscreenVs120 = """
+diff --git a/RecompOne.Runtime/Gpu/LinearFogFactor.cs b/RecompOne.Runtime/Gpu/LinearFogFactor.cs
+new file mode 100644
+index 0000000..406a4ec
+--- /dev/null
++++ b/RecompOne.Runtime/Gpu/LinearFogFactor.cs
+@@ -0,0 +1,44 @@
++namespace RecompOne.Runtime;
++
++/// <summary>0123. A fog factor linear in depth on the CPU's own integers, 4096 at the
++/// far depth: <c>(SZ - near) * 4096 / (far - near)</c>, SZ read back as a signed
++/// short, the quotient truncated toward zero, kept in 16 bits and read back signed,
++/// then 0 when negative. Not clamped at 4096: past the far depth the colour goes past
++/// the far colour and the channel's clamp stops it, as DPCS does with an IR0 the game
++/// wrote itself. <see cref="Held"/> also holds it under 4066, for vertices a game
++/// projects one at a time and caps. A corner's cue carries near and far as its DQA and
++/// DQB. Both retained shaders compose <see cref="Glsl"/>; no game addresses or policy.</summary>
++public static class LinearFogFactor
++{
++    /// <summary>The curve numbers in <see cref="RetainedScene.Vertex.Curve"/>'s numbering:
++    /// held under 4066, and not held.</summary>
++    public const uint Held = 6, Free = 7;
++
++    public static bool Is(int curve) => curve == Held || curve == Free;
++
++    public static float Weight(float depth, float near, float far, bool held)
++    {
++        int n = (int)near, d = (int)far - n;
++        if (d == 0) return 0f;
++        int sz = (short)(int)Math.Clamp(MathF.Floor(depth), 0f, 65535f);
++        int f = (short)((sz - n) * 4096 / d);
++        if (held && f >= 4066) f = 4065;
++        return Math.Max(f, 0);
++    }
++
++    public const string Glsl = """
++        // 0123. LinearFogFactor: integers throughout, the division truncating toward
++        // zero whatever the signs (GLSL leaves a negative operand's quotient open).
++        float linearFogFactor(float depth, vec2 pair, bool held) {
++            int n = int(pair.x), d = int(pair.y) - n;
++            if (d == 0) return 0.0;
++            int sz = (int(clamp(floor(depth), 0.0, 65535.0)) << 16) >> 16;
++            int num = (sz - n) * 4096;
++            int q = abs(num) / abs(d); // int-ok: d != 0 is tested above
++            if ((num < 0) != (d < 0)) q = -q;
++            int f = (q << 16) >> 16;
++            if (held && f >= 4066) f = 4065;
++            return float(max(f, 0));
++        }
++        """;
++}
+diff --git a/RecompOne.Runtime/Gpu/RetainedScene.cs b/RecompOne.Runtime/Gpu/RetainedScene.cs
+index 30bf7ca..93a5f82 100644
+--- a/RecompOne.Runtime/Gpu/RetainedScene.cs
++++ b/RecompOne.Runtime/Gpu/RetainedScene.cs
+@@ -570,7 +570,7 @@ public static class RetainedScene
+     public static float BlackQuotient(in Vertex v)
+     {
+         int curve = (int)(v.Curve + 0.5f);
+-        if (curve == 0 || curve == LinearDepthCue.Curve || v.Dqa >= 0f) return 0f;
++        if (curve == 0 || curve == LinearDepthCue.Curve || LinearFogFactor.Is(curve) || v.Dqa >= 0f) return 0f;
+         float ir0 = curve == 1 ? 2848f : 3232f;
+         return Math.Max(0f, (ir0 * 4096f - v.Dqb) / v.Dqa);
+     }
+@@ -582,6 +582,8 @@ public static class RetainedScene
+         if (curve == 0) return 1f;
+         if (curve == LinearDepthCue.Curve)
+             return Math.Clamp(1 - LinearDepthCue.Weight(z, v.Dqa, v.Dqb) / 4096, 0, 1);
++        if (LinearFogFactor.Is(curve))
++            return Math.Clamp(1 - LinearFogFactor.Weight(z, v.Dqa, v.Dqb, curve == LinearFogFactor.Held) / 4096, 0, 1);
+         float q = Math.Min(h * 65536f / Math.Max(z, 1f), 131071f);
+         float ir0 = Math.Clamp((v.Dqa * q + v.Dqb) / 4096f, 0f, 4096f);
+         float w = curve == 1 ? Math.Max(ir0 - 800f, 0f) * 2f : ir0 < 2800f ? ir0 : 3f * ir0 - 5600f;

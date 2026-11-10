@@ -2147,6 +2147,19 @@ Four files in the directory have no entry below:
   where it used to throw. Only the two throw sites changed; the RAM, scratchpad
   and register paths are untouched. Off by default (KF1's fuzzer turns it on), so
   nothing changes for a port that does not set it. **No recompile.**
+- `0123-linear-fog-factor.patch` — a sixth and seventh fog curve for the retained
+  world shaders, `LinearFogFactor`: the factor linear in depth on the CPU's own
+  integers, `(SZ - near) * 4096 / (far - near)` with SZ read back as a short, the
+  quotient truncated toward zero, kept in 16 bits and read back signed, then 0 when
+  negative, and not clamped at 4096 (the channel's clamp stops it, as DPCS does with
+  an IR0 a game wrote itself). Curve 6 also holds it under 4066, for vertices a game
+  projects one at a time and caps; 7 does not. A corner's or instance's cue carries
+  near and far as its DQA and DQB. Composed into `WorldVs` (`cueKeep`, the per-pixel
+  `vFog`) and `PrimFs` (`fogRaw`, `cueWeight`, kept out of the level rescale as curve
+  5 is), and `RetainedScene.FogKeep`/`BlackQuotient`. Shadow Tower's map and models
+  fog this way. Only a cue with curve 6 or 7 reaches the new branches, and the level
+  test's `curve < 5` reads as `!= 5` did for curves 0 to 5, so **nothing changes for
+  a game that does not use them. No recompile.**
 - `0122-libpad-actuators.patch` — three faults in the newer pad library's vibration.
   `PadInfoAct(port, -1, term)` asks how many actuators the pad has; the runtime
   answered from `term` and said 1, where a DualShock has 2, and Shadow Tower then
