@@ -57,15 +57,40 @@ the scratchpad's `+0xC`; its offsets are from `bank + 0xC`:
 | `+0x10` | u16, the face's normal, a byte offset into the normals |
 | `+0x12..+0x18` | four u16 byte offsets into the projected corners |
 
-**The colour and the fog.** The map is lit and fogged by the GTE each frame, not
-baked:
+**The projection** (`ScenePrepare4`, `func_8001CDF8`). Per visible cell, the GTE's
+rotation is one of four matrices at `0x8017BDB8` (0x20 bytes each), picked by the
+cell's rotation, and its translation is the cell's entry in a 16-byte-a-cell table
+the caller passes in `a0` (built by `ScenePrepare3`, the pass with `MVMVA`: the cell's
+origin in view space, probably). The four matrices are the view's rotation times each
+quarter turn, rebuilt every frame: standing in map 0 at heading 0, the first read
+`[0 0 -1; 0 1 0; 1 0 0]` in 4.12. The vertices are 8-byte `SVECTOR`s in the mesh's
+own space, three to an `RTPT`.
 
-1. The cell's rotation loads the GTE's **light matrix** (control 8 to 12) from a
-   table of four 0x14-byte matrices at the scratchpad's `+0x3C4`.
-2. Per face, `NCCS` with the face's one normal and the RGB at the scratchpad's
-   `+0x44` (its code byte replaced): one lit colour for the whole face.
-3. Per corner, `DPCS` of that colour with the corner's `IR0`: the GTE's **depth cue**
-   toward the far colour. This is all that makes the GT4's corners differ.
+**The fog is linear in depth, computed on the CPU.** For each corner the pass writes
+`IR0 = (SZ - near) * 4096 / (far - near)` over the word at `+6`, truncating, and 0
+when negative (`DPCS` saturates the top). It is not the GTE's `DQA`/`DQB` curve.
+
+**The lighting record**, pointed at by the scratchpad's `+0x3C4` (`0x8018C960` in map
+0, from a table indexed at `0x80165090 + 0x18000 + 0x6E08`), read standing in map 0:
+
+| offset | what | map 0 |
+|---|---|---|
+| `+0x00` | four light matrices, 0x14 bytes each, one per quarter turn | |
+| `+0x50` | the colour matrix (`LCM`, control 16 to 20) | `0x800 0x800 0x900` ... |
+| `+0x64..+0x66` | the back colour, a byte each, `<< 4` (control 13 to 15) | `80 80 80` |
+| `+0x68` | s16, the fog's near depth | `0x4000` |
+| `+0x6A` | s16, the fog's far depth | `0x5000` |
+
+`ModelStep17D28` (`func_80017D28`) blends two such records for a model by a weight,
+so the models' light can lie between records; not read further.
+
+**The colour.** Per face, `NCCS` with the face's one normal (in the mesh's space,
+lit by the light matrix for the cell's rotation) and the RGB at the scratchpad's
+`+0x44`: one lit colour a face. Then per corner, `DPCS` of that colour with the
+corner's `IR0` toward the **far colour**, which the scene sets from the byte at
+`0x8017BE8C`: `(5, 5, 5)` (`<< 4`, so nearly black), `(6, 4, 2)` when `& 2` (the
+flickering light, which also sets `+0x44` from `rand()`), `(2, 6, 6)` when `& 4`;
+`+0x44` is `0x80` grey otherwise. The fog is all that makes a GT4's corners differ.
 
 The order key is the largest of the four `SZ` shifted right by 5, plus the bias;
 4096 or more, or under the near limit at the scratchpad's `+0x8C`, drops the face.
@@ -76,9 +101,11 @@ pointer to `0x8001DAE0` (`& 2`) or `0x8001DB20` (`& 4`), used by the packet half
 read.
 
 **For the retained map** (`RENDERER_PLAN.md`, Step 3): the source geometry is
-per mesh, placed per cell by a rotation and the cell's position. The lighting is
-one normal a face against a rotated light matrix, which fits the shared
-`GteLightMap`; the fog is the GTE's own depth cue (`DQA`/`DQB` and the far colour),
-a curve `GteLightMap` already numbers. Still to read: the vertex record and how a
-cell's position is applied (in the preparation passes), the triangles' 0x14-byte
-record, and the two flags.
+per mesh in its own space, placed per cell by a quarter turn and the cell's origin;
+the lighting is one normal a face against the record's light and colour matrices
+and back colour, which fits the shared `GteLightMap`; the fog is linear between the
+record's near and far depths toward a far colour from three fixed choices, which is
+the shape of the shared `LinearDepthCue` (Verdite3's near/far cue), with this game's
+own arithmetic (full `SZ`, truncating division, the top saturated by `DPCS`). Still
+to read: the cell origin's units (`ScenePrepare3`), the triangles' 0x14-byte record,
+the record table's index, and when the record changes within an area.

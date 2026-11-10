@@ -60,8 +60,9 @@ The world's families, as known:
 | VRAM | `TextureAnimations` (`MoveImage`/`LoadImage`), the light's flicker `0x8017BE88` |
 
 **Read 2026-11-10** ("The map's records and colours" in `docs/GPU_RENDERER.md`): the
-map's cells, meshes and quads, and its colour: `NCCS` per face with the cell's
-rotated light matrix, then the GTE's depth cue per corner. **Still unknown**: the
+map's cells, meshes and quads, the projection, the lighting record, and the colour:
+`NCCS` per face with the cell's rotated light matrix, then a linear fog in depth
+computed on the CPU toward one of three far colours. **Still unknown**: the
 vertex record and how a cell is placed; the triangles' record; the models' light
 inputs (`ModelPolygons` uses `MVMVA`/`RTPS`).
 
