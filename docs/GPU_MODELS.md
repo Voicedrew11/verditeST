@@ -28,8 +28,8 @@ reaches at most 4065 of 4096 toward the far colour.
 A writer with one normal (`NCDS`, `NCCS`) colours a flat face; three (`NCDT`,
 `NCCT`) a Gouraud one, the fourth corner of a quad taking an `NCDS`/`NCCS` of its
 own. The flat FT3 writer `func_800194C4` uses code `| 0x24` and length 7, the map's
-FT3 shape. Which writer is which kind (FT3, FT4, GT3, GT4) is read from the first
-of each row only; the rest are inferred from their order and their GTE calls.
+FT3 shape. Each row runs FT3, FT4, GT3, GT4 in that order: checked for the unfogged row
+(below), inferred for the other two from their order and their GTE calls.
 
 ## The face writers
 
@@ -87,6 +87,5 @@ yet, and whether map 0's models reach them is not counted.
 
 `ModelLight` (`func_80033DB8`) is not light: it fetches a pointer from a table at
 `0x80165090 + 0x834C + id * 4` and keeps it only if `func_80015258` accepts it (the
-name predates the reading). The fogged writers, the blend's records and weight, and the held models' path (`HeldModel`, `func_80021AC4`, which calls
-the same steps) are next. A model reference in the shape of the map's
-(`patches/Render/MapReference.cs`) needs the face records first.
+name predates the reading). The fogged and mixed writers, the blend's records and weight, and the held
+models' path (`HeldModel`, `func_80021AC4`, which calls the same steps) are next.
