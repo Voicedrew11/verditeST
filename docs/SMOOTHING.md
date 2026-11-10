@@ -74,12 +74,20 @@ frame: over the tour, map 24 read a median of **144 distinct model packets a sec
 with 576 entity draws carried a second; with `ST_SMOOTH_MODELS=0` the same visit read
 none, but creatures do not act the same from run to run, so the pair is not a clean
 comparison. In maps 44 to 46 an entity was carried on every frame and its packets did
-not change: it was not in view. A creature followed on purpose is still to do, and
-whether the pose routine interpolates between keys or steps between them is not read
-(if it steps, a carried time shows the key changing on the right frame, no smoother).
+not change: it was not in view. A creature followed on purpose is still to do.
+
+**The pose routine blends between keys**, so a carried time gives poses between ticks,
+not the next key a frame early. The model drawer hands `func_80035AA8` (or
+`func_80034604`) the time; on the path through `func_80034364`, `func_80033CFC` walks
+the clip's keys (a count byte, then per key an offset to a record whose first u16 is
+its length in time) to the one holding the time, and returns the fraction through it,
+`(time - key start) << 12 / length`, 0 to 0x1000. `func_80074A04` then adds, for
+every vertex, that fraction times the key's delta to the base (`IR0` = the fraction,
+the GTE's `GPF`, three shorts at a time). The other branch (`func_8003569C`, when the
+clip header's `+6` is set) was not read.
 
 ## Not carried yet
 
-Creatures' poses, the arm, the HUD's gauges, sprite cels (held
+The arm, the HUD's gauges, sprite cels (held
 to the tick by `patches/DrawStageTick.cs`, not carried), and the loops that draw
 their own frames (the menu, which has no world behind it).

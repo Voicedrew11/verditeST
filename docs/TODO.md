@@ -22,7 +22,8 @@ Verdite1's picture is left to port; the rest is the user's eye.
 ## Phase 6: what is left
 
 Started 2026-11-10: the camera and the models' positions and angles are carried
-(`docs/SMOOTHING.md`). Next: the models' poses, the arm, the HUD's gauges. The cell
+(`docs/SMOOTHING.md`). The poses blend between keys,
+so the carried clip time smooths them. Next: the arm, the HUD's gauges. The cell
 cull trails the carried eye on about 1% of walking frames (`docs/SMOOTHING.md`).
 
 ## Phase 5: what is left
