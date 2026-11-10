@@ -8,12 +8,23 @@ open now.
 - **By eye:** the camera and the models carried between ticks (`docs/SMOOTHING.md`):
   turning, walking and creatures moving at 144, against `ST_SMOOTH=0`; a cell popping
   in late when walking across a cell edge (about 1% of frames carry the eye there).
+- **By hand:** vibration on a real pad (`docs/INPUT.md`): the options' vibration on,
+  then a hit or a fall.
+- **To push (the user):** the fork commit `0122` (`tools/RecompOne`, commit `4f5cd57`),
+  to `Voicedrew11/verdite-recompone`; until then this copy is ahead of it.
 - **By eye:** a status flash (a full-screen tint), now up for the whole tick at 144:
   poke `801991FE 0010` and `80199200 4000` over the agent channel.
 - **By eye:** map 24's two texture animations (`docs/GAME_INTERNALS.md`, "Texture
   animations"), now at the tick's pace: against an emulator, or `ST_PACING=0`.
 - **By eye:** the picture's switches (`docs/PICTURE.md`), each against its `=0`; the
   Z-buffer most of all (decals, the HUD, fades, the menu).
+
+## Phase 8: what is left
+
+Started 2026-11-10 (`docs/INPUT.md`): step 1 read. The game is digital only, has a
+twelve-entry button table, and drives two motors; the runtime's rumble is fixed in
+the fork (`0122`). Next: which action each button-table entry names, then
+`KeyLayout`, the mouse, rumble options.
 
 ## Phase 7: what is left
 
