@@ -1,5 +1,8 @@
+using System.Reflection;
+using RecompOne.Runtime.Context;
 using RecompOne.Runtime.Events;
 using RecompOne.Runtime.Memory;
+using RecompOne.Runtime.Modding;
 
 namespace St;
 
@@ -49,8 +52,44 @@ public static class AgentBeacon
     /// <summary>In an area with a player: ST.EXE, a module in, a maximum HP set.</summary>
     public static bool InGame => _program == "st" && _map != NoArea && _memory.ReadU16(MaxHp) != 0;
 
+    // Stage 1 (func_800164B4) runs once an iteration of the main loop, and once a
+    // frame of the in-game menu's loop (its call at 0x800591BC): seen within a second
+    // from one of them, that loop is turning, not a movie, a load or another screen.
+    const uint MenuStage1Return = 0x800591C4;
+    static long _loopMs = -1, _menuMs = -1;
+    static readonly ModInfo _self = new() { Id = "st.beacon", Name = "Agent beacon", Version = "1.0" };
+    static bool _queued;
+
+    /// <summary>Whether the main loop ran in the last second.</summary>
+    public static bool LoopLive => Recent(_loopMs);
+
+    /// <summary>Whether the in-game menu's loop ran in the last second.</summary>
+    public static bool MenuLive => Recent(_menuMs);
+
+    static bool Recent(long ms) => ms >= 0 && Environment.TickCount64 - ms < PeriodMs;
+
+    public static void StageOne(CpuContext c, IMemory m)
+    {
+        if (c.RA == MainLoop.First.ReturnAddress) _loopMs = Environment.TickCount64;
+        else if (c.RA == MenuStage1Return) _menuMs = Environment.TickCount64;
+    }
+
+    static bool Attach()
+    {
+        SymbolRegistry.Build();
+        if (SymbolRegistry.Resolve(MainLoop.Overlay, null, MainLoop.First.Routine) is not { } t) return false;
+        if (!_queued)
+        {
+            HookManager.AddPre(_self, t, typeof(AgentBeacon).GetMethod(nameof(StageOne), BindingFlags.Public | BindingFlags.Static)!);
+            _queued = true;
+        }
+        HookManager.Commit();
+        return HookAttach.Installed(t);
+    }
+
     public static void Install(string? spec, IMemory memory)
     {
+        HookAttach.OnOverlayLoad("beacon", Attach);
         _memory = memory;
         _printing = (spec ?? "").Trim().ToLowerInvariant() is "1" or "on";
         Event.AddListener<OverlayLoadedEvent>(OnOverlayLoaded);
@@ -95,7 +134,8 @@ public static class AgentBeacon
     /// <summary>One line of JSON. Game thread.</summary>
     public static string Snapshot()
     {
-        string head = $"\"program\":\"{_program}\",\"map\":{_map},\"frames\":{Frames}";
+        string head = $"\"program\":\"{_program}\",\"map\":{_map},\"frames\":{Frames}," +
+                      $"\"loop\":{(LoopLive ? "true" : "false")},\"menu\":{(MenuLive ? "true" : "false")}";
         if (!InGame) return $"{{{head},\"inGame\":false}}";
 
         var m = _memory;

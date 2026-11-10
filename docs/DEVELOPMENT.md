@@ -172,11 +172,15 @@ about once a second, and a line on every program or area load. The same JSON is 
 command channel's `state`:
 
 ```json
-{"program":"st","map":0,"frames":1576,"inGame":true,"hp":752,"maxHp":752,"mp":550,
+{"program":"st","map":0,"frames":1576,"loop":true,"menu":false,"inGame":true,"hp":752,"maxHp":752,"mp":550,
  "maxMp":550,"dead":false,"pos":[262144,267712,258048],"heading":0}
 ```
 
-`map` is -1 outside `ST.EXE`; outside an area only the first four fields are there.
+`map` is -1 outside `ST.EXE`; outside an area only the first six fields are there.
+`loop` is the main loop seen turning in the last second, `menu` the in-game menu's
+loop: both call stage 1 (`func_800164B4`), told apart by the return address.
+Measured 2026-11-10: `true,false` in play, `false,true` with the menu open, and
+`true,false` again after Circle.
 `inGame` is `ST.EXE` with a module in and a maximum HP set.
 
 `ST_SHELL=1` opens a command channel on `127.0.0.1:27904` (`patches/AgentServer.cs`).

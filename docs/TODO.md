@@ -123,8 +123,8 @@ The gate's test passes (`scripts/acceptance.py`, three runs, 2026-11-09). Still 
   reproduces (2026-11-10, `docs/DEVELOPMENT.md`).
 - `ST_AUTOSTART=load` takes the first save the card screen offers; picking a slot is
   not done.
-- A main-loop marker for the beacon (Verdite3's `loop`). Phase 4's survey has the
-  loop (`docs/GAME_INTERNALS.md`); the marker is not added yet.
+- ~~A main-loop marker for the beacon.~~ Added with a menu marker (2026-11-10,
+  `docs/DEVELOPMENT.md`).
 
 ## Phase 2: what is left
 
