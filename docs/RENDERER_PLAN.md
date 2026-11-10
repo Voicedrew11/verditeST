@@ -59,10 +59,11 @@ The world's families, as known:
 | presentation | HUD (`HudPanels`, `HudHpMp`, `HudNumber`), `PanelBorder`, text, tints, `LoadFade`, the menu's backdrop |
 | VRAM | `TextureAnimations` (`MoveImage`/`LoadImage`), the light's flicker `0x8017BE88` |
 
-**Unknown, read first**: the map's cell record layout (what `MapQuads`/`MapTriangles`
-walk); where the map's corner colours come from (its routines run no lighting op,
-only `NCLIP`); whether this game fogs with the GTE's depth cue or bakes it; the
-models' light inputs (`ModelPolygons` uses `MVMVA`/`RTPS`, `SceneQuads` `NCCS`).
+**Read 2026-11-10** ("The map's records and colours" in `docs/GPU_RENDERER.md`): the
+map's cells, meshes and quads, and its colour: `NCCS` per face with the cell's
+rotated light matrix, then the GTE's depth cue per corner. **Still unknown**: the
+vertex record and how a cell is placed; the triangles' record; the models' light
+inputs (`ModelPolygons` uses `MVMVA`/`RTPS`).
 
 ## Step 0: close the inventory, establish the baseline
 
