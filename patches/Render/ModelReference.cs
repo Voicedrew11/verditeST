@@ -27,6 +27,7 @@ public static class ModelReference
     static readonly Dictionary<int, uint> _headBefore = [];
     static ModelFaces _shape = ModelFaces.FlatTriangles;
     static uint _cursor, _ot;
+    static bool _colours;
 
     public static void Install(string? spec)
     {
@@ -57,6 +58,10 @@ public static class ModelReference
     public static void Pre1(CpuContext c, IMemory m) => Pre(ModelFaces.All[1], c, m);
     public static void Pre2(CpuContext c, IMemory m) => Pre(ModelFaces.All[2], c, m);
     public static void Pre3(CpuContext c, IMemory m) => Pre(ModelFaces.All[3], c, m);
+    public static void Pre4(CpuContext c, IMemory m) => Pre(ModelFaces.All[4], c, m);
+    public static void Pre5(CpuContext c, IMemory m) => Pre(ModelFaces.All[5], c, m);
+    public static void Pre6(CpuContext c, IMemory m) => Pre(ModelFaces.All[6], c, m);
+    public static void Pre7(CpuContext c, IMemory m) => Pre(ModelFaces.All[7], c, m);
 
     static MapLight.Matrix Control(int first) => MapLight.Matrix.FromWords(Gte.ReadControl(first),
         Gte.ReadControl(first + 1), Gte.ReadControl(first + 2), Gte.ReadControl(first + 3), Gte.ReadControl(first + 4));
@@ -73,6 +78,8 @@ public static class ModelReference
             (int)Gte.ReadControl(15), (int)Gte.ReadControl(21), (int)Gte.ReadControl(22), (int)Gte.ReadControl(23));
         uint corners = m.ReadU32(Scratch + 0x40), normals = m.ReadU32(Scratch + 0x24);
         uint rgb = m.ReadU32(Scratch + 0x60) & 0xFFFFFF;
+        // The flicker's calls rewrite a fogged face's colour after NCDS; not modelled.
+        _colours = shape.Fog == ModelFaces.Fogging.None || (m.ReadU8(0x8017BE8C) & 6) == 0;
         int far = (short)m.ReadU16(Scratch + 4), near = (int)m.ReadU32(Scratch + 0x80);
         for (uint i = 0, q = c.A1; i < (c.A0 & 0xFFFF); i++, q += shape.RecordSize)
             Face(m, q, corners, normals, light, inputs, rgb, c.A3, near, far);
@@ -85,11 +92,13 @@ public static class ModelReference
         int n = _shape.Corners;
         Span<uint> sxy = stackalloc uint[n];
         int sum = 0;
+        Span<short> fog = stackalloc short[n];
         for (int k = 0; k < n; k++)
         {
             uint at = corners + m.ReadU16(q + _shape.CornersAt[k]);
             sxy[k] = m.ReadU32(at);
             sum += (short)m.ReadU16(at + 4);
+            fog[k] = (short)m.ReadU16(at + 6);
         }
         if (Nclip(sxy[0], sxy[1], sxy[2]) <= 0) { MapReference.Count($"{_shape.Name}: turned away"); return; }
         // The mean depth, >> 5: a triangle's through a multiply by 0x55555556, a quad's by >> 7.
@@ -105,8 +114,10 @@ public static class ModelReference
         for (int k = 0; k < _shape.Colours.Length; k++)
         {
             uint at = normals + m.ReadU16(q + _shape.NormalsAt[k]);
-            w[_shape.Colours[k]] = MapLight.Lit(light, inputs, (short)m.ReadU16(at), (short)m.ReadU16(at + 2),
-                                                (short)m.ReadU16(at + 4), rgb | code);
+            short nx = (short)m.ReadU16(at), ny = (short)m.ReadU16(at + 2), nz = (short)m.ReadU16(at + 4);
+            w[_shape.Colours[k]] = _shape.Fog == ModelFaces.Fogging.None
+                ? MapLight.Lit(light, inputs, nx, ny, nz, rgb | code)
+                : MapLight.LitFogged(light, inputs, nx, ny, nz, rgb | code, _shape.Ir0(fog, k));
         }
         _expected.Add(new Expected(key, w));
     }
@@ -138,6 +149,7 @@ public static class ModelReference
     {
         for (int i = 1; i < words.Length; i++)
         {
+            if (!_colours && _shape.Colours.Contains(i)) continue;
             uint mask = _shape.Texture.Any(t => t.Word == i && t.Half) ? 0xFFFFu : 0xFFFFFFFFu;
             uint game = m.ReadU32(p + (uint)i * 4);
             if ((game & mask) == words[i]) continue;

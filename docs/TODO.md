@@ -51,8 +51,9 @@ routine makes: 0 mismatches over the session. The map reference
 cells included, light and fog too, and matches the game's packets word for word.
 The near splits are measured: pieces in the face's own key, and the 98.5% that
 draw nothing are all off the screen. The models' light is read
-(`docs/GPU_MODELS.md`, inspection only). The models' four unfogged face writers match a plain-C# reference word for word.
-Next: the fogged and mixed writers, then the blend's inputs; the census and call
+(`docs/GPU_MODELS.md`, inspection only). The models' unfogged and fogged face writers (eight) match a plain-C# reference word
+for word, the fogged ones' IR0 rules read. Next: the mixed writers, the blend's
+inputs; the census and call
 order in the contexts not reached (held models, text, tints, the flicker).
 
 ## Phase 10: what is left

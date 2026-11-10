@@ -17,8 +17,25 @@ sealed record ModelFaces(
     int[] Colours,                       // packet words: one (flat) or one a corner (Gouraud)
     int[] Positions,
     (int Word, uint At, bool Half)[] Texture,
-    int TpageWord)                       // the texture word that takes the caller's blend bits
+    int TpageWord,                       // the texture word that takes the caller's blend bits
+    ModelFaces.Fogging Fog = ModelFaces.Fogging.None)
 {
+    /// <summary>How a fogged writer forms IR0 from the corners' fog factors f0..f3.
+    /// None: NCCS/NCCT, no fog. Mean: (f0 + f1 + f2) / 3 or (f0 + .. + f3) >> 2, one for
+    /// the face. FirstTwice: (2 f0 + f1 + f2) >> 2, a smooth triangle's. MeanThenFirst: a
+    /// smooth quad's, the four's mean for the NCDT of corners 0 to 2, then f0 alone for
+    /// corner 3's own NCDS.</summary>
+    public enum Fogging { None, Mean, FirstTwice, MeanThenFirst }
+
+    /// <summary>IR0 for the colour of corner <paramref name="k"/>.</summary>
+    public short Ir0(ReadOnlySpan<short> f, int k) => Fog switch
+    {
+        Fogging.Mean => (short)(f.Length == 3 ? (f[0] + f[1] + f[2]) / 3 : (f[0] + f[1] + f[2] + f[3]) >> 2),
+        Fogging.FirstTwice => (short)((2 * f[0] + f[1] + f[2]) >> 2),
+        Fogging.MeanThenFirst => k == 3 ? f[0] : (short)((f[0] + f[1] + f[2] + f[3]) >> 2),
+        _ => 0,
+    };
+
     public uint PacketSize => (Length + 1) * 4;
 
     public int Corners => CornersAt.Length;
@@ -39,5 +56,19 @@ sealed record ModelFaces(
         [0x10, 0x14, 0x18, 0x1C], [0x12, 0x16, 0x1A, 0x1E], 0x3C, 0xC, [1, 4, 7, 10], [2, 5, 8, 11],
         [(3, 0x0, false), (6, 0x4, false), (9, 0x8, true), (12, 0xC, true)], 6);
 
-    public static readonly ModelFaces[] All = [FlatTriangles, FlatQuads, SmoothTriangles, SmoothQuads];
+    // ModelStep192D4's: the same records and packets, fogged.
+    public static readonly ModelFaces FoggedFlatTriangles = FlatTriangles with
+        { Name = "fogged model FT3", Writer = 0x800184C4, Fog = Fogging.Mean };
+    public static readonly ModelFaces FoggedFlatQuads = FlatQuads with
+        { Name = "fogged model FT4", Writer = 0x80018828, Fog = Fogging.Mean };
+    public static readonly ModelFaces FoggedSmoothTriangles = SmoothTriangles with
+        { Name = "fogged model GT3", Writer = 0x80018BA0, Fog = Fogging.FirstTwice };
+    public static readonly ModelFaces FoggedSmoothQuads = SmoothQuads with
+        { Name = "fogged model GT4", Writer = 0x80018F48, Fog = Fogging.MeanThenFirst };
+
+    public static readonly ModelFaces[] All =
+    [
+        FlatTriangles, FlatQuads, SmoothTriangles, SmoothQuads,
+        FoggedFlatTriangles, FoggedFlatQuads, FoggedSmoothTriangles, FoggedSmoothQuads,
+    ];
 }

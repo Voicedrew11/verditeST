@@ -32,17 +32,34 @@ static class MapLight
     /// with <paramref name="rgbc"/>'s code byte on top.</summary>
     public static uint Lit(in Matrix light, in Inputs a, short nx, short ny, short nz, uint rgbc)
     {
+        var (i1, i2, i3) = Light(light, a, nx, ny, nz);
+        return Pack(Times(rgbc, 0, i1) >> 4, Times(rgbc, 8, i2) >> 4, Times(rgbc, 16, i3) >> 4, rgbc);
+    }
+
+    /// <summary>NCDS: <see cref="Lit"/>'s light and colour, then moved toward the far
+    /// colour by <paramref name="ir0"/> of 4096 in one step, as DPCS does.</summary>
+    public static uint LitFogged(in Matrix light, in Inputs a, short nx, short ny, short nz, uint rgbc, short ir0)
+    {
+        var (i1, i2, i3) = Light(light, a, nx, ny, nz);
+        return Pack(Toward(Raw(rgbc, 0, i1), a.FarR, ir0), Toward(Raw(rgbc, 8, i2), a.FarG, ir0),
+                    Toward(Raw(rgbc, 16, i3), a.FarB, ir0), rgbc);
+    }
+
+    // The colour times the light, unshifted: what NCDS interpolates from.
+    static long Raw(uint rgbc, int shift, int ir) => ((long)((rgbc >> shift) & 0xFF) * ir) << 4;
+
+    // The same, >> 12: the GTE's MAC, a byte << 4.
+    static int Times(uint rgbc, int shift, int ir) => (int)(Raw(rgbc, shift, ir) >> 12);
+
+    static (int, int, int) Light(in Matrix light, in Inputs a, short nx, short ny, short nz)
+    {
         int l1 = Ir(((long)light.M0 * nx + (long)light.M1 * ny + (long)light.M2 * nz) >> 12, true);
         int l2 = Ir(((long)light.M3 * nx + (long)light.M4 * ny + (long)light.M5 * nz) >> 12, true);
         int l3 = Ir(((long)light.M6 * nx + (long)light.M7 * ny + (long)light.M8 * nz) >> 12, true);
         var c = a.Colour;
-        int i1 = Ir((((long)a.BackR << 12) + (long)c.M0 * l1 + (long)c.M1 * l2 + (long)c.M2 * l3) >> 12, true);
-        int i2 = Ir((((long)a.BackG << 12) + (long)c.M3 * l1 + (long)c.M4 * l2 + (long)c.M5 * l3) >> 12, true);
-        int i3 = Ir((((long)a.BackB << 12) + (long)c.M6 * l1 + (long)c.M7 * l2 + (long)c.M8 * l3) >> 12, true);
-        int r = (int)((((long)(rgbc & 0xFF) * i1) << 4) >> 12);
-        int g = (int)((((long)((rgbc >> 8) & 0xFF) * i2) << 4) >> 12);
-        int b = (int)((((long)((rgbc >> 16) & 0xFF) * i3) << 4) >> 12);
-        return Pack(r >> 4, g >> 4, b >> 4, rgbc);
+        return (Ir((((long)a.BackR << 12) + (long)c.M0 * l1 + (long)c.M1 * l2 + (long)c.M2 * l3) >> 12, true),
+                Ir((((long)a.BackG << 12) + (long)c.M3 * l1 + (long)c.M4 * l2 + (long)c.M5 * l3) >> 12, true),
+                Ir((((long)a.BackB << 12) + (long)c.M6 * l1 + (long)c.M7 * l2 + (long)c.M8 * l3) >> 12, true));
     }
 
     static uint Pack(int r, int g, int b, uint code) =>
@@ -52,12 +69,13 @@ static class MapLight
     /// 4096. IR0 is used as written, so a corner past the far depth goes past the far
     /// colour and is clamped per channel.</summary>
     public static uint Fogged(uint rgbc, in Inputs a, short ir0) => Pack(
-        Toward(rgbc & 0xFF, a.FarR, ir0), Toward((rgbc >> 8) & 0xFF, a.FarG, ir0),
-        Toward((rgbc >> 16) & 0xFF, a.FarB, ir0), rgbc);
+        Toward((long)(rgbc & 0xFF) << 16, a.FarR, ir0), Toward((long)((rgbc >> 8) & 0xFF) << 16, a.FarG, ir0),
+        Toward((long)((rgbc >> 16) & 0xFF) << 16, a.FarB, ir0), rgbc);
 
-    static int Toward(uint channel, int far, short ir0)
+    // The GTE's interpolation from near (MAC before the shift, 4.12 of a byte << 4)
+    // toward far by ir0, then to a byte.
+    static int Toward(long near, int far, short ir0)
     {
-        long near = (long)channel << 16;
         int step = Ir((((long)far << 12) - near) >> 12, false);
         return (int)(((long)step * ir0 + near) >> 12) >> 4;
     }

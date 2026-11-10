@@ -2,7 +2,8 @@
 
 Phase 11's log for the models, beside `docs/GPU_RENDERER.md` (the map). Read
 2026-11-10 from the literal transcriptions in `patches/Draw/` and the generated
-writers; inspection, except "The face writers", whose unfogged four are checked numerically.
+writers; inspection, except "The face writers", whose unfogged and fogged eight are checked
+numerically.
 
 ## The chain
 
@@ -28,8 +29,8 @@ reaches at most 4065 of 4096 toward the far colour.
 A writer with one normal (`NCDS`, `NCCS`) colours a flat face; three (`NCDT`,
 `NCCT`) a Gouraud one, the fourth corner of a quad taking an `NCDS`/`NCCS` of its
 own. The flat FT3 writer `func_800194C4` uses code `| 0x24` and length 7, the map's
-FT3 shape. Each row runs FT3, FT4, GT3, GT4 in that order: checked for the unfogged row
-(below), inferred for the other two from their order and their GTE calls.
+FT3 shape. Each row runs FT3, FT4, GT3, GT4 in that order: checked for the first two rows
+(below), inferred for the mixed row from its order and its GTE calls.
 
 ## The face writers
 
@@ -60,9 +61,28 @@ where the map takes the largest; the face is dropped unless the scratchpad's `+0
 worked out in plain C# from its arguments, the scratchpad and the GTE's light
 inputs as left by the caller; after it, every packet, tag, key head and the cursor
 are compared. Over `scripts/session.py` in map 0: **2,578 FT3s, 21,111 FT4s, 4,664
-GT3s and 1,623 GT4s matched whole, 0 differences**, 1,397 calls of each writer. The
-fogged and mixed writers (`ModelStep192D4`'s, `ModelStep1BF10`'s) are not covered
-yet, and whether map 0's models reach them is not counted.
+GT3s and 1,623 GT4s matched whole, 0 differences**, 1,397 calls of each writer.
+
+**The fogged writers** (`ModelStep192D4`'s: `func_800184C4` FT3, `80018828` FT4,
+`80018BA0` GT3, `80018F48` GT4) take the same records and make the same packets,
+with `NCDS`/`NCDT` and one `IR0` formed from the corners' fog factors f0..f3:
+
+| writer | IR0 |
+|---|---|
+| FT3 | `(f0 + f1 + f2) / 3`, truncating |
+| FT4 | `(f0 + f1 + f2 + f3) >> 2` |
+| GT3 | `(2 f0 + f1 + f2) >> 2`: corner 0 counts twice |
+| GT4 | the four's mean for corners 0 to 2 (`NCDT`), then **f0 alone** for corner 3's own `NCDS` |
+
+So a smooth face's fog is one value for the face, not per corner, and a GT4's
+fourth corner takes corner 0's fog. Read from the writers after a first run with a
+plain mean left about 13% of smooth faces a step off in every channel; with the
+rules above, a second run over the session: **all eight writers, 358,572 faces, 0
+differences** (fogged: 30,206 FT3s, 268,381 FT4s, 17,935 GT3s, 8,953 GT4s). In map 0
+most models are fogged (12,995 calls of each fogged writer against 1,397 unfogged).
+`ModelStep1BF10`'s mixed writers are not covered yet. The flicker's calls through
+`0x8017BE8C & 6` would rewrite a fogged colour after `NCDS`; colours are then not
+compared, and map 0 never sets it.
 
 ## The light inputs
 
@@ -87,5 +107,5 @@ yet, and whether map 0's models reach them is not counted.
 
 `ModelLight` (`func_80033DB8`) is not light: it fetches a pointer from a table at
 `0x80165090 + 0x834C + id * 4` and keeps it only if `func_80015258` accepts it (the
-name predates the reading). The fogged and mixed writers, the blend's records and weight, and the held
+name predates the reading). The mixed writers (`ModelStep1BF10`), the blend's records and weight, and the held
 models' path (`HeldModel`, `func_80021AC4`, which calls the same steps) are next.
