@@ -28,4 +28,11 @@ default. Add an entry here when a switch is added to `Program.cs`.
 | `ST_SMOOTH` | on | `0`: the camera is not carried between ticks; the picture's eye changes 20 times a second |
 | `ST_SMOOTH_MODELS` | on | `0`: the models' positions and angles are not carried, the camera still is |
 | `ST_SMOOTH_PROBE` | off | `1`: a line a second: frames drawn, distinct cameras, tick samples, snaps, backward steps |
+| `ST_NODITHER` | on | `0`: the GPU's ordered dither as the console draws it |
+| `ST_NODITHER_PROBE` | off | `1`: every 2 s, draw envs and table E1 words that asked for dither, and GPUSTAT's dither bit |
+| `ST_TRUECOLOR` | on | `0`: the console's 15-bit colour |
+| `ST_PERSPECTIVE` | on | `0`: the console's affine texture mapping |
+| `ST_PERSPECTIVE_PROBE` | off | `1`: every 2 s, the address map's roots, propagations, hits and misses |
+| `ST_SUBPIXEL` | on | `0`: every vertex snapped to a whole pixel |
+| `ST_SUBPIXEL_PROBE` | off | `1`: every 2 s, the map's counters and how far the vertices moved |
 | `ST_RATECENSUS` | off | seconds: with pacing on, the RAM words that change on frames no stage ran on, printed once |

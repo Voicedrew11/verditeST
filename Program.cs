@@ -66,6 +66,15 @@ St.StageProbe.Install(Verdite.Core.Game.Env("STAGEPROBE"));
 St.GeometryProbe.Install(Verdite.Core.Game.Env("GEOPROBE"));
 // Who sends each frame to the screen: stage 14, or a loop drawing its own.
 St.PresentProbe.Install(Verdite.Core.Game.Env("PRESENTPROBE"));
+// The picture (Phase 7, docs/PICTURE.md): the runtime's switches and their probes.
+St.NoDither.Configure(Verdite.Core.Game.Env("NODITHER"), Verdite.Core.Game.Env("NODITHER_PROBE"));
+St.NoDither.Install();
+St.TrueColor.Configure(Verdite.Core.Game.Env("TRUECOLOR"));
+St.Perspective.Configure(Verdite.Core.Game.Env("PERSPECTIVE"), Verdite.Core.Game.Env("PERSPECTIVE_PROBE"));
+St.Perspective.Install();
+St.Subpixel.Configure(Verdite.Core.Game.Env("SUBPIXEL"), Verdite.Core.Game.Env("SUBPIXEL_PROBE"));
+St.Subpixel.Install();
+
 // The draw path's routines in C# (patches/Draw/): ST_LITERAL=1|0|verify, or one
 // routine's own ST_<NAME>. See "The draw path in C#" in docs/GEOMETRY.md.
 St.Literal.InstallAll();
