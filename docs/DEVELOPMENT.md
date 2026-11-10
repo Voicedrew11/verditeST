@@ -50,7 +50,7 @@ patches, all reading the stage table in `patches/MainLoop.cs` ("The main loop" i
   decided once an iteration at stage 1, and only when called from the main loop's own
   sites. Stage 14 runs every frame. A watchdog: no boundary for 500 ms and stage 1
   ticks from the wall clock instead (`ST_PACING_NOBOUNDARY=1` tests it; it read 20.0
-  ticks a second).
+  ticks a second). `patches/PacingProbe.cs` prints `ST_FPS_PROBE`'s line.
 - **`patches/VBlankPacing.cs`**: `VSync(n)` waits n vblanks on a 60 Hz grid in all six
   programs, as libetc does; the runtime's non-blocking `VSync` returns at once for any
   mode. This is what holds the game to 20 with pacing off, and VS mode and the ending

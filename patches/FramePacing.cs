@@ -5,7 +5,6 @@ using RecompOne.Runtime.Context;
 using RecompOne.Runtime.Events;
 using RecompOne.Runtime.Memory;
 using RecompOne.Runtime.Modding;
-using RecompOne.Runtime.Sdk;
 
 namespace St;
 
@@ -15,7 +14,7 @@ namespace St;
 ///     ST_PACING=0      off: the game's own pace (VBlankPacing holds it to 20)
 ///     ST_FPS=144|off   the picture's rate; off is uncapped
 ///     ST_TICKRATE=20   the world's (a comparison only)
-///     ST_FPS_PROBE=1   a line a second: fps drawn, ticks taken, packets drawn
+///     ST_FPS_PROBE=1   a line a second (PacingProbe)
 ///
 /// The game's frame gate func_8001535C (one vblank since it last passed) is skipped;
 /// the frame boundary is the DrawOTag after a VSync call, paced there; main-loop
@@ -67,21 +66,12 @@ public static class FramePacing
 
     static double _fallbackNextMs = -1.0;
     static bool _fallbackSaid;
-    static long _fallbackTicks;
-
-    static bool _probe;
-    static double _windowStart;
-    static long _windowFrames, _windowTicks, _windowPresentsMark, _windowStageRuns, _windowStageSkips;
-    static long _packetsTick, _packetsTickFrames, _packetsIdle, _packetsIdleFrames;
 
     /// <summary>Frame boundaries reached: an identity, not a rate.</summary>
     public static long Frames { get; private set; }
 
     /// <summary>World ticks taken: an identity, not a rate.</summary>
     public static long Ticks { get; private set; }
-
-    /// <summary>Frames a second over the last probe window; 0 until the first.</summary>
-    public static double Measured { get; private set; }
 
     /// <summary>Whether the main-loop iteration now running ran its stages.</summary>
     public static bool IterationTicked => _iterationTicks;
@@ -105,7 +95,7 @@ public static class FramePacing
     public static void Configure(string? pacing, string? fps, string? tickRate, string? probe)
     {
         Enabled = pacing?.Trim() != "0";
-        _probe = probe?.Trim() == "1";
+        PacingProbe.On = probe?.Trim() == "1";
         if (!string.IsNullOrWhiteSpace(tickRate))
         {
             if (!double.TryParse(tickRate, NumberStyles.Float, CultureInfo.InvariantCulture, out double hz) || !double.IsFinite(hz))
@@ -133,7 +123,7 @@ public static class FramePacing
             _mainLoopDraws = 0;
             if (Enabled) RecompOne.Runtime.Runtime.TargetFps = _inGame ? HostCeiling() : _hostFps;
         });
-        Event.AddListener<VSyncEvent>(_ => WatchdogProbe());
+        Event.AddListener<VSyncEvent>(_ => PacingProbe.Vblank());
         if (!Enabled)
         {
             Console.WriteLine("[ST] pacing: off (ST_PACING=0), the game's own pace");
@@ -225,7 +215,7 @@ public static class FramePacing
 
         double now = _clock.Elapsed.TotalMilliseconds;
         _lastBoundaryMs = now;
-        if (_probe) Probe(m, now);
+        PacingProbe.Frame(m, now, _iterationTicks);
         Boundary?.Invoke(m);
         AdvanceLogicClock(now);
         if (!Uncapped) Floor(1000.0 / TargetFps);
@@ -243,7 +233,7 @@ public static class FramePacing
         _tickThisFrame = _logicCredit >= 1.0;
         if (!_tickThisFrame) return;
         _logicCredit -= 1.0;
-        _windowTicks++;
+        PacingProbe.Tick();
         Ticks++;
     }
 
@@ -258,7 +248,7 @@ public static class FramePacing
             bool live = _lastBoundaryMs >= 0.0 && now - _lastBoundaryMs <= BoundaryDeadMs;
             _iterationTicks = live ? _tickThisFrame : FallbackTick(now);
         }
-        if (_iterationTicks) _windowStageRuns++; else _windowStageSkips++;
+        PacingProbe.Stage(_iterationTicks);
         return _iterationTicks;
     }
 
@@ -276,7 +266,7 @@ public static class FramePacing
         double period = 1000.0 / LogicHz;
         if (_fallbackNextMs < 0.0 || now - _fallbackNextMs > 4.0 * period) _fallbackNextMs = now;
         bool tick = now >= _fallbackNextMs;
-        if (tick) { _fallbackNextMs += period; _fallbackTicks++; Ticks++; }
+        if (tick) { _fallbackNextMs += period; PacingProbe.FallbackTick(); Ticks++; }
         _tickThisFrame = tick;
         if (!Uncapped) Floor(1000.0 / TargetFps);
         return tick;
@@ -295,65 +285,5 @@ public static class FramePacing
             RecompOne.Runtime.Diagnostics.Profiler.End(profile);
         }
         _due += min;
-    }
-
-    // ---- ST_FPS_PROBE ------------------------------------------------------------
-
-    static void Probe(IMemory m, double now)
-    {
-        // Packets the frame just drawn carried, split by whether the world ticked on
-        // it: a gated stage that fed the picture would show as fewer on idle frames.
-        long packets = CountPackets(m);
-        if (_iterationTicks) { _packetsTick += packets; _packetsTickFrames++; }
-        else { _packetsIdle += packets; _packetsIdleFrames++; }
-
-        _windowFrames++;
-        double elapsed = now - _windowStart;
-        if (elapsed < 1000.0) return;
-        Measured = _windowFrames * 1000.0 / elapsed;
-        long presents = LibEtc.VSyncCalls - _windowPresentsMark;
-        _windowPresentsMark = LibEtc.VSyncCalls;
-        Console.WriteLine($"[ST] pacing: {Measured:0.0} fps drawn of {(Uncapped ? "uncapped" : $"{TargetFps:0.#}")}, " +
-                          $"{presents * 1000.0 / elapsed:0.0} VSync call(s)/s, " +
-                          $"{_windowTicks * 1000.0 / elapsed:0.0} tick(s)/s of {LogicHz:0.#} Hz, " +
-                          $"stages {_windowStageRuns} run/{_windowStageSkips} skipped, " +
-                          $"packets/frame {Average(_packetsTick, _packetsTickFrames)} ticked, " +
-                          $"{Average(_packetsIdle, _packetsIdleFrames)} idle");
-        _windowStart = now;
-        _windowFrames = _windowTicks = _windowStageRuns = _windowStageSkips = 0;
-        _packetsTick = _packetsTickFrames = _packetsIdle = _packetsIdleFrames = 0;
-    }
-
-    static string Average(long sum, long n) => n == 0 ? "-" : (sum / (double)n).ToString("0", CultureInfo.InvariantCulture);
-
-    // The table is drawn from its last entry and linked by the low 24 bits of each
-    // tag; the top byte is the packet's length in words.
-    static long CountPackets(IMemory m)
-    {
-        uint ot = m.ReadU32(MainLoop.OtPointer);
-        if ((ot & 0xFF000000) != 0x80000000) return 0;
-        uint p = (ot + (MainLoop.OtWords - 1) * 4) & 0xFFFFFF;
-        long n = 0;
-        for (int guard = 0; guard < 200000 && p != 0xFFFFFF; guard++)
-        {
-            uint tag = m.ReadU32(0x80000000 | p);
-            if ((tag >> 24) != 0) n++;
-            p = tag & 0xFFFFFF;
-        }
-        return n;
-    }
-
-    /// <summary>The probe's half from the vblank, when the boundary is lost.</summary>
-    static double _watchdogStart = -1;
-    static void WatchdogProbe()
-    {
-        if (!_probe) return;
-        double now = _clock.Elapsed.TotalMilliseconds;
-        if (_watchdogStart < 0) { _watchdogStart = now; return; }
-        if (now - _watchdogStart < 1000.0) return;
-        if (_fallbackTicks > 0)
-            Console.WriteLine($"[ST] pacing: no boundary, {_fallbackTicks * 1000.0 / (now - _watchdogStart):0.0} tick(s)/s from the watchdog");
-        _fallbackTicks = 0;
-        _watchdogStart = now;
     }
 }
