@@ -74,7 +74,20 @@ frame: over the tour, map 24 read a median of **144 distinct model packets a sec
 with 576 entity draws carried a second; with `ST_SMOOTH_MODELS=0` the same visit read
 none, but creatures do not act the same from run to run, so the pair is not a clean
 comparison. In maps 44 to 46 an entity was carried on every frame and its packets did
-not change: it was not in view. A creature followed on purpose is still to do.
+not change: it was not in view.
+
+**A creature in view, the eye still** (2026-11-10): map 24's arrival point, where a
+creature comes at the player, kept alive by poke for 24 s. The camera probe read 0 new
+cameras a second throughout, and the model probe **144.0 distinct model packets a
+second** in all 14 windows, 576 entity draws carried a second (four entities), 0 snaps:
+with nothing else moving, every frame's models were new, from the carried poses and
+positions alone. A run with `ST_SMOOTH_MODELS=0` is no comparison (the creature hit
+the player and the eye moved), and none is needed for the gate.
+
+## The gate
+
+Phase 6's measured gate is met: 144 distinct cameras a second turning, a creature a
+new pose on every frame, 0 backward steps. Left: the user's eye, and the arm (below).
 
 **The pose routine blends between keys**, so a carried time gives poses between ticks,
 not the next key a frame early. The model drawer hands `func_80035AA8` (or
