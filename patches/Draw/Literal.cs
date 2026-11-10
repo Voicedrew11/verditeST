@@ -16,7 +16,8 @@ namespace St;
 /// Verify runs the recompiled routine, then the transcription from the same state,
 /// and compares all of RAM outside a stack window under the call, the scratchpad,
 /// every register with LO and HI, the GTE and the interrupt poll's countdown (so a
-/// loop that polls a different number of times shows). Both runs start with the
+/// loop that polls a different number of times shows), and the calls each run makes
+/// (<see cref="LiteralCalls"/>). Both runs start with the
 /// countdown pushed out of reach, so no interrupt handler runs inside either (they
 /// read the clock); the countdown is put back less the polls taken, and a handler due
 /// runs at the next poll after the call. **The recompiled result stands.** Verdite1's Literal; Phase 5's step 2 in
@@ -124,6 +125,11 @@ public sealed partial class Literal
             var target = SymbolRegistry.Resolve(MainLoop.Overlay, null, r.Address);
             r._hooked = target != null && HookAttach.Installed(target);
             if (r._hooked) n++;
+        }
+        if (All.Any(r => r._mode == Mode.Verify) && !LiteralCalls.Installed)
+        {
+            var routines = All.Select(r => SymbolRegistry.Resolve(MainLoop.Overlay, null, r.Address)).OfType<MethodInfo>();
+            Console.WriteLine($"[ST] literal verify: call order on, {LiteralCalls.Attach(routines)} callee(s) hooked");
         }
         var modes = All.GroupBy(r => r._mode).Select(g => $"{g.Count()} {g.Key.ToString().ToLowerInvariant()}");
         Console.WriteLine($"[ST] literal routines: {n} of {All.Count} installed ({string.Join(", ", modes)})");

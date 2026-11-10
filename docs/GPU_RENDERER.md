@@ -176,6 +176,24 @@ zone), so it is dead when the caller resumes. Verdite3 compares an 8 KB window
 there; here it is excluded on that argument, which stands as long as no routine
 reads below its caller's stack pointer.
 
-**Not compared: the order of the calls a routine makes** and their arguments,
-which Verdite3's supplemental verifier checks. Two routines with the same end state
-but a different call order would pass here. That is the one gap for Step 2.
+**The calls a routine makes**, added 2026-11-10 (`patches/Draw/LiteralCalls.cs`):
+both runs record every call into a function the recompiled routines call directly
+(77 callees, read from the generated methods' IL at attach, so the list follows the
+recompiler), at the callee's entry, as its return address and `a0` to `a3`; the
+return address names the call site, so it names the callee. Indirect calls (`jalr`,
+through the dispatcher) are compared by count and their last 64 targets, the
+dispatcher's own ring. A verify nested in another records its own calls; the outer
+one sees the call to it. Installed only when a routine starts in verify.
+
+Measured over `scripts/session.py` with `ST_LITERAL=verify`: 54 routines ran, 130,061
+verified calls, **524,055 calls inside them compared, 0 mismatches**. A negative
+control (one argument bit flipped in every second record of the C# run) gave a
+mismatch at call 0 in each routine that calls anything, so a zero here is a match.
+The 26 routines with no calls compared are leaves (`MarkClipSlots`, `MarkPoseSlots`,
+`HudNumber`, `HudSprite`, `PanelBorder`, the text routines, ...) or call only on a
+branch the session does not reach: `TextureAnimations` (none in area 0), the tint,
+the held models, the near path, `ModelExtras2`. Those branches stay unverified for
+call order until a context reaches them (Step 0.2's list).
+
+Verify now covers what Verdite3's `NativeScene` verify and its supplemental verifier
+do together: Step 2's reference comparison is complete for the paths exercised.

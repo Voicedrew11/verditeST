@@ -45,8 +45,10 @@ Planned 2026-11-10 (`docs/RENDERER_PLAN.md`), on Verdite3's route (the user's ca
 it is a recompilation like this one). Read: the map's cells, meshes, faces,
 projection, lighting record and linear fog (`docs/GPU_RENDERER.md`). The scene
 census (`ST_SCENE_CENSUS=1`) gives every packet of the session an owner, 0
-unattributed. Next: Step 2's verify past RAM (scratchpad, registers, GTE), and the
-census in the contexts not reached (near path, held models, text).
+unattributed. Verify compares RAM, scratchpad, registers, GTE and the calls each
+routine makes: 0 mismatches over the session. Next: Step 2's reference records
+(transforms, light, fog, table keys at the original operations), and the census
+and call order in the contexts not reached (near path, held models, text, tints).
 
 ## Phase 10: what is left
 

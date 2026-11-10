@@ -23,7 +23,8 @@ public sealed partial class Literal
     readonly uint[] _padBefore = new uint[Differential.PadWords], _padTheirs = new uint[Differential.PadWords],
                     _padOurs = new uint[Differential.PadWords];
     readonly Gte.State _gteEntry = new(), _gteTheirs = new(), _gteOurs = new();
-    long _calls, _bad, _interrupted, _twinBad;
+    readonly LiteralCalls.Trace _callsTheirs = new(), _callsOurs = new();
+    long _calls, _bad, _interrupted, _twinBad, _inner;
     readonly List<string> _samples = [];
     double _reportAt;
 
@@ -46,7 +47,9 @@ public sealed partial class Literal
         Countdown?.SetValue(null, Deferred);
         uint slow = Interrupts.SlowPolls;
 
+        _callsTheirs.Begin();
         orig(c, mem);
+        _callsTheirs.End();
         ram.CopyTo(_theirs);
         Differential.SavePad(mem, _padTheirs);
         var theirs = c.Snapshot();
@@ -61,7 +64,9 @@ public sealed partial class Literal
         Gte.Load(_gteEntry);
         Countdown?.SetValue(null, Deferred);
         RandSeed?.SetValue(null, seed);
+        _callsOurs.Begin();
         _body(c, mem);
+        _callsOurs.End();
         Differential.SavePad(mem, _padOurs);
         var ours = c.Snapshot();
         Gte.Save(_gteOurs);
@@ -80,6 +85,8 @@ public sealed partial class Literal
             why ??= Differential.DescribePad(_padOurs, _padTheirs);
             why ??= Registers(ours, theirs);
             why ??= Gte.Diff(_gteTheirs, _gteOurs) is { } g ? $"GTE {g}" : null;
+            _inner += _callsTheirs.Direct.Count + _callsTheirs.Indirect;
+            why ??= LiteralCalls.Diff(_callsTheirs, _callsOurs);
             why ??= countOurs != countTheirs ? $"polls: recompiled left {countTheirs}, ours {countOurs}" : null;
             if (why != null)
             {
@@ -120,10 +127,11 @@ public sealed partial class Literal
         if (now < _reportAt) return;
         _reportAt = now + 2.0;
         Console.WriteLine($"[ST] verify {Name} (func_{Address:X8}): {_calls} call(s), {_bad} mismatch(es), " +
-                          $"{_interrupted} interrupted" + (_twin != null ? $", twin {_twinBad} mismatch(es)" : ""));
+                          $"{_interrupted} interrupted" + (_twin != null ? $", twin {_twinBad} mismatch(es)" : "") +
+                          (LiteralCalls.Installed ? $", {_inner} call(s) inside compared" : ""));
         foreach (var s in _samples) Console.WriteLine($"[ST]   {s}");
         _samples.Clear();
-        _calls = _bad = _interrupted = _twinBad = 0;
+        _calls = _bad = _interrupted = _twinBad = _inner = 0;
     }
 
     /// <summary>ST_LITERAL_DUMP=dir: the first mismatch of each routine writes the
