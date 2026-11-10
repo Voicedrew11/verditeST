@@ -160,6 +160,14 @@ near faces split); between the two neither (lit, no fog); past the far one `0x80
 the entity's own `+0x1E`. Only the cels' `0x0F` and the entities' `0x8D` carry a
 blend bit over the tour, so the blend matters for a few entities and map 24's cels.
 
+**The low bits are the transparency.** Each step turns the flags into the writers'
+`a3`: `((flags >> 1) & 2) | ((flags & 3) << 21)`, so `& 4` sets the GP0 code's
+semi-transparency bit and `& 3` is the texture page's blend mode (the hardware's
+0: half and half, 1: added, 2: subtracted, 3: a quarter added). Over the tour:
+`0x04` (the effects, half and half), `0x8D` (entities: fogged, the `& 0x08` light,
+added), `0x0F` (map 24's cels: a quarter added). Read from `ModelStep192D4`'s first
+lines; the writers' use of `a3` is checked by the reference (the packets match).
+
 For the backend (`docs/GPU_CONTRACT.md`): the fog mode is a per-instance choice made
 each frame from distance, and the blend a per-instance LCM/BK; both are inputs the
 port reads at the call, not state to model.
@@ -169,5 +177,4 @@ port reads at the call, not state to model.
 `ModelLight` (`func_80033DB8`) is not light: it fetches a pointer from a table at
 `0x80165090 + 0x834C + id * 4` and keeps it only if `func_80015258` accepts it (the
 name predates the reading). The held models' path (`HeldModel`, `func_80021AC4`)
-calls `ModelStep17D28` with weight 0 and no flags: the scene's record, always. What
-the low flag bits `4`, `2`, `1` do is next.
+calls `ModelStep17D28` with weight 0 and no flags: the scene's record, always.
