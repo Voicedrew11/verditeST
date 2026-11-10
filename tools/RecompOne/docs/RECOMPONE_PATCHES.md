@@ -2147,6 +2147,17 @@ Four files in the directory have no entry below:
   where it used to throw. Only the two throw sites changed; the RAM, scratchpad
   and register paths are untouched. Off by default (KF1's fuzzer turns it on), so
   nothing changes for a port that does not set it. **No recompile.**
+- `0121-libpad-refresh-on-vblank.patch` — `LibPad` refreshed the game's pad buffers
+  only from `PresentFrame`. The hardware fills them from the vblank interrupt, and
+  Shadow Tower's card prompts spin on a pad latch without calling `VSync`, so with
+  `LibEtc.VBlankFromPoll` on they still froze. `LibEtc.TickVBlank` now calls
+  `LibPad.OnVBlank`, which pumps host input (at most every 4 ms) and refreshes the
+  buffers. It returns at once when the game has not called `PadInitDirect`, which is
+  every King's Field port, so **nothing changes for those. No recompile.**
+- `0120-libpad-pad-read-event.patch` — `LibPad.Refresh` now fires `PadReadEvent`, in
+  the same swapped layout as the BIOS pad paths, so a listener written for `PAD_dr`
+  also sees a game that links the newer pad library. **No recompile.** No effect
+  without a listener.
 - `0119-seek-from-sector-callback.patch` — the runtime stepped one sector on after
   each sector callback, even when the callback had just issued a seek, so the new
   read started one sector late. It now steps only if no `Setloc` happened during the

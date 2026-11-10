@@ -1,4 +1,5 @@
 using RecompOne.Runtime.Context;
+using RecompOne.Runtime.Events;
 using RecompOne.Runtime.Hardware;
 using RecompOne.Runtime.Host;
 using RecompOne.Runtime.Memory;
@@ -13,6 +14,7 @@ public static class LibPad
     private const uint PadStateDiscon = 0;
     private const uint PadStateStable = 6;
 
+    private static readonly PadReadEvent _padEvent = new();
     private static uint _buf1;
     private static uint _buf2;
     private static int _smallMotorIdx = 0;
@@ -138,14 +140,39 @@ public static class LibPad
         c.V0 = 1;
     }
 
+    //0121. The hardware fills these buffers from the vblank interrupt, so a game can
+    //wait for a button in a loop that never calls VSync. Refresh from the vblank too.
+    private const double PadPumpIntervalMs = 4.0;
+
+    internal static void OnVBlank(IMemory m)
+    {
+        if (_buf1 == 0 && _buf2 == 0) return;
+        HostWindow.PumpInput(PadPumpIntervalMs);
+        Refresh(m);
+    }
+
     public static void Refresh(IMemory m)
     {
         if (_buf1 != 0)
-            WritePad(m, _buf1, Controller.State, true,
+            WritePad(m, _buf1, FirePad(m, 0, Controller.State), true,
                 Controller.RightX, Controller.RightY, Controller.LeftX, Controller.LeftY);
         if (_buf2 != 0)
-            WritePad(m, _buf2, Controller.State2, Controller.Connected2,
+            WritePad(m, _buf2, FirePad(m, 1, Controller.State2), Controller.Connected2,
                 Controller.RightX2, Controller.RightY2, Controller.LeftX2, Controller.LeftY2);
+    }
+
+    //0120. The same event, and the same swapped layout, as the BIOS pad paths, so a
+    //listener written for PAD_dr works on a game that links this library too.
+    private static ushort FirePad(IMemory m, int port, ushort buttons)
+    {
+        if (!Event.HasAnyListeners<PadReadEvent>() || Runtime.Cpu == null) return buttons;
+        var e = _padEvent;
+        e.Context = Runtime.Cpu;
+        e.Memory = m;
+        e.Port = port;
+        e.Buttons = (ushort)((buttons >> 8) | (buttons << 8));
+        Event.Dispatch(e);
+        return (ushort)((e.Buttons >> 8) | (e.Buttons << 8));
     }
 
     private static bool IsPort1(uint port)
