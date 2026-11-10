@@ -2147,6 +2147,21 @@ Four files in the directory have no entry below:
   where it used to throw. Only the two throw sites changed; the RAM, scratchpad
   and register paths are untouched. Off by default (KF1's fuzzer turns it on), so
   nothing changes for a port that does not set it. **No recompile.**
+- `0122-libpad-actuators.patch` — three faults in the newer pad library's vibration.
+  `PadInfoAct(port, -1, term)` asks how many actuators the pad has; the runtime
+  answered from `term` and said 1, where a DualShock has 2, and Shadow Tower then
+  aligned no large motor, so the runtime read the same byte for both motors and
+  every rumble played at 1/255. `PadSetAct` read the buffer once, when called, but
+  the real driver sends it every vblank and Shadow Tower calls it once at start-up
+  and then only writes the motor bytes: its rumble never reached the pad. And the
+  first `PadSetAct`, before `PadSetActAlign`, buzzed the small motor from the default
+  indices. Now `acno == -1` answers 2; the buffer is kept and read again on every
+  `Refresh` (vblank and frame), sent when it changes and every 250 ms while a motor
+  runs (SDL's rumble is given 500 ms); nothing is sent before `PadSetActAlign`; and
+  a change is logged on the `sdk` channel. Measured on Shadow Tower with vibration on:
+  the game's `func_80057A68(0x80)` sent large 192, and large 0 when its countdown ran
+  out. No King's Field port links this library, so **nothing changes for them. No
+  recompile.**
 - `0121-libpad-refresh-on-vblank.patch` — `LibPad` refreshed the game's pad buffers
   only from `PresentFrame`. The hardware fills them from the vblank interrupt, and
   Shadow Tower's card prompts spin on a pad latch without calling `VSync`, so with
