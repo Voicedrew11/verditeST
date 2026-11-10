@@ -49,7 +49,9 @@ unattributed. Verify compares RAM, scratchpad, registers, GTE and the calls each
 routine makes: 0 mismatches over the session. The map reference
 (`ST_MAP_REFERENCE=1`) works out every bulk face of the map in plain C#, the scene's flat
 cells included, light and fog too, and matches the game's packets word for word.
-Next: the near splits, then the models' light inputs; the census and call
+The near splits are measured (98.5% draw nothing; pieces in the face's own key).
+Next: why the splits draw nothing (behind the eye or off the screen), then the
+models' light inputs; the census and call
 order in the contexts not reached (held models, text, tints, the flicker).
 
 ## Phase 10: what is left

@@ -200,8 +200,38 @@ failed at the first quad. Along the way:
 - a split that clips a face away entirely writes nothing and leaves the key's head.
 
 Not yet covered: the flicker's per-corner calls when `0x8017BE8C & 6` (colours
-skipped and counted then; not reached in map 0), the near splits' own arithmetic,
+skipped and counted then; not reached in map 0), the near splits' own arithmetic
+(measured from outside: "The near splits"),
 and the models.
+
+## The near splits
+
+Measured 2026-11-10 by `ST_MAP_REFERENCE=1` (`patches/Render/NearSplits.cs`) from
+outside libgte's division, over `scripts/session.py` in map 0. The writer hands the
+division a block: `+0` the level (1 when an `NCLIP` area passes 16384, 2 past 32768;
+the triangles reach 3), `+4`/`+8` the screen's 320 and 240, `+0x14` the face's entry
+in the ordering table; the cursor goes in `a0` and comes back in `v0`.
+
+| shape, level | calls | write nothing | pieces when drawn |
+|---|---|---|---|
+| quads 1 | 174,205 | 171,622 | 4 (2,583 calls) |
+| quads 2 | 169,563 | 168,720 | 4 (369), 8 (464), 12 (7), 16 (3) |
+| triangles 1 | 9,459 | 9,128 | 4 (331) |
+| triangles 2 | 10,513 | 10,443 | 4 (46), 12 (18), 16 (6) |
+| triangles 3 | 3,536 | 3,536 | never drawn |
+
+- **About 98.5% of near faces draw nothing**: the division clips every piece away.
+  Read by count only; whether these are faces behind the eye or beside the screen
+  is not read yet, and it decides what a GPU path that clips properly would add.
+- Pieces are the face's own kind (GT4 for a quad, GT3 for a triangle), **a level
+  makes a 2 by 2 grid** (4 pieces, 16 at level 2), and they are dropped a quarter at
+  a time: the counts are multiples of 4.
+- Every piece lies end to end from the cursor and **all go into the face's own key**,
+  chained between the key's old head and its new one: 0 exceptions in 387,024 calls.
+
+For Step 4: an unsplit face in the face's key keeps the order exactly; what it
+changes is the texture's interpolation (the pieces are affine each) and whatever the
+division's clip drops.
 
 ## What verify compares
 

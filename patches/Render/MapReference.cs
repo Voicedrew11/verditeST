@@ -91,10 +91,17 @@ public static class MapReference
 
     // The near split's packets: from the cursor at its call to the cursor it returns.
     static uint _splitStart;
-    public static void SplitPre(CpuContext c, IMemory m) => _splitStart = m.ReadU32(Scratch + 0x10);
+    public static void SplitPre(CpuContext c, IMemory m)
+    {
+        _splitStart = m.ReadU32(Scratch + 0x10);
+        if (_inside) NearSplits.Before(m, c.A1);
+    }
+
     public static void SplitPost(CpuContext c, IMemory m)
     {
-        if (_inside) _nearSpans.Add((_splitStart, c.V0));
+        if (!_inside) return;
+        _nearSpans.Add((_splitStart, c.V0));
+        NearSplits.After(m, _shape.Name, _splitStart, c.V0);
     }
 
     static void Walk(IMemory m)
@@ -267,9 +274,9 @@ public static class MapReference
         return true;
     }
 
-    static void Agree(string what, bool ok) => Count(ok ? what + ": agree" : what + ": DIFFER");
+    internal static void Agree(string what, bool ok) => Count(ok ? what + ": agree" : what + ": DIFFER");
 
-    static void Count(string what) => _counts[what] = _counts.GetValueOrDefault(what) + 1;
+    internal static void Count(string what) => _counts[what] = _counts.GetValueOrDefault(what) + 1;
 
     static void Sample(string s)
     {
