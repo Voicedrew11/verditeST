@@ -11,11 +11,11 @@ namespace St;
 /// runtime's stores (<see cref="RetainedMeshes"/>), placed by the matrix and translation
 /// <c>ScenePrepare4</c> projects the cell with, lit from the cell's lighting record at
 /// its quarter turn and fogged by the record's near and far (runtime 0123's curve).
-/// Published before the scene's first face routine runs; the four face routines then
+/// Published before the scene's first face routine runs; the six face routines then
 /// run as the game wrote them, and <see cref="PacketFilter"/> takes their packets back
-/// off the table, all but the blended faces, which stay packets. A frame whose cells
-/// cannot all be published keeps every map packet, counted by reason. See "The
-/// retained map" in docs/GPU_RENDERER.md.
+/// off the table (the blended faces too, drawn by <see cref="RetainedBlend"/>). A frame
+/// whose cells cannot all be published keeps every map packet, counted by reason. See
+/// "The map" in docs/GPU_RETAINED.md.
 /// </summary>
 static class RetainedMap
 {
@@ -23,12 +23,13 @@ static class RetainedMap
     const uint VisibleCount = 0x801B9E14, VisibleList = 0x801B9F16, Cells = 0x8017BED0;
     const uint Turns = 0x8017BDB8, SceneFlags = 0x8017BE8C;
 
-    // SceneTriangles, SceneQuads, MapTriangles, MapQuads: the scene's face routines.
-    static readonly uint[] Routines = [0x8001F954, 0x8001FD00, 0x8001D2A8, 0x8001DB64];
+    // SceneTriangles, SceneQuads, MapTriangles, MapQuads, then the smooth faces'
+    // SceneStep1E5A0 (GT3 records) and SceneStep1EEAC (GT4): the scene's face routines.
+    static readonly uint[] Routines = [0x8001F954, 0x8001FD00, 0x8001D2A8, 0x8001DB64, 0x8001E5A0, 0x8001EEAC];
 
     static readonly ModInfo _self = new() { Id = "st.retainedmap", Name = "Retained map", Version = "1.0" };
     static readonly PacketFilter _filter = new();
-    static bool _published;
+    static bool _published, _open;
     static long _frames, _cells, _flat, _blendedFaces;
 
     public static void Install() => HookAttach.OnOverlayLoad("retained map", Attach);
@@ -53,23 +54,25 @@ static class RetainedMap
     {
         // The first face routine: the cells are projected, a0 is their translations.
         if (c.RA == 0x80020DACu) _published = GpuWorld.Capture && Publish(c, m);
-        if (_published && GpuWorld.Drawing) _filter.Open(m);
+        _open = _published && GpuWorld.Drawing;
+        if (_open) _filter.Open(m);
     }
 
     public static void After(CpuContext c, IMemory m)
     {
-        if (_published && GpuWorld.Drawing) _filter.Close(m, PacketFilter.Semi);
+        if (!_open) return;
+        _open = false;
+        _filter.Close(m, RetainedBlend.Enabled ? null : PacketFilter.Semi);
     }
 
     static bool Publish(CpuContext c, IMemory m)
     {
-        if ((m.ReadU8(SceneFlags) & 6) != 0) { GpuWorld.Fallback("map", "flicker-recolour"); return false; }
         uint bank = m.ReadU32(Scratch + 0xC), record = m.ReadU32(Scratch + 0x3C4), table = c.A0;
         uint rgb = m.ReadU32(Scratch + 0x44) & 0xFFFFFF;
         int count = m.ReadU16(VisibleCount);
         if (count > 256) { GpuWorld.Fallback("map", "visible-count"); return false; }
-        var instances = new RetainedScene.ModelInstance[count];
-        var runs = new RetainedMeshes.Run[2];
+        var instances = new (RetainedScene.ModelInstance Inst, RetainedMeshes.Mesh Mesh, RetainedMeshes.Run[] Runs, uint Corners)[count];
+        int nearLimit = (int)m.ReadU32(Scratch + 0x8C);
         // The walk's order, last visible cell first, as the corner buffer is laid out.
         uint corners = m.ReadU32(Scratch + 0x34);
         for (int i = count - 1; i >= 0; i--)
@@ -77,17 +80,16 @@ static class RetainedMap
             uint cell = Cells + m.ReadU16(VisibleList + (uint)i * 2) * 12u;
             uint descriptor = bank + 0xC + m.ReadU8(cell) * 0x28u, base_ = bank + 0xC;
             uint faces = base_ + m.ReadU32(descriptor + 0x10);
-            int triangles = m.ReadU16(descriptor + 0x18), quads = m.ReadU16(descriptor + 0x1C);
-            runs[0] = new(RetainedMeshes.FaceShape.FlatTriangle, faces, triangles);
-            runs[1] = new(RetainedMeshes.FaceShape.FlatQuad, faces + (uint)triangles * 0x14, quads);
+            bool flat = (m.ReadU8(cell + 4) & 3) == 0;
+            var runs = Runs(m, descriptor, faces, flat);
             uint normals = base_ + m.ReadU32(descriptor + 8), vertices = base_ + m.ReadU32(descriptor);
             int vertexCount = (int)m.ReadU32(descriptor + 4);
-            var mesh = RetainedMeshes.Get(m, descriptor, runs, normals, vertexCount, out string? reason);
+            // A flat cell's mesh is its flat runs only: a key of its own.
+            var mesh = RetainedMeshes.Get(m, flat ? descriptor | 1 : descriptor, runs, normals, vertexCount, out string? reason);
             if (mesh == null) { GpuWorld.Fallback("map", reason ?? "mesh"); return false; }
             int pose = RetainedMeshes.Rigid(m, vertices, vertexCount);
             if (pose == 0) { GpuWorld.Fallback("map", "vertex-range"); return false; }
             int turn = m.ReadU8(cell + 3) & 3;
-            bool flat = (m.ReadU8(cell + 4) & 3) == 0;
             var inst = new RetainedScene.ModelInstance
             {
                 MeshStart = mesh.Start, MeshCount = mesh.Opaque, MeshAll = mesh.Total, Pose = pose,
@@ -97,7 +99,8 @@ static class RetainedMap
             };
             Place(ref inst, m, Turns + (uint)turn * 0x20, table + (uint)i * 16);
             Light(ref inst, m, record, record + (uint)turn * 0x14);
-            instances[count - 1 - i] = inst;
+            if (!flat) Flicker.Recolour(ref inst, m.ReadU8(SceneFlags));
+            instances[count - 1 - i] = (inst, mesh, runs, corners);
             if (RetainedCheck.On)
                 RetainedCheck.Cell(m, inst, vertices, vertexCount, corners, normals, runs, record,
                                    record + (uint)turn * 0x14, flat);
@@ -105,10 +108,36 @@ static class RetainedMap
             _flat += flat ? 1 : 0;
             _blendedFaces += mesh.Blended;
         }
-        foreach (var inst in instances) RetainedScene.AddInstance(inst);
+        foreach (var (inst, mesh, runs, at) in instances)
+        {
+            RetainedScene.AddInstance(inst);
+            // The map's blended faces at the key of their deepest corner, dropped at
+            // 4096 or under the near limit, as the face routines link them.
+            if (RetainedBlend.Enabled && mesh.Blended > 0)
+                RetainedBlend.Add(m, mesh, runs, at, RetainedBlend.Keying.Deepest, nearLimit - 1, 4096, false, 0);
+            else if (mesh.Blended > 0) GpuWorld.Fallback("map", "blended-faces");
+        }
         _frames++;
         _cells += count;
         return true;
+    }
+
+    /// <summary>A cell's face runs from its descriptor: FT3 and FT4 (<c>+0x18</c>,
+    /// <c>+0x1C</c>), then GT3 and GT4 (<c>+0x1A</c>, <c>+0x1E</c>), one after another
+    /// from <paramref name="faces"/>. The scene's own flat cells (<c>+4 &amp; 3 == 0</c>)
+    /// draw only the first two; the smooth ones are drawn for the others alone.</summary>
+    static RetainedMeshes.Run[] Runs(IMemory m, uint descriptor, uint faces, bool flat)
+    {
+        int ft3 = m.ReadU16(descriptor + 0x18), ft4 = m.ReadU16(descriptor + 0x1C);
+        uint gt3At = faces + (uint)ft3 * 0x14 + (uint)ft4 * 0x1C;
+        int gt3 = flat ? 0 : m.ReadU16(descriptor + 0x1A), gt4 = flat ? 0 : m.ReadU16(descriptor + 0x1E);
+        return
+        [
+            new(RetainedMeshes.FaceShape.FlatTriangle, faces, ft3),
+            new(RetainedMeshes.FaceShape.FlatQuad, faces + (uint)ft3 * 0x14, ft4),
+            new(RetainedMeshes.FaceShape.SmoothTriangle, gt3At, gt3),
+            new(RetainedMeshes.FaceShape.SmoothQuad, gt3At + (uint)gt3 * 0x18, gt4),
+        ];
     }
 
     /// <summary>The GTE's rotation (4.12) from <paramref name="matrix"/> and its

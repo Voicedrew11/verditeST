@@ -154,8 +154,8 @@ The tour over the 12 areas the fixed warp reaches is below the table.
 | `func_8001CDF8` | the scene's fourth preparation pass; writes no packet | `ScenePrepare4`, `ST_SCENEPREPARE4` | 0 in 2,241 |
 | `func_8001D2A8` | the map's GT3s, every visible cell's triangles | `MapTriangles`, `ST_MAPTRIANGLES` | 0 in 2,246 |
 | `func_8001DB64` | the map's GT4s, every visible cell's quads | `MapQuads`, `ST_MAPQUADS` | 0 in 2,257 |
-| `func_8001E5A0` | a scene step after the map's quads; wrote no packet in map 0 | `SceneStep1E5A0`, `ST_SCENESTEP1E5A0` | 0 in 2,257 |
-| `func_8001EEAC` | the scene's last step; wrote no packet in map 0 | `SceneStep1EEAC`, `ST_SCENESTEP1EEAC` | 0 in 2,257 |
+| `func_8001E5A0` | the map's smooth GT3s: each non-flat cell's third run (0x18-byte records, counted at the descriptor's `+0x1A`), a normal a corner; maps 44 to 46 only (`GPU_RETAINED.md`) | `SceneStep1E5A0`, `ST_SCENESTEP1E5A0` | 0 in 2,257 |
+| `func_8001EEAC` | the map's smooth GT4s: the fourth run (0x20 bytes, counted at `+0x1E`); maps 44 to 46 only | `SceneStep1EEAC`, `ST_SCENESTEP1EEAC` | 0 in 2,257 |
 | `func_8001F954` | the scene's FT3s, beside func_8001FD00's FT4s. A leaf | `SceneTriangles`, `ST_SCENETRIANGLES` | 0 in 2,241 |
 | `func_8001FD00` | the scene's FT4s: a list of 12-byte records at 0x8017BED0, indexed from 0x801B9F16, counted at 0x801B9E14. A leaf | `SceneQuads`, `ST_SCENEQUADS` | 0 in 2,241 |
 | `func_80020164` | a scene step between the scene's own quads and the map's; wrote no packet in map 0 | `SceneStep20164`, `ST_SCENESTEP20164` | 0 in 2,241 |

@@ -32,11 +32,17 @@ static class RetainedMeshes
     /// <summary>A run of face records of one shape.</summary>
     public readonly record struct Run(FaceShape Shape, uint First, int Count);
 
+    /// <summary>One face of a built mesh: its first corner in the store and how many (3,
+    /// or 6 for a quad), whether its record is blended, and its record (the run and
+    /// the index in it), in the records' order.</summary>
+    public readonly record struct Face(int Corner, int Corners, bool Semi, int Run, int Index);
+
     /// <summary>A built mesh: its corners in the store (opaque first, then blended), and
     /// how many faces it has and how many of them are blended.</summary>
     public sealed class Mesh
     {
         public int Start, Opaque, Total, Vertices, Faces, Blended;
+        public Face[] FaceList = [];
         public uint NormalBytes;
         public ulong Hash;
     }
@@ -110,9 +116,11 @@ static class RetainedMeshes
         var faces = new List<RetainedScene.Vertex[]>();
         uint normalBytes = 0;
         var semi = new List<bool>();
+        var where = new List<(int Run, int Index)>();
         Span<int> vi = stackalloc int[4];
-        foreach (var r in runs)
+        for (int run = 0; run < runs.Length; run++)
         {
+            var r = runs[run];
             var s = r.Shape;
             for (int f = 0; f < r.Count; f++)
             {
@@ -125,6 +133,7 @@ static class RetainedMeshes
                 }
                 faces.Add(Corners(m, rec, s, normals, vi));
                 semi.Add((m.ReadU8(rec + 0xB) & 2) != 0);
+                where.Add((run, f));
                 foreach (uint at in s.NormalsAt) normalBytes = Math.Max(normalBytes, m.ReadU16(rec + at) + 8u);
             }
         }
@@ -132,7 +141,13 @@ static class RetainedMeshes
         // last-built face first and its first on top: the store holds them last first.
         var opaque = new List<RetainedScene.Vertex>();
         var blended = new List<RetainedScene.Vertex>();
-        for (int i = faces.Count - 1; i >= 0; i--) (semi[i] ? blended : opaque).AddRange(faces[i]);
+        var placed = new int[faces.Count];
+        for (int i = faces.Count - 1; i >= 0; i--)
+        {
+            var list = semi[i] ? blended : opaque;
+            placed[i] = list.Count;
+            list.AddRange(faces[i]);
+        }
         var mesh = new Mesh
         {
             Opaque = opaque.Count, Total = opaque.Count + blended.Count, Vertices = count,
@@ -141,6 +156,10 @@ static class RetainedMeshes
         if (!InRam(normals, normalBytes)) { reason = "mesh-normal-range"; return null; }
         opaque.AddRange(blended);
         mesh.Start = RetainedScene.AddMesh(CollectionsMarshal.AsSpan(opaque));
+        mesh.FaceList = new Face[faces.Count];
+        for (int i = 0; i < faces.Count; i++)
+            mesh.FaceList[i] = new(mesh.Start + placed[i] + (semi[i] ? mesh.Opaque : 0), faces[i].Length, semi[i],
+                                   where[i].Run, where[i].Index);
         return mesh;
     }
 

@@ -11,13 +11,16 @@ findings live in `docs/`, split by what you would be doing when you need them.
 
 Phases 0 to 4 of `docs/PORTING_PLAN.md` have passed their gates, with the by-eye
 checks of Phases 2 and 4 still the user's and Phase 3's fuzzer not ported. The repository holds `tools/RecompOne` (the fork at `4125070`, its
-`main` with patches through `0122`) and `tools/verdite-core` (Verdite Core at `f1138e1`). The disc
+`main` with patches through `0122`, and `0123` to `0125` committed here, not pushed) and `tools/verdite-core` (Verdite Core at `f1138e1`). The disc
 recompiles (4027 functions, `applied 199 patches, 0 reimplementations`).
 `scripts/acceptance.py` boots from the movies to the first area, saves, loads both
 ways, changes areas and dies, driven by `ST_AUTOSTART`, the beacon's state and `warp`;
 all 36 area modules load and run. The world ticks at the console's 20 Hz at any drawn
 rate (144 by default); before Phase 4 the port ran it at 60, since the runtime's
 `VSync(3)` did not wait. Phase 5 has started: the draw path's first inventory is in `docs/GEOMETRY.md`, with the open items in `docs/TODO.md`.
+Phase 11's retained GPU world is built and off by default (`ST_GPU_WORLD=1`): every
+world packet off the table over the tour, checked against the game's numbers, not
+yet looked at (`docs/GPU_RETAINED.md`). The fork's patches `0123` to `0125` are local.
 
 ## The documents
 
@@ -34,6 +37,7 @@ rate (144 by default); before Phase 4 the port ran it at 60, since the runtime's
 - [docs/GPU_MODELS.md](docs/GPU_MODELS.md): Phase 11's findings for the models' light and fog.
 - [docs/GPU_COST.md](docs/GPU_COST.md): Phase 11's baseline: what the frame's drawing costs with the GPU path off.
 - [docs/GPU_CONTRACT.md](docs/GPU_CONTRACT.md): Phase 11 Step 1: the shared retained backend read against this game.
+- [docs/GPU_RETAINED.md](docs/GPU_RETAINED.md): Phase 11 Steps 3 and 4 as built: the map, models, poses and blended faces on the GPU (`ST_GPU_WORLD=1`).
 - [docs/INPUT.md](docs/INPUT.md): the pad library, the button table, vibration (Phase 8).
 - [docs/ENV_VARS.md](docs/ENV_VARS.md): every `ST_*` switch.
 - [docs/TODO.md](docs/TODO.md): what is open now.

@@ -29,8 +29,10 @@ public static class GpuWorld
 
     static readonly ModInfo _self = new() { Id = "st.gpuworld", Name = "Retained world", Version = "1.0" };
 
-    /// <summary>0 packets, 1 shadow (published, not drawn), 2 drawn.</summary>
-    public static int Mode { get; set; }
+    /// <summary>0 packets, 1 shadow (published, not drawn), 2 drawn. Set from the
+    /// settings window's thread; read once a frame on the game thread.</summary>
+    public static int Mode { get => Volatile.Read(ref _mode); set => Volatile.Write(ref _mode, Math.Clamp(value, 0, 2)); }
+    static int _mode;
 
     public static bool Probe { get; set; }
 
@@ -172,6 +174,7 @@ public static class GpuWorld
                           $"models {RetainedModels.Report()}, meshes {RetainedMeshes.Builds} built/{RetainedMeshes.Hits} hits/" +
                           $"{RetainedMeshes.Rebuilds} rebuilt, store {RetainedScene.MeshCornerCount} corners/" +
                           $"{RetainedScene.PoseTexels} texels, GPU draws {RetainedScene.MainDraws}/missed {RetainedScene.MainMissed}, " +
-                          $"instances drawn {RetainedScene.InstancesDrawn}, fallbacks: {reasons}");
+                          $"instances drawn {RetainedScene.InstancesDrawn}, blended faces {RetainedBlend.Faces} published/" +
+                          $"{RetainedBlend.Dropped} dropped by key/{RetainedScene.BlendDrawn} drawn, fallbacks: {reasons}");
     }
 }

@@ -6,7 +6,8 @@
 Run from the repository root after building Release. Boots a new game, then for each
 map in patches/Arrivals.cs warps there without a point (so the player lands where a
 door would put them), stands, turns a full circle in place and stands again. The
-extra ST_* settings go to the game, usually ST_LITERAL=verify or a probe. It prints
+extra ST_* settings go to the game, usually ST_LITERAL=verify or a probe;
+TOUR_MAPS=21,24 visits only those. It prints
 each map's HP after the visit and judges nothing else: read the log. After a death it
 boots a new game, whose log is <log>.2, <log>.3 and so on. About 25 s a map. See "Measuring the draw path" in docs/DEVELOPMENT.md.
 """
@@ -35,7 +36,9 @@ def main() -> None:
     log = sys.argv[1]
     game, boots = None, 0
     try:
-        for area in maps_with_arrivals():
+        only = os.environ.get("TOUR_MAPS")
+        areas = [a for a in maps_with_arrivals() if not only or str(a) in only.split(",")]
+        for area in areas:
             if game is None:  # first, or after a death: a dead player loads no area
                 boots += 1
                 game = Game("new", f"{log}.{boots}" if boots > 1 else log)

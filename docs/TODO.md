@@ -28,17 +28,12 @@ About 95 commits on `main`. At your word at 12:34, `main` was pushed to `origin`
 - **Input (Phase 8):** a WASD layout, mouse look, and vibration (fork patch 0122).
 - **Settings (Phase 10):** `Settings ▸ Testing` with the port's switches live and
   kept; first-run setup from `config/onboarding.json`.
-- **GPU renderer (Phase 11), planned on Verdite3's route:** the map's cells, faces,
-  light and linear fog, and all twelve model face writers, are modelled in plain C#
-  and match the game's packets word for word over the tour (about 3 million faces, 0
-  differences), including the flicker's recolour and the near faces. Read and
-  counted: the models' light blend, and what sets it (an entity's fog mode is its
-  distance; the low flag bits are transparency). Baseline cost: under 1.4 ms a frame
-  at p95. The one ~600 ms stall per game start is the .NET compiler, not the
-  drawing, and a ReadyToRun publish takes it to 5 ms with the game playing and
-  verifying the same (`docs/GPU_COST.md`); not yet the default build. Step 1 is
-  read (`docs/GPU_CONTRACT.md`): the shared backend needs two small additions for this game, a linear 4096 fog curve and a
-  post-fog recolour.
+- **GPU renderer (Phase 11), built, off by default:** `ST_GPU_WORLD=1` draws the
+  whole world (map, models, poses, blended faces) on the GPU from kept meshes, and
+  takes every world packet off the table: over the 12-map tour, 0 fallbacks, 0 missed
+  draws, and what is left as packets is the HUD, text, fades and libgpu's own.
+  Checked against the game's own numbers every frame; looked at by nobody yet
+  (`docs/GPU_RETAINED.md`).
 
 **Pushed:** `tools/RecompOne` split to `Voicedrew11/verdite-recompone` `main`
 (`7031630..4125070`: patches 0117 to 0122, the only subtree edit tonight being 0122),
@@ -50,9 +45,8 @@ eye or by hand (smoothing, widescreen, the Z-buffer and picture switches, WASD,
 mouse, vibration, the Testing tab, first-run setup), and one decision (how to reach
 the port's settings from the game's menu; a spare button is recommended).
 
-**Next for Phase 11:** the fog curve as a fork patch (with `MapLight` as its
-reference), then the near divisions' arithmetic, then wiring the map into the
-retained backend.
+**Next for Phase 11:** your look at `ST_GPU_WORLD=1` (below), then the push of
+runtime `0123` to `0125`.
 
 ## Waiting on the user
 
@@ -90,28 +84,31 @@ retained backend.
 
 ## Phase 11: what is left
 
-Planned 2026-11-10 (`docs/RENDERER_PLAN.md`), on Verdite3's route (the user's call:
-it is a recompilation like this one). Read: the map's cells, meshes, faces,
-projection, lighting record and linear fog (`docs/GPU_RENDERER.md`). The scene
-census (`ST_SCENE_CENSUS=1`) gives every packet of the session an owner, 0
-unattributed. Verify compares RAM, scratchpad, registers, GTE and the calls each
-routine makes: 0 mismatches over the session. The map reference
-(`ST_MAP_REFERENCE=1`) works out every bulk face of the map in plain C#, the scene's flat
-cells included, light and fog too, and matches the game's packets word for word.
-The near splits are measured: pieces in the face's own key, and the 98.5% that
-draw nothing are all off the screen. The models' light is read
-(`docs/GPU_MODELS.md`, inspection only). The models' unfogged and fogged face writers (eight) match a plain-C# reference word
-for word, the fogged ones' IR0 rules read. Over the tour, 0 differences in 11 maps.
-The flicker's colour is modelled and checked, and all twelve model writers match
-over the tour. The blend's modes are read and counted (`docs/GPU_MODELS.md`). The baseline cost is
-measured (`docs/GPU_COST.md`, under 1.4 ms a frame at p95; the one ~600 ms stall a
-boot is the .NET compiler, and a ReadyToRun publish takes it to 5 ms, measured). Step 1 is read
-(`docs/GPU_CONTRACT.md`): a linear 4096 fog curve and a post-cue recolour are the two
-runtime additions this game needs. What sets each
-model's blend and fog mode is read and counted (`docs/GPU_MODELS.md`, "What each
-caller passes": the entities' fog mode by distance). The low flag bits are the
-transparency (on, and the blend mode). Next: the near divisions' own arithmetic; the census and call
-order in the contexts not reached (held models, text, tints, the flicker).
+**Built 2026-11-10** (`docs/GPU_RETAINED.md`), off by default until looked at:
+`ST_GPU_WORLD=1` or `Settings ▸ Testing ▸ Retained GPU world` draws the map (its
+flat and smooth faces), the models (entities, effects, cels, held models), their poses and their blended faces on
+the GPU from meshes kept there, the flicker's recolour included, and takes their
+packets off the table. Checked against the game's own numbers every frame
+(`ST_GPU_WORLD_CHECK=1`): placement, depth, fog and light match but for the
+differences listed in "What differs from the console". Runtime patches `0123`
+(the fog curve), `0124` (the recolour) and `0125` (blended faces without `0079`) are
+committed in `tools/RecompOne`, **not pushed to the fork**.
+
+Left, in order:
+
+1. **By eye** (the user): the retained world against `ST_GPU_WORLD=0` in every map,
+   most of all the fog at distance, maps 24 and 32 under the flicker, effects and cels,
+   the hands, near walls, the menu's world. Then the default.
+2. **Push `0123` to `0125`** to `Voicedrew11/verdite-recompone` (ask first), after
+   Verdite2's and Verdite3's acceptance runs on them.
+3. **Stop running the face routines** whose packets are taken off: what they leave
+   besides packets is measured (`ST_WRITER_EFFECTS=1`; no game RAM, only scratchpad,
+   GTE and per-frame statistics, "Not done" in `docs/GPU_RETAINED.md`). Left: show the
+   models' path reads none of the GTE registers or scratchpad words before writing
+   them, then skip under a verify. Worth about 0.15 ms of CPU at p95.
+4. The far colour (the GPU fogs to black, the game to `(5, 5, 5)`), the map's 4065
+   cap on a mesh's last vertices, faces within 128 units of the eye.
+5. Step 5's enhancements through the retained world, each a Testing switch; Step 6.
 
 ## Phase 10: what is left
 

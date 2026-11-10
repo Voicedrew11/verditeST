@@ -47,6 +47,7 @@ public sealed class TestingSection : ISettingsSection
         new("st.zbuffer", "ST_ZBUFFER", () => ZBuffer.Enabled, v => ZBuffer.Enabled = v),
         new("st.nearscreen", "ST_NEARSCREEN", () => NearScreen.Enabled, v => NearScreen.Enabled = v),
         new("st.menuworld", "ST_MENUWORLD", () => MenuWorld.Enabled, v => MenuWorld.Enabled = v),
+        new("st.gpu_world", "ST_GPU_WORLD", () => GpuWorld.Mode == 2, v => GpuWorld.Mode = v ? 2 : 0),
         new(Widescreen.HudKey, "ST_WIDESCREEN_HUD", () => Widescreen.AnchorHud, Widescreen.SetAnchorHud),
         new(Mouse.OnKey, "ST_MOUSE", () => Mouse.Enabled, v => Mouse.Enabled = v),
         new(Mouse.LeadKey, "ST_MOUSE_LEAD", () => Mouse.Lead, v => Mouse.Lead = v),
@@ -271,6 +272,9 @@ public sealed class TestingSection : ISettingsSection
             "Corners keep the fraction of a pixel the GTE dropped, so edges stop jittering as the view moves.");
         Toggle("Z-buffer", K("st.zbuffer"),
             "Per-pixel occlusion from the map's depths, instead of the painter's order.");
+        Toggle("Retained GPU world", K("st.gpu_world"),
+            "Draws the map, the creatures and objects, and their blended faces on the GPU from meshes kept there, " +
+            "instead of the game's packets. Needs the Z-buffer. Takes effect from the next frame (docs/GPU_RENDERER.md).");
     }
 
     static void DrawProbes()

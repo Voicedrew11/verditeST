@@ -66,3 +66,5 @@ Most on/off switches and `ST_FPS` are also on `Settings ▸ Testing`, kept in
 | `ST_GPU_WORLD_CHECK` | off | `1`: every 5 s, the retained map's and models' placement, fog, light and kept faces against the numbers the game computed the same frame |
 | `ST_GPU_MODEL_CLIP` | on | `0`: a retained model face reaching past the eye placed at the GTE's saturated projection, as its packets were, not clipped at the near plane |
 | `ST_GPU_TIMES` | off | `1`: every 5 s, the GPU's milliseconds a present by pass (the frame's packets, the retained world, the present) |
+| `ST_GPU_BLEND` | on | `0`: under the retained world, blended faces stay packets instead of being drawn by the backend at their table entries |
+| `ST_WRITER_EFFECTS` | off | `1`: every 5 s, the words of RAM, the scratchpad, the GTE and the registers that the scene's face routines and the models' steps change besides their packets |

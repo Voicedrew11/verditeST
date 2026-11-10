@@ -141,6 +141,9 @@ through the pages is the user's to try.
 
 ## Measuring the draw path
 
+`scripts/tour.py <log> [ST_X=1 ...]` visits every map with an arrival point;
+`TOUR_MAPS=24,38` in its environment visits only those.
+
 `scripts/session.py <log> [ST_X=1 ...]` boots a new game and plays the same moves
 every run: stand, walk forward and back along the first heading, turn in place, open
 and close the menu, then walk off the ledge to the left of the start and press Cross

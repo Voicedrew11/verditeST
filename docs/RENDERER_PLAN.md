@@ -122,6 +122,10 @@ table keys at the original operations, as instrumentation, not a renderer.
 GPU pose results match the native integers, including negative deltas and wraps;
 unknown data is a counted fallback. `ST_GPU_WORLD=shadow` exercises all of it
 beside the packets before `1` suppresses any.
+Built 2026-11-10 (`docs/GPU_RETAINED.md`): the map and models as instances of kept
+meshes (not a world-space mesh: the map's cells are a model's shape), poses as kept
+keys and deltas, exact against the GTE's blend; over the tour 0 parts uploaded a frame
+and 0 fallbacks. The pose writes are not skipped, so 3.3's readers are not yet owed.
 
 ## Step 4: the main view on the GPU
 
@@ -132,6 +136,11 @@ packet presentation over everything.
 
 **Gate**: every face type and submit path has a GPU path and an exercised check;
 residual world packets are listed by caller and reason.
+Built 2026-11-10: every face type (the map's flat and smooth runs, the twelve model
+writers, the blended faces at their table entries) has a GPU path and a per-frame
+check; the census leaves no world packet over the tour. Unreached: the hands
+(nothing held in a new game). The face routines still run under a filter (rule 1's
+end state is open, `TODO.md`).
 
 ## Step 5: lighting, fog and the buffers
 

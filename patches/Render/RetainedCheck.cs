@@ -36,13 +36,18 @@ static class RetainedCheck
     static int _nearLimit;
     static long _faces, _lightOff, _lightOff2;
     static int _worstLight;
-    static long _at;
+    static long _at, _zSamples;
 
     /// <summary>One published model part, at its step's entry: the corner buffer at
     /// the scratchpad's <c>+0x40</c> holds its vertices' screen XY, depth and fog.</summary>
-    public static void Model(IMemory m, in RetainedScene.ModelInstance i, uint vertices, int count, uint corners, bool fog)
+    public static void Model(IMemory m, in RetainedScene.ModelInstance i, uint vertices, int count, uint corners, bool fog,
+                             string who)
     {
+        long before = _models.ZOff;
         Vertices(_models, m, i, vertices, count, corners, (int)i.Dqa, (int)i.Dqb, fog, held: true);
+        if (_models.ZOff > before && _samples.Count < 12 && _zSamples++ % 200 == 0)
+            _samples.Add($"models depth off in {AgentBeacon.Map}: {who}, {_models.ZOff - before} of {count} vertices, " +
+                         $"t ({i.Vtx},{i.Vty},{i.Vtz}), corners 0x{corners:X8}, vertices 0x{vertices:X8}");
         // The table's range on the faces' mean depth: lo < (mean >> 5) + bias < hi,
         // against the instance's Near <= mean of (SZ >> 2) < Far, both from the same corners.
         uint bank = m.ReadU32(0x1F80000C), descriptor = m.ReadU32(0x1F800020);
@@ -150,16 +155,20 @@ static class RetainedCheck
                 int key = (deepest >> 5) + (sbyte)m.ReadU8(rec + 0xA);
                 if (key >= 4096) _droppedFar++;
                 else if (key < nearLimit && deepest > 0) _droppedNear++;
-                uint n = normals + m.ReadU16(r.First + (uint)f * r.Shape.Size + r.Shape.NormalsAt[0]);
-                short nx = (short)m.ReadU16(n), ny = (short)m.ReadU16(n + 2), nz = (short)m.ReadU16(n + 4);
-                uint want = MapLight.Lit(light, inputs, nx, ny, nz, i.Rgbc);
-                int off = 0;
-                for (int ch = 0; ch < 3; ch++)
-                    off = Math.Max(off, Math.Abs((int)((want >> (8 * ch)) & 0xFF) - Shader(i, nx, ny, nz, ch)));
-                _faces++;
-                if (off > 0) _lightOff++;
-                if (off > 1) _lightOff2++;
-                _worstLight = Math.Max(_worstLight, off);
+                // One normal a flat face, one a corner a smooth one.
+                foreach (uint normalAt in r.Shape.NormalsAt)
+                {
+                    uint n = normals + m.ReadU16(rec + normalAt);
+                    short nx = (short)m.ReadU16(n), ny = (short)m.ReadU16(n + 2), nz = (short)m.ReadU16(n + 4);
+                    uint want = MapLight.Lit(light, inputs, nx, ny, nz, i.Rgbc);
+                    int off = 0;
+                    for (int ch = 0; ch < 3; ch++)
+                        off = Math.Max(off, Math.Abs((int)((want >> (8 * ch)) & 0xFF) - Shader(i, nx, ny, nz, ch)));
+                    _faces++;
+                    if (off > 0) _lightOff++;
+                    if (off > 1) _lightOff2++;
+                    _worstLight = Math.Max(_worstLight, off);
+                }
             }
     }
 
