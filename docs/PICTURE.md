@@ -11,7 +11,7 @@ user's.
 | `ST_TRUECOLOR` | 24-bit output: the display target is RGBA8 (`GteDepth.TrueColor`) | `TrueColor.cs` |
 | `ST_PERSPECTIVE` | perspective-correct textures: the runtime's address map (`GteVertexMap`) recovers each corner's depth from the GTE and the renderer interpolates U/W, V/W, 1/W | `Perspective.cs` |
 | `ST_SUBPIXEL` | the fraction of a pixel the GTE truncates, kept by the same map | `Subpixel.cs` |
-| `ST_ZBUFFER` | per-pixel occlusion instead of the ordering table, from the same map's depths; a triangle with no depth keeps painter's order, so a miss is the old picture. Blended surfaces drawn in table order (`ST_BLENDORDER`, the fork's `0079`) | `ZBuffer.cs` |
+| `ST_ZBUFFER` | per-pixel occlusion instead of the ordering table, from the same map's depths; a triangle with no depth keeps painter's order, so a miss is the old picture. Blended surfaces drawn in table order (`ST_BLENDORDER`, the fork's `0079`). The swinging arm is left out of the map, so it draws over the world as the console's front table does (`HeldModelLayer`, "The arm" in `docs/SMOOTHING.md`) | `ZBuffer.cs` |
 
 The probes hook every program's `DrawOTag` and `PutDrawEnv` (the six columns of
 "The SDK in each program" in `docs/RECOMPILATION.md`).

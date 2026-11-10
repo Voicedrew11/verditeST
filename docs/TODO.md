@@ -86,7 +86,7 @@ runtime `0123` to `0125`.
 
 **Built 2026-11-10** (`docs/GPU_RETAINED.md`), off by default until looked at:
 `ST_GPU_WORLD=1` or `Settings ▸ Testing ▸ Retained GPU world` draws the map (its
-flat and smooth faces), the models (entities, effects, cels, held models), their poses and their blended faces on
+flat and smooth faces), the models (entities, effects, cels; the held models stay packets, over the world), their poses and their blended faces on
 the GPU from meshes kept there, the flicker's recolour included, and takes their
 packets off the table. Checked against the game's own numbers every frame
 (`ST_GPU_WORLD_CHECK=1`): placement, depth, fog and light match but for the
@@ -98,7 +98,7 @@ Left, in order:
 
 1. **By eye** (the user): the retained world against `ST_GPU_WORLD=0` in every map,
    most of all the fog at distance, maps 24 and 32 under the flicker, effects and cels,
-   the hands, near walls, the menu's world. Then the default.
+   the arm while swinging (Triangle), near walls, the menu's world. Then the default.
 2. **Push `0123` to `0125`** to `Voicedrew11/verdite-recompone` (ask first), after
    Verdite2's and Verdite3's acceptance runs on them.
 3. **Stop running the face routines** whose packets are taken off: what they leave
@@ -149,8 +149,8 @@ Started 2026-11-10: the camera and the models' positions and angles are carried
 (`docs/SMOOTHING.md`). The poses blend between keys,
 so the carried clip time smooths them. The HUD's gauges step
 once, with nothing to carry. The measured gate is met (a creature in map 24 new
-on every frame, the eye still). Left: the arm, which needs a held weapon in a measured
-run (a new game holds none). The cell
+on every frame, the eye still). Left: the arm's swing, which steps at 20 Hz (Triangle
+swings it; "The arm" in `docs/SMOOTHING.md`). The cell
 cull trails the carried eye on about 1% of walking frames (`docs/SMOOTHING.md`).
 
 ## Phase 5: what is left

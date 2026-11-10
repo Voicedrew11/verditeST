@@ -164,7 +164,7 @@ The tour over the 12 areas the fixed warp reaches is below the table.
 | `func_80021654` | the area load's fade: while the loader (0x801B5920) runs, a full-screen FT4S whose shade follows the vblanks since 0x801B5938, over 0x78 of them | `LoadFade`, `ST_LOADFADE` | 0 in 1,117 |
 | `func_8002181C` | a full-screen FT4 of 320 by 240 (func_80021518) in the colour at 0x8017BD6A, 6E, 72 and the blend at 0x8017BD68, for one frame when the byte at 0x8017BD66 is set, which it clears | `ScreenTintA`, `ST_SCREENTINTA` | 0 in 1,117 |
 | `func_800218D8` | the second full-screen tint, from the bytes after ScreenTintA's (flag 0x8017BD67, colour 0x8017BD6C, 70, 74, blend 0x8017BD69) | `ScreenTintB`, `ST_SCREENTINTB` | 0 in 1,117 |
-| `func_80021AC4` | a model drawn with func_80022010 from the draw stage, called twice (0 and 1): a hand each, probably; drew nothing in map 0 | `HeldModel`, `ST_HELDMODEL` | 0 in 2,236 |
+| `func_80021AC4` | a model drawn with func_80022010 from the draw stage, called twice (0 and 1): each hand's arm while it swings (Triangle), into the front table, which the probes here do not walk ("The arm" in `docs/SMOOTHING.md`) | `HeldModel`, `ST_HELDMODEL` | 0 in 2,236 |
 | `func_80022010` | every model polygon: FT3 to GT4, semi-transparent or not; called by func_80022678 and func_80021AC4 | `ModelPolygons`, `ST_MODELPOLYGONS` | 0 in 1,718 |
 | `func_80022678` | one model: its matrix, light and pose, then func_80022010 for its polygons | `ModelDraw`, `ST_MODELDRAW` | 0 in 1,030 |
 | `func_80023C6C` | func_800241D0's last call, after the models | `ModelExtras`, `ST_MODELEXTRAS` | 0 in 2,260 |

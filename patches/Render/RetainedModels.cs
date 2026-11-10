@@ -18,7 +18,8 @@ namespace St;
 /// colour, fogged on runtime 0123's curve 6 (held under 4066, as every model vertex is).
 /// The step then runs as the game wrote it and <see cref="PacketFilter"/> takes its
 /// packets off but the blended ones. Every caller (the entities, the effects, the
-/// second list, the cels, the held models) goes through these steps. See "The retained
+/// second list, the cels, the held models) goes through these steps; the held models
+/// are left as packets, drawn over the world (<see cref="HeldModelLayer"/>). See "The retained
 /// models" in docs/GPU_RENDERER.md.
 /// </summary>
 static class RetainedModels
@@ -60,7 +61,7 @@ static class RetainedModels
     static void Before(CpuContext c, IMemory m, uint step)
     {
         _filtering = false;
-        if (!GpuWorld.Capture) return;
+        if (!GpuWorld.Capture || HeldModelLayer.Drawing) return;
         if (!Publish(c, m, step)) return;
         if (!GpuWorld.Drawing) return;
         _filter.Open(m);

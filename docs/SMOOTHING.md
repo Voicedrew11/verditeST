@@ -132,14 +132,34 @@ clip header's `+6` is set) was not read.
 
 ## The arm
 
-`func_80021AC4(hand)`, called twice by the draw stage (0 and 1), draws the model the
-player holds in that hand: the u16 at `player+0x130 + 2 * hand` (`0x80199058`), `-1`
-for none, posed through `func_80035AA8` like a model and lit with the matrix at
-`0x8017BD78`. **A new game holds nothing** (both `0xFFFF`), so in every measurement
-so far it drew nothing; pressing each shoulder and face button once ran its model
-calls for about 0.75 s with nothing to draw. Carrying the arm's swing waits for a
-held weapon in a measured run: equipping one through the menu, or a save that holds
-one (`ST_AUTOSTART=load` needs the acceptance test's way through the card screen).
+`func_80021AC4(hand)`, called twice by the draw stage (0 and 1), draws that hand's
+arm **while it swings**: the s16 at `player+0x130 + 2 * hand` (`0x80199058`) is the
+swing's clip time, `-1` at rest, and is the time handed to `func_80034604` /
+`func_80035AA8` to pose it. The hand's record is the pointer at `player+0xE8 + 4 *
+hand`: `+0xC`/`+0xE`/`+0x10` its view-space place, `+0x14` its angles. So the arm is
+drawn only during an attack, at rest drawing nothing, as on the console. Measured
+2026-11-10 on the first save (`ST_AUTOSTART=load`, nothing equipped): Triangle swings
+hand 0, its time running `0, 0x114, 0x228, ...` for about a second; the unarmed arm's
+record places it at (320, 224, 512), so it swings in from the bottom right, about a
+fifth of its front faces with a corner on the screen. Circle, Square, Cross and the
+shoulders start no swing.
+
+**Drawn over the world.** Its packets go to the 0x40-entry front table
+(`0x80165178 + buffer * 0x100`), which `func_80017634` links ahead of the main
+table's entry 0, so the console draws the arm last, with no depth test. The port gave
+its corners the address map's depths, so the Z-buffer let nearer floor and walls
+cover it (about 7,500 to 11,000 of its triangles a second depth-tested while
+swinging), and the retained world took it as an instance in the world's own depth.
+`HeldModelLayer` (`patches/Render/HeldModelLayer.cs`) keeps it the console's way:
+its parts are not published to the retained world, and after the routine the words
+of its packets are dropped from the address map, so they keep painter's order.
+Measured over the same swings: 8,400 to 12,100 triangles a second in painter's order
+against the HUD's 960, the world's 61,320 tested unchanged. `ST_HELDLAYER=0`
+compares. The ST_GEOPROBE rows for `21AC4` read "no packets" because the probe walks
+the main table only.
+
+Carrying the swing between ticks: the time steps once a tick, so the arm's pose
+steps at 20 Hz; not carried yet.
 
 ## The HUD's gauges
 

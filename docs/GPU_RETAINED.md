@@ -62,7 +62,8 @@ single-part path, with the GTE holding the part's view-space matrix and the mode
 light, and the part's posed vertices at the scratchpad's `+0x48`: the bank's own for
 `ModelPolygons`, a posed copy for `ModelDraw` (read from the bank instead, a tour put
 parts in map 38 1,295 units out). So the step's entry covers every caller: entities,
-effects, the second list, cels and the held models. The instance: the four runs FT3,
+effects, the second list and cels; not the held models, which stay packets in the
+front table, drawn over the world (`HeldModelLayer`, "The arm" in `docs/SMOOTHING.md`). The instance: the four runs FT3,
 FT4, GT3, GT4 from the descriptor, the GTE's matrix and light, the face colour the
 steps set (`0x80`, or under the warm flicker `0x88 - (w >> 13)` with `& 0x10`, else
 `0xA0 - (w >> 11)`, `w` the light's random word at `0x8017BE88`), fogged on curve 6
@@ -172,7 +173,7 @@ plus 0.13 to 0.15 ms of the retained world. Both well inside a 144 Hz frame.
 
 - **The user's eye**, on everything: walls, floors and creatures against the packets
   (`ST_GPU_WORLD=0`), the fog at distance, maps 24 and 32 under the flicker, the effects
-  and cels (blended), the hands, the menu's world, the near walls.
+  and cels (blended), the arm over the world while swinging (Triangle), the menu's world, the near walls.
 - **The face routines still run.** Their packets are taken off, not never made: the
   CPU still spends what it did (about 0.15 ms more at p95, the filter included). A
   native enumeration that publishes without running them is Verdite3's end state

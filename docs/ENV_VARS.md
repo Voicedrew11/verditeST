@@ -60,6 +60,7 @@ Most on/off switches and `ST_FPS` are also on `Settings ▸ Testing`, kept in
 | `ST_ZBUFFER_PROBE` | off | `1`: every 2 s, triangles depth-tested and kept in painter's order, depth steps |
 | `ST_BLENDORDER` | on | `0`: blended surfaces drawn as the depth test meets them, not in table order |
 | `ST_ZBUFFER_THRESHOLD` | 0 | units: restart the depth buffer on a step this large; 0 keeps one buffer a frame |
+| `ST_HELDLAYER` | on | `0`: the swinging arm depth-tested against the world and taken into the retained world, not drawn over it as the console's front table draws it ("The arm" in `docs/SMOOTHING.md`) |
 | `ST_RATECENSUS` | off | seconds: with pacing on, the RAM words that change on frames no stage ran on, printed every window of that many seconds with the map |
 | `ST_GPU_WORLD` | 0 | `1`: the map (and, as they land, the models) drawn by the retained GPU renderer, their packets taken off the table; `shadow`: meshes built and instances published, packets still drawn |
 | `ST_GPU_WORLD_PROBE` | off | `1`: every 5 s, retained frames, instances, packets taken off, mesh builds and fallbacks by reason |

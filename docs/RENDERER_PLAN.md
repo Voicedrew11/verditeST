@@ -54,7 +54,7 @@ The world's families, as known:
 | scene's own | `SceneQuads` FT4, `SceneTriangles` FT3: the map's cells whose `+4 & 3` is 0, flat and unfogged |
 | models | `Models`, `Models2` → `ModelDraw` → `ModelPolygons` (FT3..GT4); `ModelLight` per entity |
 | poses | `func_80033CFC`, `func_80074A04`; slots `MarkClipSlots` `0x8016768C`, `MarkPoseSlots` `0x8016780C` |
-| view-space | `HeldModel` (0) and (1): the hands, probably; nothing held in a new game |
+| view-space | `HeldModel` (0) and (1): each hand's arm while it swings, into the front table, kept packets over the world (`HeldModelLayer`) |
 | effects | `Effect246E4` (vblank timers, `rand`) |
 | presentation | HUD (`HudPanels`, `HudHpMp`, `HudNumber`), `PanelBorder`, text, tints, `LoadFade`, the menu's backdrop |
 | VRAM | `TextureAnimations` (`MoveImage`/`LoadImage`), the light's flicker `0x8017BE88` |
@@ -138,8 +138,9 @@ packet presentation over everything.
 residual world packets are listed by caller and reason.
 Built 2026-11-10: every face type (the map's flat and smooth runs, the twelve model
 writers, the blended faces at their table entries) has a GPU path and a per-frame
-check; the census leaves no world packet over the tour. Unreached: the hands
-(nothing held in a new game). The face routines still run under a filter (rule 1's
+check; the census leaves no world packet over the tour. The arm (the held models)
+is not retained: it stays packets in the front table, over the world
+(`HeldModelLayer`, "The arm" in `docs/SMOOTHING.md`). The face routines still run under a filter (rule 1's
 end state is open, `TODO.md`).
 
 ## Step 5: lighting, fog and the buffers
