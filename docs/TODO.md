@@ -42,8 +42,10 @@ open now.
 ## Phase 11: what is left
 
 Planned 2026-11-10 (`docs/RENDERER_PLAN.md`), on Verdite3's route (the user's call:
-it is a recompilation like this one). First move: the map's cell records from
-`MapQuads`, and the scene census.
+it is a recompilation like this one). Read: the map's cells, meshes, faces,
+projection, lighting record and linear fog (`docs/GPU_RENDERER.md`). The scene
+census runs (`ST_SCENE_CENSUS=1`); map 0 is attributed but for 2 to 33 packets
+inside the scene and 2 outside it. Next: those, then Step 2's verify past RAM.
 
 ## Phase 10: what is left
 

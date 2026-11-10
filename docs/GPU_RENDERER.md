@@ -123,3 +123,31 @@ the shape of the shared `LinearDepthCue` (Verdite3's near/far cue), with this ga
 own arithmetic (full `SZ`, truncating division, the top saturated by `DPCS`). Still
 to read: what the halving count does to the vertices,
 the record table's index, and when the record changes within an area.
+
+## The scene census
+
+`ST_SCENE_CENSUS=1` (`patches/SceneCensus.cs`, Step 0.1 of the plan): after every
+main-loop stage 14, each packet in the ordering table goes to the innermost call of
+`GeometryProbe.Sites` whose span of the packet buffer holds it, then to that call's
+domain; a packet in no span is counted as unattributed. Inside the scene the map's
+routines move their own cursor, the scratchpad's `+0x10`, and the scene writes it
+back to the frame's record only at its end, so calls inside the scene are spanned by
+that cursor. Without it every map packet read as the scene's.
+
+Measured 2026-11-10 over `scripts/session.py` (map 0: stand, walk, turn, the menu, a
+death), a frame:
+
+| domain | packets | kinds |
+|---|---|---|
+| map bulk (`MapQuads`, `MapTriangles`) | 137 to 226 | GT4 125 to 205, GT3 12 to 21 |
+| models | 34 to 96 | FT4 most, FT3, GT3, GT4; FT4S and FT3S when a creature is near |
+| HUD | 22 | 10 mode packets, 8 sprites, 2 F4, 2 FT4 |
+| map (other) | 2 to 33 | FT4, GT3: inside the scene, outside every named call |
+| (unattributed) | 2 | one `0x80` (VRAM to VRAM) and one empty packet |
+| load fade | 0.2 | FT4S |
+
+Not seen in map 0: the near path (`map near`), the scene's own faces, the held
+models, effects, tints and text. Open: what writes the "map (other)" packets inside
+the scene (the light's flicker, or `ScenePrepare` steps, are candidates) and which
+routine adds the unattributed copy (the texture animations run before the frame
+head, so not they).

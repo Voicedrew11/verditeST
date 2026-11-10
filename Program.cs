@@ -92,6 +92,8 @@ St.NearScreen.Install();
 St.MenuWorld.Configure(Verdite.Core.Game.Env("MENUWORLD"), Verdite.Core.Game.Env("MENUWORLD_PROBE"));
 St.MenuWorld.Install();
 St.MapCoverage.Install(Verdite.Core.Game.Env("MAPCOVERAGE"));
+// Every packet of a frame by the domain that wrote it (Phase 11, docs/GPU_RENDERER.md).
+St.SceneCensus.Install(Verdite.Core.Game.Env("SCENE_CENSUS"));
 St.WordWatch.Install(Verdite.Core.Game.Env("WORDWATCH"));
 
 // The draw path's routines in C# (patches/Draw/): ST_LITERAL=1|0|verify, or one
