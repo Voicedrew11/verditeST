@@ -35,4 +35,8 @@ default. Add an entry here when a switch is added to `Program.cs`.
 | `ST_PERSPECTIVE_PROBE` | off | `1`: every 2 s, the address map's roots, propagations, hits and misses |
 | `ST_SUBPIXEL` | on | `0`: every vertex snapped to a whole pixel |
 | `ST_SUBPIXEL_PROBE` | off | `1`: every 2 s, the map's counters and how far the vertices moved |
+| `ST_ZBUFFER` | on | `0`: occlusion by the ordering table alone, as the console |
+| `ST_ZBUFFER_PROBE` | off | `1`: every 2 s, triangles depth-tested and kept in painter's order, depth steps |
+| `ST_BLENDORDER` | on | `0`: blended surfaces drawn as the depth test meets them, not in table order |
+| `ST_ZBUFFER_THRESHOLD` | 0 | units: restart the depth buffer on a step this large; 0 keeps one buffer a frame |
 | `ST_RATECENSUS` | off | seconds: with pacing on, the RAM words that change on frames no stage ran on, printed once |

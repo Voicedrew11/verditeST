@@ -74,6 +74,8 @@ St.Perspective.Configure(Verdite.Core.Game.Env("PERSPECTIVE"), Verdite.Core.Game
 St.Perspective.Install();
 St.Subpixel.Configure(Verdite.Core.Game.Env("SUBPIXEL"), Verdite.Core.Game.Env("SUBPIXEL_PROBE"));
 St.Subpixel.Install();
+St.ZBuffer.Configure(Verdite.Core.Game.Env("ZBUFFER"), Verdite.Core.Game.Env("ZBUFFER_PROBE"));
+St.ZBuffer.Install();
 
 // The draw path's routines in C# (patches/Draw/): ST_LITERAL=1|0|verify, or one
 // routine's own ST_<NAME>. See "The draw path in C#" in docs/GEOMETRY.md.

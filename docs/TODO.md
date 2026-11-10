@@ -7,13 +7,14 @@ open now.
 
 - **By eye:** the camera and the models carried between ticks (`docs/SMOOTHING.md`):
   turning, walking and creatures moving at 144, against `ST_SMOOTH=0`.
-- **By eye:** the picture's switches (`docs/PICTURE.md`), each against its `=0`.
+- **By eye:** the picture's switches (`docs/PICTURE.md`), each against its `=0`; the
+  Z-buffer most of all (decals, the HUD, fades, the menu).
 
 ## Phase 7: what is left
 
 Started 2026-11-10: no dither, 24-bit colour, perspective and sub-pixel are on
 (`docs/PICTURE.md`), the address map hitting 98.5% in map 0. Next: the misses by
-writer, other areas, the Z-buffer from the address map's depths.
+writer, other areas; the Z-buffer is on from the map's depths, packet records next.
 
 ## Phase 6: what is left
 
