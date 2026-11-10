@@ -5,13 +5,14 @@ open now.
 
 ## Waiting on the user
 
-- **By eye:** the camera carried between ticks (`docs/SMOOTHING.md`): turning and
-  walking at 144 against `ST_SMOOTH=0`.
+- **By eye:** the camera and the models carried between ticks (`docs/SMOOTHING.md`):
+  turning, walking and creatures moving at 144, against `ST_SMOOTH=0`.
 
 ## Phase 6: what is left
 
-Started 2026-11-10: the camera is carried (`docs/SMOOTHING.md`). Next: models and
-their poses, the arm, the HUD's gauges, whether the cell cull lags the carried eye.
+Started 2026-11-10: the camera and the models' positions and angles are carried
+(`docs/SMOOTHING.md`). Next: the models' poses, the arm, the HUD's gauges, whether
+the cell cull lags the carried eye.
 
 ## Phase 5: what is left
 

@@ -34,8 +34,29 @@ carried eye near a cell's edge may show the cull a frame early or late; not meas
 
 **By eye (the user):** turning and walking at 144, against `ST_SMOOTH=0`.
 
+## Models carried
+
+`patches/ModelSmoothing.cs`, on with the camera (`ST_SMOOTH_MODELS=0` turns the models
+alone off). The model list `func_800241D0` hands each entity to the model drawer
+`func_80022678` with its position from the record's `+0x74` (three s32) and its angles
+from `+0x8C`, `+0x8E`, `+0x90`; the records are 0xD4 bytes from `0x801BA138`, 117 slots
+up to the list's count at `0x801C0238`. Around the draw stage's call of the model list
+(return `0x80026D4C`), every slot's position and angles are replaced by the ones
+interpolated between its last two ticks, and the tick's are put back after. A slot that
+steps over 0x800 units or 0x300 in an angle in one tick snaps (a new entity in the
+slot), and an overlay load re-primes.
+
+Measured 2026-11-10 over `scripts/tour.py`'s 12 areas with `ST_SMOOTH_PROBE=1`: windows
+with something moving carried 32 to 303 entity draws a second at 144 fps, one or two
+moving entities on every frame; snaps came in two windows only (44 and 39), around area
+loads. Most windows had nothing moving. The acceptance test passes with it on.
+
+Not measured: a creature followed on purpose (none was approached), and its **pose**:
+the animation frame is still the tick's, so a walking creature glides between ticks
+with its legs held. The poses are next.
+
 ## Not carried yet
 
-Models and creatures and their poses, the arm, the HUD's gauges, sprite cels (held
+Creatures' poses, the arm, the HUD's gauges, sprite cels (held
 to the tick by `patches/DrawStageTick.cs`, not carried), and the loops that draw
 their own frames (the menu, which has no world behind it).

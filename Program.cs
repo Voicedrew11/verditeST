@@ -87,6 +87,9 @@ St.RateCensus.Install(Verdite.Core.Game.Env("RATECENSUS"));
 // The camera carried between world ticks. See "The camera carried" in docs/SMOOTHING.md.
 St.ViewSmoothing.Configure(Verdite.Core.Game.Env("SMOOTH"), Verdite.Core.Game.Env("SMOOTH_PROBE"));
 St.ViewSmoothing.Install();
+St.ModelSmoothing.Configure(Verdite.Core.Game.Env("SMOOTH"), Verdite.Core.Game.Env("SMOOTH_MODELS"),
+                            Verdite.Core.Game.Env("SMOOTH_PROBE"));
+St.ModelSmoothing.Install();
 
 // ST_BOOTEXE=str|title|optxt|st|end|vs starts that program instead of the movies:
 // the stub's first index, written once the stub is in memory. See "How one program

@@ -26,5 +26,6 @@ default. Add an entry here when a switch is added to `Program.cs`.
 | `ST_LITERAL_PROBE` | off | `1`: every five seconds, how many times each draw routine ran in C# |
 | `ST_LITERAL_DUMP` | none | a directory: the first mismatch of each routine under verify writes the entry, recompiled and transcribed RAM there |
 | `ST_SMOOTH` | on | `0`: the camera is not carried between ticks; the picture's eye changes 20 times a second |
+| `ST_SMOOTH_MODELS` | on | `0`: the models' positions and angles are not carried, the camera still is |
 | `ST_SMOOTH_PROBE` | off | `1`: a line a second: frames drawn, distinct cameras, tick samples, snaps, backward steps |
 | `ST_RATECENSUS` | off | seconds: with pacing on, the RAM words that change on frames no stage ran on, printed once |

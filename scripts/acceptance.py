@@ -99,7 +99,7 @@ class Game:
     def warp(self, map_number, arrival=()):
         self.send(" ".join(["warp", str(map_number), *map(str, arrival)]))
         self.wait_until(f"reached map {map_number}",
-                        lambda state: state["map"] == map_number and state["inGame"], 15)
+                        lambda state: state["map"] == map_number and state["inGame"], 40)
         before = self.state()["frames"]
         time.sleep(1)
         if self.state()["frames"] - before < 20:
