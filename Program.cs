@@ -48,7 +48,14 @@ RecompOne.Runtime.Events.Event.AddListener<RecompOne.Runtime.Events.OverlayLoade
 
 RecompOne.Runtime.Runtime.AppId = "verditest";
 
+// ST.EXE waits for a button in loops that never call VSync (func_80062C28's message
+// prompts), so the vblank handler has to run from the interrupt poll as well.
+RecompOne.Runtime.Sdk.LibEtc.VBlankFromPoll = true;
+
 var memory = new PSMemory();
+
+// The command channel: press buttons and read memory from a script.
+St.AgentServer.Install(Verdite.Core.Game.Env("SHELL"), memory);
 
 // ST_BOOTEXE=str|title|optxt|st|end|vs starts that program instead of the movies:
 // the stub's first index, written once the stub is in memory. See "How one program

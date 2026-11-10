@@ -3,13 +3,18 @@
 The phases and their gates are in `docs/PORTING_PLAN.md`. This file holds what is
 open now.
 
-## Phase 2: first run
+## Phase 2: what is left
 
-- Boot: the stub, then `STR.EXE`. The stub loads programs with BIOS `Load` and
-  `Exec`; check the runtime's handling of both.
-- With `ST_BOOTEXE=st` and no pad input, `ST.EXE` loads `fdat002`, draws 1774
-  frames and hands over to `TITLE.EXE`. Why is not read yet. It may only be the
-  missing hand-over from the title. From `ST_BOOTEXE=optxt` it stayed in the game
-  for the rest of a 2-minute run.
+The gate's test passes (`scripts/acceptance.py`). Still open:
+
+- **By eye (the user):** the picture, the movies, the menus, the save screens, the
+  audio. Nothing has looked at these.
+- What makes the player save in the world (`func_80055374`, `docs/GAME_INTERNALS.md`).
+- Dying once: the player's HP is not found.
+- A load lands up to `0x2630` in Z from the position read before saving.
+- Walking through a real door. The area test requests the map directly.
 - `func_80068854` (`st`) and `func_80035F6C` (`vs`), `libcard`'s jump into BIOS
-  memory: see "Indirect jumps nothing resolves" in `docs/RECOMPILATION.md`.
+  memory: saving and loading worked without reaching them.
+- `ST_BOOTEXE=st` with no pad draws 1774 frames and goes to `TITLE.EXE`. The real
+  path (title, opening text, game) stayed in the game for about 4000 frames, so this
+  looks like the missing hand-over, but it is not read.

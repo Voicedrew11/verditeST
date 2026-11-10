@@ -269,4 +269,5 @@ jumps without a table:
   `st`, 9 in `vs`), so they are not expected to run.
 - `func_80068854` in `ST.EXE` and `func_80035F6C` in `VS.EXE`: `libcard`'s jump to
   `0xA000DFAC`, an address in BIOS memory. No `jal` reaches either of them. If the
-  card library needs them it will show at Phase 2, when saving is tried.
+  card library needs them it will show at Phase 2, when saving is tried. Saving and
+  loading worked on 2026-11-09 without reaching them.

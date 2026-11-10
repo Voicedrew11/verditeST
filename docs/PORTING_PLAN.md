@@ -133,7 +133,7 @@ maps"):
 reimplementations`) with no unresolved jump table left unexplained.
 **Writes:** `docs/RECOMPILATION.md`.
 
-## Phase 2: boot, reach play, save and load
+## ~~Phase 2: boot, reach play, save and load~~ (gate passed 2026-11-09; by-eye checks open, `docs/TODO.md`)
 
 Run with the log channels on and fix what stops it, in the order the disc runs:
 the movies (`STR.EXE`), the title, the opening text, a new game in the first
