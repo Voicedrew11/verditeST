@@ -8,6 +8,8 @@ open now.
 - **By eye:** the camera and the models carried between ticks (`docs/SMOOTHING.md`):
   turning, walking and creatures moving at 144, against `ST_SMOOTH=0`; a cell popping
   in late when walking across a cell edge (about 1% of frames carry the eye there).
+- **By hand:** mouse look (`docs/INPUT.md`): a click captures; turning, looking, and
+  whether mouse down should look down.
 - **By hand:** vibration on a real pad (`docs/INPUT.md`): the options' vibration on,
   then a hit or a fall.
 - **To push (the user):** the fork commit `0122` (`tools/RecompOne`, commit `4f5cd57`),
@@ -23,8 +25,9 @@ open now.
 
 Started 2026-11-10 (`docs/INPUT.md`): step 1 read. The game is digital only, has a
 twelve-entry button table, and drives two motors; the runtime's rumble is fixed in
-the fork (`0122`). Next: which action each button-table entry names, then
-`KeyLayout`, the mouse, rumble options.
+the fork (`0122`). Mouse look drives the game's own velocities, and the measured gate
+is met (a synthetic hand lands its step every tick and stops dead). Next: the lead
+(Instant mouse look), `KeyLayout`, `MenuMouse`, the settings page (Phase 10).
 
 ## Phase 7: what is left
 

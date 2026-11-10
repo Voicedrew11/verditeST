@@ -104,6 +104,11 @@ St.ViewSmoothing.Install();
 St.ModelSmoothing.Configure(Verdite.Core.Game.Env("SMOOTH"), Verdite.Core.Game.Env("SMOOTH_MODELS"),
                             Verdite.Core.Game.Env("SMOOTH_PROBE"));
 St.ModelSmoothing.Install();
+// The mouse through the game's own turn and look velocities. See "Mouse look" in docs/INPUT.md.
+Verdite.Core.Mouse.Configure(St.MouseLook.Game);
+Verdite.Core.Mouse.Install();
+St.MouseLook.Configure(Verdite.Core.Game.Env("MOUSE_SYNTH"), Verdite.Core.Game.Env("MOUSE_PROBE"));
+St.MouseLook.Install();
 
 // ST_BOOTEXE=str|title|optxt|st|end|vs starts that program instead of the movies:
 // the stub's first index, written once the stub is in memory. See "How one program

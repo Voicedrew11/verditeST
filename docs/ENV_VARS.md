@@ -36,6 +36,9 @@ default. Add an entry here when a switch is added to `Program.cs`.
 | `ST_SUBPIXEL` | on | `0`: every vertex snapped to a whole pixel |
 | `ST_SUBPIXEL_PROBE` | off | `1`: every 2 s, the map's counters and how far the vertices moved |
 | `ST_ZBUFFER` | on | `0`: occlusion by the ordering table alone, as the console |
+| `ST_MOUSE` | on | `0`: no mouse look (Verdite Core's `Mouse`; also `ST_MOUSE_TURN`, `ST_MOUSE_LOOK`, `ST_MOUSE_INVERTY`, `ST_MOUSE_BUTTONS`, `ST_MOUSE_KEY`) |
+| `ST_MOUSE_SYNTH` | off | `yaw,pitch`: a synthetic hand, that step every tick for two seconds of three |
+| `ST_MOUSE_PROBE` | off | `1`: a line a second, the mouse's ticks driven, landed on their step, and any that moved undriven |
 | `ST_MAPCOVERAGE` | off | `1`: every five seconds, the address map's hits by the stage-14 call that wrote each polygon |
 | `ST_WORDWATCH` | off | a hex address: every five seconds, which of stage 14's calls changed that word, and how many on idle frames |
 | `ST_ZBUFFER_PROBE` | off | `1`: every 2 s, triangles depth-tested and kept in painter's order, depth steps |

@@ -57,6 +57,44 @@ What each entry drives, from the routines that read it:
 The speeds are the ones the warp zeroes on arrival (`patches/Warp.cs`), so a mouse
 look has the game's own turn and look velocities to drive (step 2).
 
+## Mouse look
+
+`patches/MouseLook.cs`, Verdite Core's `Mouse` (on by default; a click on the picture
+captures the pointer) spent through **`func_80041D4C`**, the turn and look routine,
+once a world tick. Each axis has the three branches Verdite2 and Verdite3 found in
+theirs:
+
+| | velocity | held button | none held | base angle |
+|---|---|---|---|---|
+| yaw | `player+0x2CA` | Left adds, Right takes `rate >> 2` (`rate` the s32 at `+0x2E8`), clamped to `±rate` | decays by `rate >> 2` toward 0 | `+0x27A = (yaw + vel) & 0xFFF` |
+| pitch | `player+0x2CC` | R2 adds, L2 takes 3, clamped to `±0x20`; both recentre | decays by 3 toward 0 | `+0x278`, limited to `0x2BC` and `0xD44` by `func_8004A194` |
+
+With an axis's buttons masked out of the held word (`0x801CD182`, by the button
+table's own entries, so a rewritten layout is honoured), writing `step ± accel` to
+its velocity lands the angle on `step` exactly, through the game's own limit. The
+held word is put back after the call, and a tick the mouse drove ends with the
+velocity at 0, so the view stops dead with the hand. Mouse right is a negative step,
+as Left raises the yaw; mouse down raises the pitch, the way R2 does. The mouse
+buttons press Square, Triangle and Cross (the hands and the action; `ST_MOUSE_BUTTONS`).
+
+### Measured
+
+2026-11-10, with the synthetic hand (`ST_MOUSE_SYNTH=yaw,pitch`: that step every tick,
+two seconds of every three; `ST_MOUSE_PROBE=1`), standing in map 0:
+
+- **51 and 7 a tick at 144 fps:** every driven tick turned exactly 51; pitch stepped
+  exactly 7 until it **stopped at the limit, `0x2BC`**, and stayed there.
+- **-37 and -5 at 60 fps:** exactly -37 and -5 every driven tick; pacing held 60 fps
+  at 20 ticks a second.
+- **The hand stopping:** 0 ticks moved either angle without the hand, in every
+  window of both runs.
+
+The acceptance test passes with it attached. **Not measured**: a real pointer
+(capture, sensitivity), the buttons, the lead (Instant mouse look: not wired, the
+drawn view is carried between ticks without the hand's motion since the last one).
+**By hand (the user):** turning and looking with a mouse; whether mouse down should
+look down (`ST_MOUSE_INVERTY`).
+
 ## Vibration
 
 `func_80057A68(strength)` starts the motors when the byte at `0x801CD125` (the
