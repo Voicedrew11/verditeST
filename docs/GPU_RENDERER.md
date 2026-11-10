@@ -222,10 +222,10 @@ in the ordering table; the cursor goes in `a0` and comes back in `v0`.
 
 - **About 98.5% of near faces draw nothing, and all of them are off the screen**: a
   second run classed each by its projected corners. Every face that drew nothing
-  had its whole box outside 320 by 240 (370,159 of them); no face whose box crossed
+  had its whole box outside 320 by 240 (382,219 of them); no face whose box crossed
   the screen came back empty. The ones that drew with their box outside 320 by 240
   (1,593) lie in the 16:9 margins `NearScreen` widens the division to. 12,628 of the
-  empty ones (3.4%) have a corner at depth 0 or under 256, crossing the eye's plane,
+  empty ones (3.3%) have a corner at depth 0 or under 256, crossing the eye's plane,
   their projection saturated at the GTE's 1024: the only faces a GPU path that clips
   at the near plane might draw where the game draws nothing, a sliver at most.
 - Pieces are the face's own kind (GT4 for a quad, GT3 for a triangle), **a level
