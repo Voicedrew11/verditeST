@@ -17,7 +17,10 @@ namespace St;
 ///   flicker keeps the console's rate and the world's random sequence is the
 ///   console's at any frame rate;
 /// - the rumble countdown <c>func_80057B10</c> (<c>0x801CD199</c>, frames until the
-///   motors stop): not run on an idle frame.
+///   motors stop): not run on an idle frame;
+/// - the texture animations <c>func_80016A14</c> steps in VRAM (<c>MoveImage</c>,
+///   <c>LoadImage</c>) off a countdown per entry: not run on an idle frame, since VRAM
+///   keeps the last step. A line each time the area's count of entries changes.
 ///
 /// Found by <see cref="RateCensus"/> and by reading stage 14. See "What runs at the
 /// drawn rate" in docs/GAME_INTERNALS.md.
@@ -43,6 +46,16 @@ public static class DrawStageTick
 
     const uint RumbleCountdown = 0x80057B10;
 
+    /// <summary><c>func_80016A14</c>'s table: 16 entries of 0x18 bytes, <c>+0</c> the kind
+    /// (0 or 0xFF none), <c>+1</c> the period, <c>+2</c> the countdown, <c>s16 +4</c> the area (0xFF
+    /// any), matched against the byte at <c>0x801B5929</c>.</summary>
+    const uint TextureAnimations = 0x80016A14;
+    const uint TextureTable = 0x8017BBD0;
+    const int TextureEntries = 16;
+    const uint TextureEntryBytes = 0x18;
+    const uint Area = 0x801B5929;
+    static int _textureCount = -1;
+
     static uint _celCounter;
     static readonly byte[] _cels = new byte[CelEntries];
     static bool _celsHeld;
@@ -62,11 +75,12 @@ public static class DrawStageTick
         if (Resolve(Rand) is { } rand && HookManager.AddPre(_self, rand, M(nameof(BeforeRand)))
             && HookManager.AddPost(_self, rand, M(nameof(AfterRand)))) targets.Add(rand);
         if (Resolve(RumbleCountdown) is { } rumble && HookManager.AddPre(_self, rumble, M(nameof(BeforeRumble)))) targets.Add(rumble);
+        if (Resolve(TextureAnimations) is { } tex && HookManager.AddPre(_self, tex, M(nameof(BeforeTextures)))) targets.Add(tex);
         HookManager.Commit();
 
         int hooked = targets.Count(HookAttach.Installed);
-        Console.WriteLine($"[ST] draw stage tick: {hooked}/3 held (cels, flicker rand, rumble countdown)");
-        return hooked == 3;
+        Console.WriteLine($"[ST] draw stage tick: {hooked}/4 held (cels, flicker rand, rumble countdown, texture animations)");
+        return hooked == 4;
     }
 
     public static void BeforeCels(CpuContext c, IMemory m)
@@ -98,4 +112,35 @@ public static class DrawStageTick
     }
 
     public static bool BeforeRumble(CpuContext c, IMemory m) => !FramePacing.DrawingIdleFrame;
+
+    public static bool BeforeTextures(CpuContext c, IMemory m)
+    {
+        int count = ActiveTextures(m);
+        if (count != _textureCount)
+        {
+            _textureCount = count;
+            Console.WriteLine($"[ST] draw stage tick: {count} texture animation(s) in area {m.ReadU8(Area)}: {Describe(m)}");
+        }
+        return !FramePacing.DrawingIdleFrame;
+    }
+
+    // Each live entry as kind/period/area, for the log.
+    static string Describe(IMemory m) => string.Join(" ", Enumerable.Range(0, TextureEntries)
+        .Select(i => TextureTable + (uint)i * TextureEntryBytes)
+        .Where(e => m.ReadU8(e) is not (0 or 0xFF))
+        .Select(e => $"{m.ReadU8(e):X2}/{m.ReadU8(e + 1)}/{(short)m.ReadU16(e + 4)}"));
+
+    static int ActiveTextures(IMemory m)
+    {
+        int n = 0;
+        short area = m.ReadU8(Area);
+        for (uint i = 0; i < TextureEntries; i++)
+        {
+            uint e = TextureTable + i * TextureEntryBytes;
+            short at = (short)m.ReadU16(e + 4);
+            byte kind = m.ReadU8(e);
+            if (kind is not (0 or 0xFF) && (at == area || at == 0xFF)) n++;
+        }
+        return n;
+    }
 }

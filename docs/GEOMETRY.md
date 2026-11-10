@@ -136,7 +136,7 @@ The tour over the 12 areas the fixed warp reaches is below the table.
 
 | routine | what | class, switch | mismatches in calls |
 |---|---|---|---|
-| `func_80016A14` | the draw stage's second call; calls func_80079DCC and func_80079D0C (libgpu); not read | `Draw16A14`, `ST_DRAW16A14` | 0 in 1,114 |
+| `func_80016A14` | the area's texture animations: 16 entries of 0x18 bytes at 0x8017BBD0 (kind, period, countdown, area), each stepping VRAM with MoveImage (func_80079DCC) or LoadImage (func_80079D0C) when its countdown runs out; held to the tick by DrawStageTick | `TextureAnimations`, `ST_TEXTUREANIMATIONS` | 0 in 1,114 |
 | `func_800174C4` | the frame head: flips the buffer, rewinds the packet cursor, clears both ordering tables | `FrameHead`, `ST_FRAMEHEAD` | 0 in 7,238 |
 | `func_800176A8` | the camera: the eye's position and angles from stage 10's buffers, the view matrix | `CameraSetup`, `ST_CAMERASETUP` | 0 in 1,114 |
 | `func_80017D28` | one model's set-up step in func_80022678 and func_80021AC4; not read | `ModelStep17D28`, `ST_MODELSTEP17D28` | 0 in 1,864 |

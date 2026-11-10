@@ -98,6 +98,17 @@ vblanks (`0x80088204`) runs out, so it runs on the wall clock and needs nothing.
 With the three held, the census lists only the last three rows. One area, standing:
 an area with other animations, or a fight, may show more.
 
+**Texture animations**, read from stage 14's second call and missed by the census,
+which reads RAM, not VRAM: `func_80016A14` walks 16 entries of 0x18 bytes at
+`0x8017BBD0` (`+0` the kind, 0 or 0xFF none; `+1` the period; `+2` the countdown;
+`s16 +4` the area, matched to the byte at `0x801B5929`, or 0xFF for any). Each call
+counts an entry down, and at 0 reloads it from the period and steps VRAM by kind with
+`MoveImage` (`func_80079DCC`) or `LoadImage` (`func_80079D0C`), one kind with `rsin`.
+Over the tour's 12 maps only map 24 has any: kind 2 with period 0 (a step every
+call) and kind 0x31 with period 2, which at 144 fps stepped 7.2 times a tick. Held to
+the tick (not run on an idle frame; VRAM keeps the last step); `DrawStageTick` logs
+each area's entries when they change.
+
 ### The draw path
 
 What stage 14 calls, which routine writes which packets, and the loops that present

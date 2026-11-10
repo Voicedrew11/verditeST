@@ -7,12 +7,12 @@ using static St.Mips;
 namespace St;
 
 /// <summary>
-/// <c>func_80016A14</c>: the draw stage's second call; calls func_80079DCC and func_80079D0C (libgpu); not read. <c>ST_DRAW16A14</c>.
+/// <c>func_80016A14</c>: the area's texture animations: 16 entries of 0x18 bytes at 0x8017BBD0 (kind, period, countdown, area), each stepping VRAM with MoveImage (func_80079DCC) or LoadImage (func_80079D0C) when its countdown runs out; held to the tick by DrawStageTick. <c>ST_TEXTUREANIMATIONS</c>.
 /// </summary>
-public static partial class Draw16A14
+public static partial class TextureAnimations
 {
-    public static readonly Literal R = new(typeof(Draw16A14), "draw-16A14", "DRAW16A14", 0x80016A14, Run,
-        "the draw stage's second call; calls func_80079DCC and func_80079D0C (libgpu); not read.");
+    public static readonly Literal R = new(typeof(TextureAnimations), "texture animations", "TEXTUREANIMATIONS", 0x80016A14, Run,
+        "the area's texture animations: 16 entries of 0x18 bytes at 0x8017BBD0 (kind, period, countdown, area), each stepping VRAM with MoveImage (func_80079DCC) or LoadImage (func_80079D0C) when its countdown runs out; held to the tick by DrawStageTick.");
 
     static void Replace(Action<CpuContext, IMemory> orig, CpuContext c, IMemory m) => R.Replace(orig, c, m);
 

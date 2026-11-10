@@ -6,10 +6,10 @@ using static St.Mips;
 
 namespace St;
 
-/// <summary><see cref="Draw16A14"/>'s straight-line runs, moved out whole so neither file
+/// <summary><see cref="TextureAnimations"/>'s straight-line runs, moved out whole so neither file
 /// passes the length rule (scripts/split_literal.py). Each is named after the label
 /// before it.</summary>
-public static partial class Draw16A14
+public static partial class TextureAnimations
 {
     static void After80016A80(CpuContext c, PSMemory mem)
     {

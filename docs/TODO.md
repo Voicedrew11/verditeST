@@ -8,6 +8,8 @@ open now.
 - **By eye:** the camera and the models carried between ticks (`docs/SMOOTHING.md`):
   turning, walking and creatures moving at 144, against `ST_SMOOTH=0`; a cell popping
   in late when walking across a cell edge (about 1% of frames carry the eye there).
+- **By eye:** map 24's two texture animations (`docs/GAME_INTERNALS.md`, "Texture
+  animations"), now at the tick's pace: against an emulator, or `ST_PACING=0`.
 - **By eye:** the picture's switches (`docs/PICTURE.md`), each against its `=0`; the
   Z-buffer most of all (decals, the HUD, fades, the menu).
 
