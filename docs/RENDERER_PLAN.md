@@ -66,7 +66,7 @@ computed on the CPU toward one of three far colours. The models' light
 is read too (`docs/GPU_MODELS.md`): per vertex `RTPS` and a CPU fog factor held at
 4065, per face `NCDS`/`NCDT` or `NCCS`/`NCCT` by the mesh's flag, the light matrix
 turned into model space, the colour matrix a blend of two lighting records.
-**Still unknown**: the models' face records and what sets each model's blend.
+**Still unknown**: what sets each model's blend; the near divisions' own arithmetic. Every map and model face writer matches a plain-C# reference over the tour (`GPU_RENDERER.md`, `GPU_MODELS.md`).
 
 ## Step 0: close the inventory, establish the baseline
 
