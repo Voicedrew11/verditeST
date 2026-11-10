@@ -82,13 +82,15 @@ static class RetainedMap
             runs[1] = new(RetainedMeshes.FaceShape.FlatQuad, faces + (uint)triangles * 0x14, quads);
             uint normals = base_ + m.ReadU32(descriptor + 8), vertices = base_ + m.ReadU32(descriptor);
             int vertexCount = (int)m.ReadU32(descriptor + 4);
-            var mesh = RetainedMeshes.Get(m, descriptor, runs, normals, vertices, vertexCount, out string? reason);
+            var mesh = RetainedMeshes.Get(m, descriptor, runs, normals, vertexCount, out string? reason);
             if (mesh == null) { GpuWorld.Fallback("map", reason ?? "mesh"); return false; }
+            int pose = RetainedMeshes.Rigid(m, vertices, vertexCount);
+            if (pose == 0) { GpuWorld.Fallback("map", "vertex-range"); return false; }
             int turn = m.ReadU8(cell + 3) & 3;
             bool flat = (m.ReadU8(cell + 4) & 3) == 0;
             var inst = new RetainedScene.ModelInstance
             {
-                MeshStart = mesh.Start, MeshCount = mesh.Opaque, MeshAll = mesh.Total, Pose = mesh.Pose,
+                MeshStart = mesh.Start, MeshCount = mesh.Opaque, MeshAll = mesh.Total, Pose = pose,
                 Rgbc = rgb, Tile = true, Far = 1e30f, Near = -1e30f,
                 Dqa = (short)m.ReadU16(record + 0x68), Dqb = (short)m.ReadU16(record + 0x6A),
                 Curve = flat ? 0 : LinearFogFactor.Free,

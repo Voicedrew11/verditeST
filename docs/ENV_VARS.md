@@ -63,4 +63,6 @@ Most on/off switches and `ST_FPS` are also on `Settings ▸ Testing`, kept in
 | `ST_RATECENSUS` | off | seconds: with pacing on, the RAM words that change on frames no stage ran on, printed every window of that many seconds with the map |
 | `ST_GPU_WORLD` | 0 | `1`: the map (and, as they land, the models) drawn by the retained GPU renderer, their packets taken off the table; `shadow`: meshes built and instances published, packets still drawn |
 | `ST_GPU_WORLD_PROBE` | off | `1`: every 5 s, retained frames, instances, packets taken off, mesh builds and fallbacks by reason |
-| `ST_GPU_WORLD_CHECK` | off | `1`: every 5 s, the retained map's placement, fog and light against the numbers the game computed the same frame |
+| `ST_GPU_WORLD_CHECK` | off | `1`: every 5 s, the retained map's and models' placement, fog, light and kept faces against the numbers the game computed the same frame |
+| `ST_GPU_MODEL_CLIP` | on | `0`: a retained model face reaching past the eye placed at the GTE's saturated projection, as its packets were, not clipped at the near plane |
+| `ST_GPU_TIMES` | off | `1`: every 5 s, the GPU's milliseconds a present by pass (the frame's packets, the retained world, the present) |

@@ -35,7 +35,7 @@ public static class GpuWorld
     public static bool Probe { get; set; }
 
     static bool _frame, _reset;
-    static long _reportAt;
+    static long _reportAt, _timesAt;
     public static long Frames, Instances, StoreResets;
     static readonly SortedDictionary<string, long> _reasons = [];
 
@@ -62,6 +62,11 @@ public static class GpuWorld
             _ => 0,
         };
         Probe = probe?.Trim() == "1";
+        // A model face reaching past the eye is clipped at the GPU's near plane, not put at
+        // the GTE's saturated projection (runtime 0103). ST_GPU_MODEL_CLIP=0 compares.
+        RetainedScene.ModelNearClip = Environment.GetEnvironmentVariable("ST_GPU_MODEL_CLIP") != "0";
+        // The GPU's own time a present, by pass (runtime 0084), with the probe's line.
+        RecompOne.Runtime.Diagnostics.GpuTimes.Enabled = Environment.GetEnvironmentVariable("ST_GPU_TIMES") == "1";
     }
 
     public static void Install()
@@ -134,8 +139,32 @@ public static class GpuWorld
         _reasons[key] = _reasons.GetValueOrDefault(key) + 1;
     }
 
+    static readonly long[] _ns = new long[RecompOne.Runtime.Diagnostics.GpuTimes.Passes];
+    static long _presents;
+
+    /// <summary>ST_GPU_TIMES=1: the GPU's milliseconds a present by pass since the last line.</summary>
+    static void ReportGpuTimes()
+    {
+        long presents = RecompOne.Runtime.Diagnostics.GpuTimes.Presents - _presents;
+        if (!RecompOne.Runtime.Diagnostics.GpuTimes.Enabled || presents <= 0) return;
+        var parts = new List<string>();
+        for (int p = 0; p < _ns.Length; p++)
+        {
+            long ns = RecompOne.Runtime.Diagnostics.GpuTimes.Ns[p] - _ns[p];
+            _ns[p] = RecompOne.Runtime.Diagnostics.GpuTimes.Ns[p];
+            parts.Add($"{RecompOne.Runtime.Diagnostics.GpuTimes.Names[p]} {ns / 1e6 / presents:F3}");
+        }
+        _presents = RecompOne.Runtime.Diagnostics.GpuTimes.Presents;
+        Console.WriteLine($"[ST] GPU ms a present over {presents}: {string.Join(", ", parts)}");
+    }
+
     static void Report()
     {
+        if (RecompOne.Runtime.Diagnostics.GpuTimes.Enabled && Environment.TickCount64 >= _timesAt)
+        {
+            _timesAt = Environment.TickCount64 + 5000;
+            ReportGpuTimes();
+        }
         if (!Probe || Mode == 0 || Environment.TickCount64 < _reportAt) return;
         _reportAt = Environment.TickCount64 + 5000;
         string reasons = _reasons.Count == 0 ? "none" : string.Join(", ", _reasons.Select(r => $"{r.Key} {r.Value}"));

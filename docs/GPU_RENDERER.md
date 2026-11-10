@@ -357,3 +357,57 @@ So the map's light, fog and placement are the game's; what differs is the precis
 mesh's last vertices, and faces within 128 units of the eye. **Not checked**: the
 GPU's own output (the drawn picture), which is the user's to judge, and every map
 but 0.
+
+## The retained models
+
+Step 3.2 and Step 4's model half, built 2026-11-10 (`patches/Render/RetainedModels.cs`),
+under the same `ST_GPU_WORLD=1`.
+
+**Where.** Every model part reaches one of the three steps (`ModelStep192D4` fogged,
+`ModelStep19DC8` unfogged, `ModelStep1BF10` mixed, `docs/GPU_MODELS.md`) from
+`ModelPolygons`, with the GTE holding the part's view-space matrix and the model's
+light (`LLM` already turned into the model's space by `ModelDraw`, `BK`, `LCM`) and
+the part's vertices already posed in place in the bank. So the step's entry is the
+one place every caller passes through: the entities, the effects, the second list,
+the cels and the held models. Each part there becomes an instance: its faces from
+the mesh store (the four runs FT3, FT4, GT3, GT4 one after another from the
+descriptor's `+0x10`, counts at `+0x18`, `+0x1C`, `+0x1A`, `+0x1E`), **its posed
+vertices uploaded for the frame** (`AddModelVertices`: one entity's pose differs from
+the next's in the same frame, so they are not kept), placed by the GTE's matrix,
+lit by the GTE's light, the face colour `0x80` grey (what the steps set when the
+flicker is off), fogged on curve 6 (`LinearFogFactor.Held`: every model vertex is
+held under 4066) for the fogged step and the mixed one unless `0x8017BE8C & 0x10`.
+The mixed step's parts (entities within the near radius) are `Tile` instances, the
+GPU's near plane in place of libgte's division; the others keep the game's depth
+range, `+0x80 < key < +4` taken as view depth `(lo + 1) * 8 <= z < hi * 8` with the
+face's bias left out; and runtime `0103`'s near clip is on (`ST_GPU_MODEL_CLIP=0`
+puts a face reaching past the eye at the GTE's saturated projection, as the packets
+did). Its packets are taken off as the map's are.
+
+**Left as packets, counted**: a part whose caller asks for every face blended
+(`flags & 4`: the effects' half-and-half, the cels' quarter-added; 1,204 parts over
+the session, `models:blended-model`), a face whose own record is blended, and every
+part under the flicker (`models:flicker-recolour`).
+
+**Checked** over `scripts/session.py` (`ST_GPU_WORLD_CHECK=1`, 2026-11-10), against the
+corner buffer `ModelPolygons` fills before the step:
+
+| | result |
+|---|---|
+| parts, vertices | 13,282 parts, 933,476 vertices |
+| depth | worst 1 unit |
+| screen position | 1,663 (0.18%) past a pixel and two units of the GTE's truncation, worst 2.1 px; 27,859 within that |
+| fog factor (curve 6) | 864,818 the same, **0 off** |
+| faces kept by depth | 1,050,652 alike, 24 kept by the game only (a mean truncated one way and the other), 0 by the GPU only |
+
+Not checked here: the per-face fog the writers use (one `IR0` for a face from its
+corners: the mean, corner 0 counted twice in a fogged GT3, a GT4's fourth corner on
+f0 alone, `GPU_MODELS.md`), which the GPU replaces by each pixel's own depth; the
+mixed writers' `+0x98` UV offset, on near faces only.
+
+**Cost** (`scripts/session.py`, 2026-11-10). CPU, `ST_DRAW_TIMING=1`, stage 14 to the
+swap, the steady windows: p95 0.65 to 0.77 ms packets, 0.85 to 0.96 ms retained (the
+game's routines still run under the filter, and each part's vertices are copied).
+GPU, `ST_GPU_TIMES=1` (runtime `0084`'s queries), a present: packets 0.17 to 0.22 ms
+`scene`; retained 0.06 to 0.09 ms `scene` (what is left as packets) plus 0.13 to
+0.15 ms `world`. Both well inside a 144 Hz frame.

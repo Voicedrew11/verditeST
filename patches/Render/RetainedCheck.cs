@@ -17,21 +17,64 @@ static class RetainedCheck
 {
     public static bool On = Environment.GetEnvironmentVariable("ST_GPU_WORLD_CHECK") == "1";
 
+    /// <summary>One family's placement and fog counts.</summary>
+    sealed class Tally(string name)
+    {
+        public readonly string Name = name;
+        public long Vertices, XyOff, XySaturated, XyNear, ZOff, FogSame, FogHeld, FogOff;
+        public double WorstXy, WorstZ;
+        public int WorstFog;
+        public override string ToString() =>
+            $"{Name}: {Vertices} vertices, screen off by more than a pixel and two units {XyOff} " +
+            $"(worst {WorstXy:F2} past that; {XyNear} within two units, {XySaturated} where the GTE saturates), " +
+            $"depth >1 {ZOff} (worst {WorstZ:F2}); fog same {FogSame}, held 4065 {FogHeld}, off {FogOff} (worst {WorstFog})";
+    }
+
+    static readonly Tally _map = new("map"), _models = new("models");
     static readonly List<string> _samples = [];
-    static long _droppedFar, _droppedNear;
+    static long _droppedFar, _droppedNear, _keyAgree, _keyGameOnly, _keyGpuOnly;
     static int _nearLimit;
-    static long _vertices, _xyOff, _xySaturated, _xyNear, _zOff, _fogSame, _fogHeld, _fogOff, _faces, _lightOff, _lightOff2;
-    static double _worstXy, _worstZ;
-    static int _worstFog, _worstLight;
+    static long _faces, _lightOff, _lightOff2;
+    static int _worstLight;
     static long _at;
 
-    /// <summary>One published cell: <paramref name="corners"/> is its run of the
-    /// corner buffer, 8 bytes a vertex.</summary>
-    public static void Cell(IMemory m, in RetainedScene.ModelInstance i, uint vertices, int count, uint corners,
-                            uint normals, ReadOnlySpan<RetainedMeshes.Run> runs, uint record, uint llm, bool flat)
+    /// <summary>One published model part, at its step's entry: the corner buffer at
+    /// the scratchpad's <c>+0x40</c> holds its vertices' screen XY, depth and fog.</summary>
+    public static void Model(IMemory m, in RetainedScene.ModelInstance i, uint vertices, int count, uint corners, bool fog)
+    {
+        Vertices(_models, m, i, vertices, count, corners, (int)i.Dqa, (int)i.Dqb, fog, held: true);
+        // The table's range on the faces' mean depth: lo < (mean >> 5) + bias < hi,
+        // against the instance's Near <= mean of (SZ >> 2) < Far, both from the same corners.
+        uint bank = m.ReadU32(0x1F80000C), descriptor = m.ReadU32(0x1F800020);
+        uint faces = bank + 0xC + m.ReadU32(descriptor + 0x10);
+        int lo = (int)m.ReadU32(0x1F800080), hi = (int)m.ReadU32(0x1F800004);
+        var shapes = new (RetainedMeshes.FaceShape Shape, int Count)[]
+        {
+            (RetainedMeshes.FaceShape.FlatTriangle, m.ReadU16(descriptor + 0x18)), (RetainedMeshes.FaceShape.FlatQuad, m.ReadU16(descriptor + 0x1C)),
+            (RetainedMeshes.FaceShape.SmoothTriangle, m.ReadU16(descriptor + 0x1A)), (RetainedMeshes.FaceShape.SmoothQuad, m.ReadU16(descriptor + 0x1E)),
+        };
+        foreach (var (shape, n) in shapes)
+            for (int f = 0; f < n; f++, faces += shape.Size)
+            {
+                int sum = 0, quarters = 0;
+                foreach (uint at in shape.CornersAt)
+                {
+                    int sz = m.ReadU16(corners + m.ReadU16(faces + at) + 4);
+                    sum += sz; quarters += sz >> 2;
+                }
+                int key = (shape.Corners == 4 ? sum >> 7 : (sum / 3) >> 5) + (sbyte)m.ReadU8(faces + 0xA);
+                int z = shape.Corners == 4 ? quarters >> 2 : quarters / 3;
+                bool game = key > lo && key < hi, gpu = z > 0 && z >= i.Near && z < i.Far;
+                if (game == gpu) _keyAgree++;
+                else if (game) _keyGameOnly++;
+                else _keyGpuOnly++;
+            }
+    }
+
+    static void Vertices(Tally t, IMemory m, in RetainedScene.ModelInstance i, uint vertices, int count, uint corners,
+                         int near, int far, bool fog, bool held)
     {
         float h = GteDepth.ProjH, cx = GteDepth.ProjCx, cy = GteDepth.ProjCy;
-        int near = (short)m.ReadU16(record + 0x68), far = (short)m.ReadU16(record + 0x6A);
         for (int v = 0; v < count; v++)
         {
             uint p = vertices + (uint)v * 8, q = corners + (uint)v * 8;
@@ -40,10 +83,10 @@ static class RetainedCheck
             float ey = i.R10 * x + i.R11 * y + i.R12 * z + i.Ty;
             float ez = i.R20 * x + i.R21 * y + i.R22 * z + i.Tz;
             int gx = (short)m.ReadU16(q), gy = (short)m.ReadU16(q + 2), gz = m.ReadU16(q + 4);
-            _vertices++;
+            t.Vertices++;
             double dz = Math.Abs(Math.Clamp(ez, 0, 65535) - gz);
-            if (dz > 1) _zOff++;
-            _worstZ = Math.Max(_worstZ, dz);
+            if (dz > 1) t.ZOff++;
+            t.WorstZ = Math.Max(t.WorstZ, dz);
             // Only where the GTE's divide does not saturate is the screen position the
             // projection's; elsewhere the GPU clips at its near plane instead.
             if (ez > h / 2 && gz > h / 2)
@@ -57,26 +100,35 @@ static class RetainedCheck
                     // The GTE saturates the view-space X and Y at 16 bits before the
                     // divide; the GPU does not, so there the game's place is the wrong one.
                     bool saturated = Math.Abs(ex) > 32767 || Math.Abs(ey) > 32767;
-                    if (saturated) { if (dxy > 1) _xySaturated++; }
+                    if (saturated) { if (dxy > 1) t.XySaturated++; }
                     // The GTE truncates the view position to whole units before the
                     // divide, a unit being H / z pixels: near the eye that is more than one.
                     else if (dxy > 1 + 2 * h / ez)
                     {
-                        _xyOff++;
-                        if (_samples.Count < 12 && _xyOff % 500 == 1)
-                            _samples.Add($"v{v}/{count} game ({gx},{gy},{gz}) gpu ({sx:F1},{sy:F1},{ez:F1}) " +
+                        t.XyOff++;
+                        if (_samples.Count < 12 && t.XyOff % 500 == 1)
+                            _samples.Add($"{t.Name} v{v}/{count} game ({gx},{gy},{gz}) gpu ({sx:F1},{sy:F1},{ez:F1}) " +
                                          $"t ({i.Vtx},{i.Vty},{i.Vtz}) v ({x},{y},{z})");
                     }
-                    else if (dxy > 1) _xyNear++;
-                    if (!saturated) _worstXy = Math.Max(_worstXy, dxy - 2 * h / ez);
+                    else if (dxy > 1) t.XyNear++;
+                    if (!saturated) t.WorstXy = Math.Max(t.WorstXy, dxy - 2 * h / ez);
                 }
             }
-            if (flat) continue;
-            int game = (short)m.ReadU16(q + 6), gpu = (int)LinearFogFactor.Weight(gz, near, far, held: false);
-            if (game == gpu) _fogSame++;
-            else if (game == 4065 && gpu >= 4066) _fogHeld++;
-            else { _fogOff++; _worstFog = Math.Max(_worstFog, Math.Abs(game - gpu)); }
+            if (!fog) continue;
+            int game = (short)m.ReadU16(q + 6), gpu = (int)LinearFogFactor.Weight(gz, near, far, held);
+            if (game == gpu) t.FogSame++;
+            else if (game == 4065 && gpu >= 4066) t.FogHeld++;
+            else { t.FogOff++; t.WorstFog = Math.Max(t.WorstFog, Math.Abs(game - gpu)); }
         }
+    }
+
+    /// <summary>One published cell: <paramref name="corners"/> is its run of the
+    /// corner buffer, 8 bytes a vertex.</summary>
+    public static void Cell(IMemory m, in RetainedScene.ModelInstance i, uint vertices, int count, uint corners,
+                            uint normals, ReadOnlySpan<RetainedMeshes.Run> runs, uint record, uint llm, bool flat)
+    {
+        int near = (short)m.ReadU16(record + 0x68), far = (short)m.ReadU16(record + 0x6A);
+        Vertices(_map, m, i, vertices, count, corners, near, far, !flat, held: false);
         var light = MapLight.Matrix.FromWords(m.ReadU32(llm), m.ReadU32(llm + 4), m.ReadU32(llm + 8),
                                                m.ReadU32(llm + 12), m.ReadU32(llm + 16));
         uint w = record + 0x50;
@@ -131,10 +183,9 @@ static class RetainedCheck
         _at = Environment.TickCount64 + 5000;
         foreach (var line in _samples) Console.WriteLine($"[ST] retained check sample: {line}");
         _samples.Clear();
-        Console.WriteLine($"[ST] retained check: {_vertices} vertices, screen off by more than a pixel and two units {_xyOff} " +
-                          $"(worst {_worstXy:F2} past that; {_xyNear} within two units, {_xySaturated} where the GTE saturates), " +
-                          $"depth >1 {_zOff} (worst {_worstZ:F2}); fog same {_fogSame}, held 4065 {_fogHeld}, " +
-                          $"off {_fogOff} (worst {_worstFog}); dropped by key far {_droppedFar}, near with a corner in front {_droppedNear} " +
-                          $"(near limit {_nearLimit}); {_faces} faces lit, off {_lightOff} (>1: {_lightOff2}, worst {_worstLight})");
+        Console.WriteLine($"[ST] retained check {_map}; dropped by key far {_droppedFar}, near with a corner in front " +
+                          $"{_droppedNear} (near limit {_nearLimit}); {_faces} faces lit, off {_lightOff} (>1: {_lightOff2}, worst {_worstLight})");
+        Console.WriteLine($"[ST] retained check {_models}; faces kept alike {_keyAgree}, by the game only {_keyGameOnly}, " +
+                          $"by the GPU only {_keyGpuOnly}");
     }
 }

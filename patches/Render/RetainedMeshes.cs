@@ -7,10 +7,11 @@ namespace St;
 /// <summary>
 /// The meshes the retained renderer draws from, kept on the GPU (the runtime's mesh
 /// and pose stores) and built once per content: a mesh's faces as corners in its own
-/// space, and its vertices as a rigid pose. The map's cells and the models share the
-/// face records (<see cref="FaceShape"/>), so one decoder serves both. A mesh is keyed
-/// by its descriptor's address and checked against a hash of its bytes every time it
-/// is asked for: a mesh rewritten in place is built again. The stores are emptied
+/// space, and, for vertices that hold still, a rigid pose (<see cref="Rigid"/>). The
+/// map's cells and the models share the face records (<see cref="FaceShape"/>), so one
+/// decoder serves both. A mesh is keyed by its descriptor's address and checked against
+/// a hash of its face and normal bytes every time it is asked for: a mesh rewritten in
+/// place is built again. The stores are emptied
 /// (<see cref="Clear"/>) on an area change and when they pass their bounds.
 /// See "The retained map" in docs/GPU_RENDERER.md.
 /// </summary>
@@ -31,55 +32,83 @@ static class RetainedMeshes
     /// <summary>A run of face records of one shape.</summary>
     public readonly record struct Run(FaceShape Shape, uint First, int Count);
 
-    /// <summary>A built mesh: its corners in the store (opaque first, then blended), its
-    /// pose (one past the first texel), and how many faces of each kind it has.</summary>
+    /// <summary>A built mesh: its corners in the store (opaque first, then blended), and
+    /// how many faces it has and how many of them are blended.</summary>
     public sealed class Mesh
     {
-        public int Start, Opaque, Total, Pose, Vertices, Faces, Blended;
+        public int Start, Opaque, Total, Vertices, Faces, Blended;
+        public uint NormalBytes;
         public ulong Hash;
-        public int Generation;
     }
 
     static readonly Dictionary<uint, Mesh> _meshes = [];
+    static readonly Dictionary<(uint, int, ulong), int> _rigid = [];
     static int _generation = -1;
-    public static long Builds, Hits, Rebuilds, Clears;
+    public static long Builds, Hits, Rebuilds, Clears, RigidBuilds, RigidHits;
 
     /// <summary>The mesh at <paramref name="key"/> (its descriptor), from its runs of
-    /// faces, normals and vertices; null when a record points outside RAM.</summary>
-    public static Mesh? Get(IMemory m, uint key, ReadOnlySpan<Run> runs, uint normals, uint vertices, int count,
-                            out string? reason)
+    /// faces and its normals, for <paramref name="count"/> vertices; null when a record
+    /// points outside RAM or past the vertices.</summary>
+    public static Mesh? Get(IMemory m, uint key, ReadOnlySpan<Run> runs, uint normals, int count, out string? reason)
     {
         reason = null;
-        if (_generation != RetainedScene.MeshGeneration) { _meshes.Clear(); _generation = RetainedScene.MeshGeneration; }
-        if (count <= 0 || count > 4096 || !InRam(vertices, (uint)count * 8)) { reason = "mesh-vertex-range"; return null; }
-        ulong hash = Fnv(m, vertices, (uint)count * 8);
+        CheckGeneration();
+        if (count <= 0 || count > 4096) { reason = "mesh-vertex-range"; return null; }
+        ulong hash = 14695981039346656037ul;
         foreach (var r in runs)
         {
             if (r.Count < 0 || r.Count > 4096 || !InRam(r.First, (uint)r.Count * r.Shape.Size)) { reason = "mesh-face-range"; return null; }
             hash = Fnv(m, r.First, (uint)r.Count * r.Shape.Size, hash);
         }
-        if (_meshes.TryGetValue(key, out var mesh) && mesh.Hash == hash) { Hits++; return mesh; }
+        if (_meshes.TryGetValue(key, out var mesh) && InRam(normals, mesh.NormalBytes)
+            && Fnv(m, normals, mesh.NormalBytes, hash) == mesh.Hash) { Hits++; return mesh; }
         if (mesh != null) Rebuilds++;
-        mesh = Build(m, runs, normals, vertices, count, out reason);
+        mesh = Build(m, runs, normals, count, out reason);
         if (mesh == null) return null;
-        mesh.Hash = hash;
+        mesh.Hash = Fnv(m, normals, mesh.NormalBytes, hash);
         _meshes[key] = mesh;
         Builds++;
         return mesh;
     }
 
+    /// <summary>Vertices that hold still, as a pose in the store (one past its first
+    /// texel), kept by address and content; 0 when they are not in RAM.</summary>
+    public static int Rigid(IMemory m, uint vertices, int count)
+    {
+        CheckGeneration();
+        if (count <= 0 || count > 4096 || !InRam(vertices, (uint)count * 8)) return 0;
+        var key = (vertices, count, Fnv(m, vertices, (uint)count * 8));
+        if (_rigid.TryGetValue(key, out int pose)) { RigidHits++; return pose; }
+        pose = RetainedScene.AddPose(Shorts(m, vertices, count)) + 1;
+        _rigid[key] = pose;
+        RigidBuilds++;
+        return pose;
+    }
+
+    /// <summary>A mesh's vertices as the stores take them: four shorts each.</summary>
+    public static ReadOnlySpan<short> Shorts(IMemory m, uint vertices, int count) =>
+        MemoryMarshal.Cast<byte, short>(((PSMemory)m).Ram.Slice((int)(vertices & 0x1FFFFF), count * 8));
+
     public static void Clear()
     {
-        _meshes.Clear();
         RetainedScene.ClearMeshes();
-        _generation = RetainedScene.MeshGeneration;
+        CheckGeneration();
         Clears++;
     }
 
-    static Mesh? Build(IMemory m, ReadOnlySpan<Run> runs, uint normals, uint vertices, int count, out string? reason)
+    static void CheckGeneration()
+    {
+        if (_generation == RetainedScene.MeshGeneration) return;
+        _meshes.Clear();
+        _rigid.Clear();
+        _generation = RetainedScene.MeshGeneration;
+    }
+
+    static Mesh? Build(IMemory m, ReadOnlySpan<Run> runs, uint normals, int count, out string? reason)
     {
         reason = null;
         var faces = new List<RetainedScene.Vertex[]>();
+        uint normalBytes = 0;
         var semi = new List<bool>();
         Span<int> vi = stackalloc int[4];
         foreach (var r in runs)
@@ -96,6 +125,7 @@ static class RetainedMeshes
                 }
                 faces.Add(Corners(m, rec, s, normals, vi));
                 semi.Add((m.ReadU8(rec + 0xB) & 2) != 0);
+                foreach (uint at in s.NormalsAt) normalBytes = Math.Max(normalBytes, m.ReadU16(rec + at) + 8u);
             }
         }
         // A writer links each face at the head of its slot, so the walk draws a slot's
@@ -106,13 +136,11 @@ static class RetainedMeshes
         var mesh = new Mesh
         {
             Opaque = opaque.Count, Total = opaque.Count + blended.Count, Vertices = count,
-            Faces = faces.Count, Blended = semi.Count(b => b),
+            Faces = faces.Count, Blended = semi.Count(b => b), NormalBytes = normalBytes,
         };
+        if (!InRam(normals, normalBytes)) { reason = "mesh-normal-range"; return null; }
         opaque.AddRange(blended);
         mesh.Start = RetainedScene.AddMesh(CollectionsMarshal.AsSpan(opaque));
-        var bytes = MemoryMarshal.Cast<byte, short>(((PSMemory)m).Ram.Slice((int)(vertices & 0x1FFFFF), count * 8));
-        mesh.Pose = RetainedScene.AddPose(bytes) + 1;
-        mesh.Generation = RetainedScene.MeshGeneration;
         return mesh;
     }
 
