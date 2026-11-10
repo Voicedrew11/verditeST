@@ -27,6 +27,13 @@ door. The area change comes after the saves because of the death on arrival
 
 ## What is still open
 
+- **The test failed once in four runs on 2026-11-10** (after the draw routines went to
+  C# and `warp` took arrival points): in the second process, the queued call for
+  `warp 1` never ran (the log shows `warp 0`'s `80044EE8` returning and nothing
+  after), so map 1 was never reached. The next three runs passed. Calls wait for a
+  vblank from the game's own `VSync`; which loop withheld it is not read, nor whether
+  `ST_LITERAL=0` changes the rate.
+
 - A load lands up to `0x2630` in height (Y, not Z as written before) from the
   position read just before saving. The menu load and the title load differ by that
   much. Not explained; the test compares X and Z only, within `0x800`.
