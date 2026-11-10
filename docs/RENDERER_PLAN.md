@@ -89,6 +89,9 @@ its two tables, its fog and its light inputs; choose the map's storage and updat
 strategy once. Shared changes are fork patches.
 
 **Gate**: the contract can express every Step 0 family; the siblings still pass.
+Read 2026-11-10 (`docs/GPU_CONTRACT.md`): the record, the map's light, the flat cells
+and the near faces fit; the fog curve and the flicker's recolour need two small
+game-neutral additions. Not closed.
 
 ## Step 2: native submission and references
 
