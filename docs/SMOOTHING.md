@@ -29,10 +29,19 @@ Measured 2026-11-10 with `ST_SMOOTH_PROBE=1` over the session at the default 144
 backward steps** (a frame whose position or yaw moved against the way the last tick
 went). The acceptance test passes with it on.
 
-Not done yet: the visible-cell list is built from the player's cell on the tick, so a
-carried eye near a cell's edge may show the cull a frame early or late; not measured.
+**The cell cull and the carried eye.** The visible-cell list (`func_8001C100`, called
+by the scene with `0x80199170`) is built from the player's position on the tick, not
+the camera: `func_80046270` turns X, Y and Z into 0x1000-unit cells (`>> 12`) and
+ANDs three per-axis bitmasks (64 bytes a cell, tables from `0x801856D0`, `+0x2000`,
+`+0x4000`) into a 512-bit set. The carried eye trails the tick by up to one tick, so
+near a cell's edge it may stand in the cell behind the one culled for. The probe
+counts those frames ("in another cell"): over the session, **44 frames in 36 s**, about
+1% of those drawn while walking, each within one tick of crossing an edge. Whether a
+cell is missing in them shows only by eye; if it does, the cull can be run for the
+previous tick's position as well and the two sets ORed.
 
-**By eye (the user):** turning and walking at 144, against `ST_SMOOTH=0`.
+**By eye (the user):** turning and walking at 144, against `ST_SMOOTH=0`; and
+walking across cell edges (every 0x1000 units) for a cell popping in late.
 
 ## Models carried
 

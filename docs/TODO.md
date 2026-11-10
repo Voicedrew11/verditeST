@@ -6,7 +6,8 @@ open now.
 ## Waiting on the user
 
 - **By eye:** the camera and the models carried between ticks (`docs/SMOOTHING.md`):
-  turning, walking and creatures moving at 144, against `ST_SMOOTH=0`.
+  turning, walking and creatures moving at 144, against `ST_SMOOTH=0`; a cell popping
+  in late when walking across a cell edge (about 1% of frames carry the eye there).
 - **By eye:** the picture's switches (`docs/PICTURE.md`), each against its `=0`; the
   Z-buffer most of all (decals, the HUD, fades, the menu).
 
@@ -15,14 +16,14 @@ open now.
 Started 2026-11-10: no dither, 24-bit colour, perspective and sub-pixel are on
 (`docs/PICTURE.md`), the address map hitting 98.5% in map 0; the Z-buffer is on from
 the map's depths. The misses are all the HUD's 2D packets (3D: 99.98 to 100%), so the
-packet records are not needed; the 12 reachable maps measure the same. Next:
-semi-transparency order.
+packet records are not needed; the 12 reachable maps measure the same. Nothing of
+Verdite1's picture is left to port; the rest is the user's eye.
 
 ## Phase 6: what is left
 
 Started 2026-11-10: the camera and the models' positions and angles are carried
-(`docs/SMOOTHING.md`). Next: the models' poses, the arm, the HUD's gauges, whether
-the cell cull lags the carried eye.
+(`docs/SMOOTHING.md`). Next: the models' poses, the arm, the HUD's gauges. The cell
+cull trails the carried eye on about 1% of walking frames (`docs/SMOOTHING.md`).
 
 ## Phase 5: what is left
 

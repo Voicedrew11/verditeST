@@ -54,7 +54,7 @@ public static class ViewSmoothing
     static bool _primed, _restore;
     static long _tick = -1;
     static double _probeAt = -1.0;
-    static long _frames, _moved, _samples, _snaps, _backward;
+    static long _frames, _moved, _samples, _snaps, _backward, _otherCell;
 
     static bool Active => _enabled && FramePacing.Enabled;
 
@@ -157,16 +157,19 @@ public static class ViewSmoothing
         // A step against the way the last tick went, on any axis: the carry going back.
         if (Against(_probed.X, view.X, _prev.X, _cur.X) || Against(_probed.Z, view.Z, _prev.Z, _cur.Z) ||
             Against(0, Wrap(view.Yaw - _probed.Yaw), 0, Wrap(_cur.Yaw - _prev.Yaw))) _backward++;
+        // The cell cull (func_8001C100) reads the player's tick position, cells 0x1000 a side:
+        // a carried eye in another cell than the tick's may see a cell the cull left out.
+        if (((view.X ^ _cur.X) | (view.Y ^ _cur.Y) | (view.Z ^ _cur.Z)) >> 12 != 0) _otherCell++;
         _probed = view;
         double now = Environment.TickCount64 / 1000.0;
         if (_probeAt < 0.0) _probeAt = now;
         double dt = now - _probeAt;
         if (dt < 1.0) return;
         Console.WriteLine($"[ST] view smoothing: {_frames / dt:0.0} frame(s)/s, {_moved / dt:0.0} with a new camera, " +
-                          $"{_samples / dt:0.0} tick sample(s)/s, {_snaps} snap(s), {_backward} backward; drawn [{view.X},{view.Y},{view.Z},{view.W}] " +
+                          $"{_samples / dt:0.0} tick sample(s)/s, {_snaps} snap(s), {_backward} backward, {_otherCell} in another cell; drawn [{view.X},{view.Y},{view.Z},{view.W}] " +
                           $"angles {view.Pitch} {view.Yaw} {view.Roll}; handed [{_cur.X},{_cur.Y},{_cur.Z}] yaw {_cur.Yaw}");
         Console.Out.Flush();
         _probeAt = now;
-        _frames = _moved = _samples = _snaps = _backward = 0;
+        _frames = _moved = _samples = _snaps = _backward = _otherCell = 0;
     }
 }

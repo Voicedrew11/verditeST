@@ -59,8 +59,10 @@ Verdite1's Z-buffer takes its depths first from its C# writers' packet records
 the only source. With the 3D writers at 99.98 to 100% (above) the packet records
 would add nothing in map 0; the triangles kept in painter's order are the HUD's.
 
-## Not ported yet
+## Not ported
 
-Semi-transparency order (`SemiAbr`).
+Verdite1's `SemiAbr` is a probe of its own retained models' blend modes, not a
+switch; blended surfaces in table order are `ST_BLENDORDER`, already on. Nothing of
+Verdite1's picture is left to port.
 
 **By eye (the user):** each switch against its `=0`.
