@@ -256,15 +256,13 @@ test passing; do it here or keep reading them through `Program.cs` wiring.
 
 ## Phase 11: the retained GPU renderer
 
-Verdite1's `RENDERER_PLAN.md` Steps 3 to 8, re-derived for this game: the
-retained map and its mutations (doors, lifts, anything that changes a cell),
-retained models and poses, sprites as instances, the arms, then per-pixel
-lighting, fog, ambient occlusion, anisotropy and mipmaps, neighbour blending,
-render distance with its fade, and water and reflections only if this game has
-water faces to classify. Shadow Tower is darker and more enclosed than King's
-Field, so lighting and fog are where the judging will be. Write this phase's
-own plan (`docs/RENDERER_PLAN.md`) when Phase 5's inventory exists; it cannot
-be written honestly before.
+Verdite3's native scene submission and retained renderer (`../verdite3/docs/GPU_RENDERER.md`,
+built from `../KFII-PC/docs/VERDITE3_GPU_PLAN.md`), re-derived for this game:
+Verdite3 is a recompilation like this one, so its route fits; Verdite1's renderer
+plan leans on a decompilation this port does not have. A scene census, literal
+native submitters with a full verify, retained map, meshes and poses, the main
+view on the GPU, then lighting, fog and the buffers. The plan is
+`docs/RENDERER_PLAN.md` (written 2026-11-10).
 
 **Gate:** native comparisons in every loaded area, no packet fallback for the
 main view, frame time measured. **By eye:** everything.

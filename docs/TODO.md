@@ -39,6 +39,12 @@ open now.
 - **By eye:** the picture's switches (`docs/PICTURE.md`), each against its `=0`; the
   Z-buffer most of all (decals, the HUD, fades, the menu).
 
+## Phase 11: what is left
+
+Planned 2026-11-10 (`docs/RENDERER_PLAN.md`), on Verdite3's route (the user's call:
+it is a recompilation like this one). First move: the map's cell records from
+`MapQuads`, and the scene census.
+
 ## Phase 10: what is left
 
 Started 2026-11-10: `Settings ▸ Testing` has the switches live and kept ("The Testing
