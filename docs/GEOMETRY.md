@@ -128,9 +128,37 @@ verify reads 0. Verify was checked once by planting a wrong constant in
 | `func_8001FD00`, the scene's FT4s | `SceneQuads`, `ST_SCENEQUADS` | 0 in 3,083 |
 | `func_8001F954`, the scene's FT3s | `SceneTriangles`, `ST_SCENETRIANGLES` | 0 in 3,083 |
 | `func_80022010`, every model polygon | `ModelPolygons`, `ST_MODELPOLYGONS` | 0 in 1,322 |
+| `func_80020A80`, the scene | `Scene`, `ST_SCENE` | 0 in 1,094 |
+| `func_8001C100`, the visible-cell list | `VisibleCells`, `ST_VISIBLECELLS` | 0 in 2,187 |
+| `func_8001C264`, scene preparation, not read | `ScenePrepare1`, `ST_SCENEPREPARE1` | 0 in 2,187 |
+| `func_8001C60C`, scene preparation, not read | `ScenePrepare2`, `ST_SCENEPREPARE2` | 0 in 2,187 |
+| `func_8001CB88`, scene preparation, not read | `ScenePrepare3`, `ST_SCENEPREPARE3` | 0 in 2,187 |
+| `func_8001CDF8`, scene preparation, not read | `ScenePrepare4`, `ST_SCENEPREPARE4` | 0 in 2,187 |
+| `func_80020164`, a scene step, no packets in map 0 | `SceneStep20164`, `ST_SCENESTEP20164` | 0 in 2,187 |
+| `func_80020588`, a scene step, no packets in map 0 | `SceneStep20588`, `ST_SCENESTEP20588` | 0 in 2,187 |
+| `func_8001E5A0`, a scene step, no packets in map 0 | `SceneStep1E5A0`, `ST_SCENESTEP1E5A0` | 0 in 2,187 |
+| `func_8001EEAC`, a scene step, no packets in map 0 | `SceneStep1EEAC`, `ST_SCENESTEP1EEAC` | 0 in 2,187 |
+| `func_800241D0`, the model list | `Models`, `ST_MODELS` | 0 in 1,094 |
+| `func_80022678`, one model | `ModelDraw`, `ST_MODELDRAW` | 0 in 921 |
+| `func_80033DB8`, per entity, before its model | `ModelLight`, `ST_MODELLIGHT` | 0 in 6,560 |
+| `func_80023C6C`, after the model list | `ModelExtras`, `ST_MODELEXTRAS` | 0 in 2,187 |
+| `func_800251C8`, a second model list, empty in map 0 | `Models2`, `ST_MODELS2` | 0 in 1,094 |
+| `func_80023ED8`, after the second list | `ModelExtras2`, `ST_MODELEXTRAS2` | 0 in 2,187 |
+| `func_80021AC4`, a model from the draw stage, twice; empty in map 0 | `HeldModel`, `ST_HELDMODEL` | 0 in 2,187 |
+| `func_80021654`, an FT4S over the scene, now and then | `Overlay21654`, `ST_OVERLAY21654` | 0 in 1,094 |
+| `func_800174C4`, the frame head | `FrameHead`, `ST_FRAMEHEAD` | 0 in 1,417 |
+| `func_800176A8`, frame set-up | `FrameSetup`, `ST_FRAMESETUP` | 0 in 1,094 |
 
 `scripts/verify_summary.py <log>` sums a run's verify lines. The acceptance test
-passes with all of them on (2026-11-10).
+passes with all 29 on (2026-11-10), and play still draws 144 frames and 20 ticks a
+second. The names with numbers in them are placeholders until the routine is read.
+A count is calls, not coverage: `Models2` and `HeldModel` drew nothing in map 0, so
+their drawing branches have not been compared yet.
+
+Verify restores the HLE `rand()`'s seed (`BiosA._randSeed`, outside guest RAM) before
+the second run, as it does the interrupt countdown; without it the scene, which calls
+`rand()` for the light's flicker, read a 2-byte mismatch at `0x8017BE88` on two calls
+in three.
 
 The map writers each have **two packet paths**, kept in `MapQuadsPackets.cs` and
 `MapTrianglesPackets.cs` so no file passes the length rule: the ordinary one writes

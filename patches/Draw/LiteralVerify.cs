@@ -14,6 +14,11 @@ public sealed partial class Literal
     static readonly FieldInfo? Countdown =
         typeof(Interrupts).GetField("_countdown", BindingFlags.NonPublic | BindingFlags.Static);
 
+    // The HLE rand()'s seed lives outside guest RAM, so a routine that calls rand() (the
+    // scene's light flicker) would draw a different number on its second run.
+    static readonly FieldInfo? RandSeed =
+        typeof(RecompOne.Runtime.Bios.BiosA).GetField("_randSeed", BindingFlags.NonPublic | BindingFlags.Static);
+
     byte[] _before = [], _theirs = [];
     readonly uint[] _padBefore = new uint[Differential.PadWords], _padTheirs = new uint[Differential.PadWords],
                     _padOurs = new uint[Differential.PadWords];
@@ -37,6 +42,7 @@ public sealed partial class Literal
         var entry = c.Snapshot();
         Gte.Save(_gteEntry);
         int countdown = (int?)Countdown?.GetValue(null) ?? 0;
+        object? seed = RandSeed?.GetValue(null);
         Countdown?.SetValue(null, Deferred);
         uint slow = Interrupts.SlowPolls;
 
@@ -46,6 +52,7 @@ public sealed partial class Literal
         var theirs = c.Snapshot();
         Gte.Save(_gteTheirs);
         int countTheirs = (int?)Countdown?.GetValue(null) ?? 0;
+        object? seedTheirs = RandSeed?.GetValue(null);
         uint slowTheirs = Interrupts.SlowPolls;
 
         _before.CopyTo(ram);
@@ -53,6 +60,7 @@ public sealed partial class Literal
         c.Restore(entry);
         Gte.Load(_gteEntry);
         Countdown?.SetValue(null, Deferred);
+        RandSeed?.SetValue(null, seed);
         _body(c, mem);
         Differential.SavePad(mem, _padOurs);
         var ours = c.Snapshot();
@@ -86,6 +94,7 @@ public sealed partial class Literal
             _before.CopyTo(ram);
             Differential.LoadPad(mem, _padBefore);
             c.Restore(entry);
+            RandSeed?.SetValue(null, seed);
             _twin(c, mem);
             Differential.SavePad(mem, _padOurs);
             int hi = (int)(entry.SP & (uint)(ram.Length - 1));
@@ -105,6 +114,7 @@ public sealed partial class Literal
         c.Restore(theirs);
         Gte.Load(_gteTheirs);
         Countdown?.SetValue(null, Math.Max(1, countdown - (Deferred - countTheirs)));
+        RandSeed?.SetValue(null, seedTheirs);
 
         double now = Environment.TickCount64 / 1000.0;
         if (now < _reportAt) return;
