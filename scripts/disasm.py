@@ -27,6 +27,7 @@ def main() -> None:
     if not 0 <= offset < len(data):
         sys.exit(f"{start:08X} is outside the text ({text:08X}..)")
     md = Cs(CS_ARCH_MIPS, CS_MODE_32 | CS_MODE_LITTLE_ENDIAN)
+    md.skipdata = True  # GTE (COP2) instructions are not decoded; step over them as .byte
     stop_after = None
     for n, ins in enumerate(md.disasm(data[offset:offset + limit * 4], start)):
         print(f"{ins.address:08X}  {ins.mnemonic:8} {ins.op_str}")
