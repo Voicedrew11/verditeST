@@ -49,7 +49,8 @@ The page in the game's own menu waits on a decision ("Waiting on the user").
 Started 2026-11-10 (`docs/WIDESCREEN.md`): 16:9 by default, the tints stretched, the
 HUD movable to the edges (off), the near polygons widened. The measured gate is met:
 the same cells at both aspects (the cull is by position), and the busiest area's
-packets peak at 33% of a buffer. Next: `MenuWorld` (the world live behind menus).
+packets peak at 33% of a buffer. `MenuWorld` has nothing to port: the menu draws no
+world behind it (`docs/WIDESCREEN.md`, "The menus"). Left: the user's eye.
 
 ## Phase 8: what is left
 

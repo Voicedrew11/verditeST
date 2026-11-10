@@ -19,7 +19,17 @@ disc. Started 2026-11-10.
 | the cell cull | nothing to widen: built from the player's position alone (below) |
 | the near polygons | `NearScreen.cs`: libgte's division's screen width widened |
 | the packet buffer | measured, below |
-| the world behind menus | not ported (`MenuWorld`) |
+| the world behind menus | nothing to port: the menu has no world behind it (below) |
+
+## The menus
+
+Verdite3's `MenuWorld` draws the world live behind a menu instead of the game's
+320-wide still of it. Shadow Tower has no such still. Its menu (`func_80029B74`) and
+death prompt (`func_8002CEF8`) clear the ordering table and draw only their panels
+and text (`docs/GEOMETRY.md`, "Who presents"), so the screen behind them is black
+across the margin as within the 320 columns. There is no world to keep live, and
+drawing one would be a change to the game, not a port of it. The load fade follows
+the vblank count (`0x801B5938`), so it is not held to 20 either.
 
 ## The margin, the latches and the tints
 
