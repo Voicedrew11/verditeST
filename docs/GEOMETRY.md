@@ -117,68 +117,69 @@ verify reads 0. Verify was checked once by planting a wrong constant in
 `HudPanels` (`0x61` for `0x60`): it reported 24 bytes from `0x8011C48D`, recompiled
 `60`, ours `61`.
 
-Verified 2026-11-10 over `scripts/session.py` (`scripts/literal_table.py` writes this
-table from `patches/Draw/` and a verify run's log):
+Verified 2026-11-10 over `scripts/session.py` (map 0, the menu, a death) and
+`scripts/tour.py` (23 areas, standing and turning; `scripts/literal_table.py` writes
+this table from `patches/Draw/` and the two runs' logs):
 
 | routine | what | class, switch | mismatches in calls |
 |---|---|---|---|
-| `func_80016A14` | the draw stage's second call; calls func_80079DCC and func_80079D0C (libgpu); not read | `Draw16A14`, `ST_DRAW16A14` | 0 in 812 |
-| `func_800174C4` | the frame head: flips the buffer, rewinds the packet cursor, clears both ordering tables | `FrameHead`, `ST_FRAMEHEAD` | 0 in 1,019 |
-| `func_800176A8` | the draw stage's first call, before the frame head | `FrameSetup`, `ST_FRAMESETUP` | 0 in 812 |
-| `func_80017D28` | one model's set-up step in func_80022678 and func_80021AC4; not read | `ModelStep17D28`, `ST_MODELSTEP17D28` | 0 in 1,477 |
-| `func_800192D4` | a model step in func_80022678; not read | `ModelStep192D4`, `ST_MODELSTEP192D4` | 0 in 6,689 |
-| `func_80019DC8` | a model step in func_80022678 and func_80021AC4; not read | `ModelStep19DC8`, `ST_MODELSTEP19DC8` | 0 in 2,605 |
+| `func_80016A14` | the draw stage's second call; calls func_80079DCC and func_80079D0C (libgpu); not read | `Draw16A14`, `ST_DRAW16A14` | 0 in 1,114 |
+| `func_800174C4` | the frame head: flips the buffer, rewinds the packet cursor, clears both ordering tables | `FrameHead`, `ST_FRAMEHEAD` | 0 in 7,238 |
+| `func_800176A8` | the draw stage's first call, before the frame head | `FrameSetup`, `ST_FRAMESETUP` | 0 in 1,114 |
+| `func_80017D28` | one model's set-up step in func_80022678 and func_80021AC4; not read | `ModelStep17D28`, `ST_MODELSTEP17D28` | 0 in 1,864 |
+| `func_800192D4` | a model step in func_80022678; not read | `ModelStep192D4`, `ST_MODELSTEP192D4` | 0 in 7,602 |
+| `func_80019DC8` | a model step in func_80022678 and func_80021AC4; not read | `ModelStep19DC8`, `ST_MODELSTEP19DC8` | 0 in 4,646 |
 | `func_8001BF10` | a model step in func_80022678; not read | `ModelStep1BF10`, `ST_MODELSTEP1BF10` | not reached |
-| `func_8001C100` | the visible-cell list, from the eye's cell outwards | `VisibleCells`, `ST_VISIBLECELLS` | 0 in 1,623 |
-| `func_8001C264` | the scene's first preparation pass after the cell list; writes no packet | `ScenePrepare1`, `ST_SCENEPREPARE1` | 0 in 1,623 |
-| `func_8001C60C` | the scene's second preparation pass; writes no packet | `ScenePrepare2`, `ST_SCENEPREPARE2` | 0 in 1,623 |
-| `func_8001C8E0` | a draw-stage call after the scene; calls func_8001C88C; not read | `Draw1C8E0`, `ST_DRAW1C8E0` | 0 in 812 |
-| `func_8001C9C8` | a draw-stage call after the scene; calls func_8001C88C; not read | `Draw1C9C8`, `ST_DRAW1C9C8` | 0 in 812 |
-| `func_8001CAB8` | a draw-stage call after the scene; calls func_8001C88C; not read | `Draw1CAB8`, `ST_DRAW1CAB8` | 0 in 812 |
-| `func_8001CB88` | the scene's third preparation pass; writes no packet | `ScenePrepare3`, `ST_SCENEPREPARE3` | 0 in 1,623 |
-| `func_8001CDF8` | the scene's fourth preparation pass; writes no packet | `ScenePrepare4`, `ST_SCENEPREPARE4` | 0 in 1,623 |
-| `func_8001D2A8` | the map's GT3s, every visible cell's triangles | `MapTriangles`, `ST_MAPTRIANGLES` | 0 in 1,623 |
-| `func_8001DB64` | the map's GT4s, every visible cell's quads | `MapQuads`, `ST_MAPQUADS` | 0 in 1,623 |
-| `func_8001E5A0` | a scene step after the map's quads; wrote no packet in map 0 | `SceneStep1E5A0`, `ST_SCENESTEP1E5A0` | 0 in 1,623 |
-| `func_8001EEAC` | the scene's last step; wrote no packet in map 0 | `SceneStep1EEAC`, `ST_SCENESTEP1EEAC` | 0 in 1,623 |
-| `func_8001F954` | the scene's FT3s, beside func_8001FD00's FT4s. A leaf | `SceneTriangles`, `ST_SCENETRIANGLES` | 0 in 1,623 |
-| `func_8001FD00` | the scene's FT4s: a list of 12-byte records at 0x8017BED0, indexed from 0x801B9F16, counted at 0x801B9E14. A leaf | `SceneQuads`, `ST_SCENEQUADS` | 0 in 1,623 |
-| `func_80020164` | a scene step between the scene's own quads and the map's; wrote no packet in map 0 | `SceneStep20164`, `ST_SCENESTEP20164` | 0 in 1,623 |
-| `func_80020588` | a scene step before the map's triangles; wrote no packet in map 0 | `SceneStep20588`, `ST_SCENESTEP20588` | 0 in 1,623 |
-| `func_80020A80` | the scene: the light's flicker, the visible-cell list, the map's preparation, then its quads and triangles and the scene's own | `Scene`, `ST_SCENE` | 0 in 812 |
-| `func_80021654` | an FT4S over the scene, now and then (a tint or flash, probably) | `Overlay21654`, `ST_OVERLAY21654` | 0 in 812 |
-| `func_8002181C` | a draw-stage call; calls func_80021518 with 320 by 240; not read | `Draw2181C`, `ST_DRAW2181C` | 0 in 812 |
-| `func_800218D8` | a draw-stage call; calls func_80021518 with 320 by 240; not read | `Draw218D8`, `ST_DRAW218D8` | 0 in 812 |
-| `func_80021AC4` | a model drawn with func_80022010 from the draw stage, called twice (0 and 1): a hand each, probably; drew nothing in map 0 | `HeldModel`, `ST_HELDMODEL` | 0 in 1,623 |
-| `func_80022010` | every model polygon: FT3 to GT4, semi-transparent or not; called by func_80022678 and func_80021AC4 | `ModelPolygons`, `ST_MODELPOLYGONS` | 0 in 1,273 |
-| `func_80022678` | one model: its matrix, light and pose, then func_80022010 for its polygons | `ModelDraw`, `ST_MODELDRAW` | 0 in 739 |
-| `func_80023C6C` | func_800241D0's last call, after the models | `ModelExtras`, `ST_MODELEXTRAS` | 0 in 1,623 |
-| `func_80023ED8` | func_800251C8's last call | `ModelExtras2`, `ST_MODELEXTRAS2` | 0 in 1,623 |
-| `func_800241D0` | the model list: the entity records (0xD4 bytes from 0x801BA138) named by the u16 list at 0x801C023C, counted at 0x801C0238, each through func_80022678 | `Models`, `ST_MODELS` | 0 in 812 |
-| `func_800246E4` | an effect drawn when a timer kept in vblanks runs out (calls rand()); FT3 and FT4; not read | `Effect246E4`, `ST_EFFECT246E4` | 0 in 812 |
-| `func_800251C8` | a second model list, the same shape as func_800241D0's; drew nothing in map 0 | `Models2`, `ST_MODELS2` | 0 in 812 |
-| `func_80025C24` | one HUD panel record drawn as a sprite with its mode packet; called by func_80026964 | `HudSprite`, `ST_HUDSPRITE` | 0 in 12,877 |
-| `func_80025E00` | one HUD panel record drawn as an FT4; called by func_80026964 | `HudQuad`, `ST_HUDQUAD` | 0 in 3,241 |
-| `func_80026020` | one HUD panel record drawn as an F4 with its mode packet; called by func_80026964 | `HudFill`, `ST_HUDFILL` | 0 in 3,241 |
-| `func_80026228` | called up to five times by the draw stage, one per active entry of a table at 0x8007F3F4; not read | `Draw26228`, `ST_DRAW26228` | 0 in 5 |
-| `func_80026508` | a draw-stage call when 0x801D2D23 is set and 0x801B5929 is under 0x2C; not read | `Draw26508`, `ST_DRAW26508` | 0 in 811 |
-| `func_80026964` | the HUD's panel list: 0x14-byte records from 0x8007F3F4 + 0x14 * a0, to a 0xFF, each drawn as a sprite, an FT4 or an F4 | `HudPanels`, `ST_HUDPANELS` | 0 in 1,621 |
-| `func_80026ECC` | drawn by the menu at (0x6A, y); not read | `Text26ECC`, `ST_TEXT26ECC` | 0 in 17,468 |
-| `func_8002732C` | a line of text at a position; the menu and the prompt; not read | `Text2732C`, `ST_TEXT2732C` | 0 in 1,056 |
+| `func_8001C100` | the visible-cell list, from the eye's cell outwards | `VisibleCells`, `ST_VISIBLECELLS` | 0 in 2,236 |
+| `func_8001C264` | the scene's first preparation pass after the cell list; writes no packet | `ScenePrepare1`, `ST_SCENEPREPARE1` | 0 in 2,236 |
+| `func_8001C60C` | the scene's second preparation pass; writes no packet | `ScenePrepare2`, `ST_SCENEPREPARE2` | 0 in 2,236 |
+| `func_8001C8E0` | a draw-stage call after the scene; calls func_8001C88C; not read | `Draw1C8E0`, `ST_DRAW1C8E0` | 0 in 1,131 |
+| `func_8001C9C8` | a draw-stage call after the scene; calls func_8001C88C; not read | `Draw1C9C8`, `ST_DRAW1C9C8` | 0 in 1,131 |
+| `func_8001CAB8` | a draw-stage call after the scene; calls func_8001C88C; not read | `Draw1CAB8`, `ST_DRAW1CAB8` | 0 in 1,131 |
+| `func_8001CB88` | the scene's third preparation pass; writes no packet | `ScenePrepare3`, `ST_SCENEPREPARE3` | 0 in 2,236 |
+| `func_8001CDF8` | the scene's fourth preparation pass; writes no packet | `ScenePrepare4`, `ST_SCENEPREPARE4` | 0 in 2,241 |
+| `func_8001D2A8` | the map's GT3s, every visible cell's triangles | `MapTriangles`, `ST_MAPTRIANGLES` | 0 in 2,246 |
+| `func_8001DB64` | the map's GT4s, every visible cell's quads | `MapQuads`, `ST_MAPQUADS` | 0 in 2,257 |
+| `func_8001E5A0` | a scene step after the map's quads; wrote no packet in map 0 | `SceneStep1E5A0`, `ST_SCENESTEP1E5A0` | 0 in 2,257 |
+| `func_8001EEAC` | the scene's last step; wrote no packet in map 0 | `SceneStep1EEAC`, `ST_SCENESTEP1EEAC` | 0 in 2,257 |
+| `func_8001F954` | the scene's FT3s, beside func_8001FD00's FT4s. A leaf | `SceneTriangles`, `ST_SCENETRIANGLES` | 0 in 2,241 |
+| `func_8001FD00` | the scene's FT4s: a list of 12-byte records at 0x8017BED0, indexed from 0x801B9F16, counted at 0x801B9E14. A leaf | `SceneQuads`, `ST_SCENEQUADS` | 0 in 2,241 |
+| `func_80020164` | a scene step between the scene's own quads and the map's; wrote no packet in map 0 | `SceneStep20164`, `ST_SCENESTEP20164` | 0 in 2,241 |
+| `func_80020588` | a scene step before the map's triangles; wrote no packet in map 0 | `SceneStep20588`, `ST_SCENESTEP20588` | 0 in 2,243 |
+| `func_80020A80` | the scene: the light's flicker, the visible-cell list, the map's preparation, then its quads and triangles and the scene's own | `Scene`, `ST_SCENE` | 0 in 1,131 |
+| `func_80021654` | an FT4S over the scene, now and then (a tint or flash, probably) | `Overlay21654`, `ST_OVERLAY21654` | 0 in 1,117 |
+| `func_8002181C` | a draw-stage call; calls func_80021518 with 320 by 240; not read | `Draw2181C`, `ST_DRAW2181C` | 0 in 1,117 |
+| `func_800218D8` | a draw-stage call; calls func_80021518 with 320 by 240; not read | `Draw218D8`, `ST_DRAW218D8` | 0 in 1,117 |
+| `func_80021AC4` | a model drawn with func_80022010 from the draw stage, called twice (0 and 1): a hand each, probably; drew nothing in map 0 | `HeldModel`, `ST_HELDMODEL` | 0 in 2,236 |
+| `func_80022010` | every model polygon: FT3 to GT4, semi-transparent or not; called by func_80022678 and func_80021AC4 | `ModelPolygons`, `ST_MODELPOLYGONS` | 0 in 1,718 |
+| `func_80022678` | one model: its matrix, light and pose, then func_80022010 for its polygons | `ModelDraw`, `ST_MODELDRAW` | 0 in 1,030 |
+| `func_80023C6C` | func_800241D0's last call, after the models | `ModelExtras`, `ST_MODELEXTRAS` | 0 in 2,260 |
+| `func_80023ED8` | func_800251C8's last call | `ModelExtras2`, `ST_MODELEXTRAS2` | 0 in 2,266 |
+| `func_800241D0` | the model list: the entity records (0xD4 bytes from 0x801BA138) named by the u16 list at 0x801C023C, counted at 0x801C0238, each through func_80022678 | `Models`, `ST_MODELS` | 0 in 1,131 |
+| `func_800246E4` | an effect drawn when a timer kept in vblanks runs out (calls rand()); FT3 and FT4; not read | `Effect246E4`, `ST_EFFECT246E4` | 0 in 1,134 |
+| `func_800251C8` | a second model list, the same shape as func_800241D0's; drew nothing in map 0 | `Models2`, `ST_MODELS2` | 0 in 1,134 |
+| `func_80025C24` | one HUD panel record drawn as a sprite with its mode packet; called by func_80026964 | `HudSprite`, `ST_HUDSPRITE` | 0 in 17,718 |
+| `func_80025E00` | one HUD panel record drawn as an FT4; called by func_80026964 | `HudQuad`, `ST_HUDQUAD` | 0 in 4,454 |
+| `func_80026020` | one HUD panel record drawn as an F4 with its mode packet; called by func_80026964 | `HudFill`, `ST_HUDFILL` | 0 in 4,454 |
+| `func_80026228` | called up to five times by the draw stage, one per active entry of a table at 0x8007F3F4; not read | `Draw26228`, `ST_DRAW26228` | 0 in 10 |
+| `func_80026508` | a draw-stage call when 0x801D2D23 is set and 0x801B5929 is under 0x2C; not read | `Draw26508`, `ST_DRAW26508` | 0 in 1,115 |
+| `func_80026964` | the HUD's panel list: 0x14-byte records from 0x8007F3F4 + 0x14 * a0, to a 0xFF, each drawn as a sprite, an FT4 or an F4 | `HudPanels`, `ST_HUDPANELS` | 0 in 2,228 |
+| `func_80026ECC` | drawn by the menu at (0x6A, y); not read | `Text26ECC`, `ST_TEXT26ECC` | 0 in 216,471 |
+| `func_8002732C` | a line of text at a position; the menu and the prompt; not read | `Text2732C`, `ST_TEXT2732C` | 0 in 12,763 |
 | `func_800276BC` | text or a number at a position; the menu; not read | `Text276BC`, `ST_TEXT276BC` | 0 in 385 |
-| `func_80027D18` | a draw-stage call when the player's state is 1, and the death prompt's; not read | `Draw27D18`, `ST_DRAW27D18` | 0 in 119 |
-| `func_80028220` | text for func_80028784; not read | `Text28220`, `ST_TEXT28220` | 0 in 393 |
-| `func_80028364` | text for func_80028784 and the menu; not read | `Text28364`, `ST_TEXT28364` | 0 in 29,836 |
-| `func_800286A8` | text for func_80028784, the menu and the prompt; not read | `Text286A8`, `ST_TEXT286A8` | 0 in 549 |
+| `func_80027D18` | a draw-stage call when the player's state is 1, and the death prompt's; not read | `Draw27D18`, `ST_DRAW27D18` | 0 in 5,973 |
+| `func_80028220` | text for func_80028784; not read | `Text28220`, `ST_TEXT28220` | 0 in 12,099 |
+| `func_80028364` | text for func_80028784 and the menu; not read | `Text28364`, `ST_TEXT28364` | 0 in 673,517 |
+| `func_800286A8` | text for func_80028784, the menu and the prompt; not read | `Text286A8`, `ST_TEXT286A8` | 0 in 18,106 |
 | `func_80028784` | the draw stage's text when 0x8017BD66 is set; not read | `Text28784`, `ST_TEXT28784` | not reached |
 | `func_8002948C` | the menu's last call before presenting; not read | `Draw2948C`, `ST_DRAW2948C` | 0 in 34 |
-| `func_80029618` | a window or panel, x y w h; the menu and the prompt | `Window29618`, `ST_WINDOW29618` | 0 in 158 |
-| `func_80033110` | called from the draw stage when the byte at 0x80199140 is 0, 5 or 6; not read | `Draw33110`, `ST_DRAW33110` | 0 in 746 |
-| `func_80033DB8` | per entity before its model is drawn; calls func_80015258 | `ModelLight`, `ST_MODELLIGHT` | 0 in 8,383 |
-| `func_800340F8` | a draw-stage call; a leaf; not read | `Draw340F8`, `ST_DRAW340F8` | 0 in 812 |
+| `func_80029618` | a window or panel, x y w h; the menu and the prompt | `Window29618`, `ST_WINDOW29618` | 0 in 6,012 |
+| `func_80033110` | called from the draw stage when the byte at 0x80199140 is 0, 5 or 6; not read | `Draw33110`, `ST_DRAW33110` | 0 in 995 |
+| `func_80033DB8` | per entity before its model is drawn; calls func_80015258 | `ModelLight`, `ST_MODELLIGHT` | 0 in 11,164 |
+| `func_800340F8` | a draw-stage call; a leaf; not read | `Draw340F8`, `ST_DRAW340F8` | 0 in 1,116 |
 | `func_80034604` | a model step in func_80022678 and func_80021AC4; not read | `ModelStep34604`, `ST_MODELSTEP34604` | not reached |
-| `func_80034FC4` | a draw-stage call; a leaf; not read | `Draw34FC4`, `ST_DRAW34FC4` | 0 in 812 |
-| `func_80035AA8` | a model step in func_80022678 and func_80021AC4; not read | `ModelStep35AA8`, `ST_MODELSTEP35AA8` | 0 in 1,273 |
+| `func_80034FC4` | a draw-stage call; a leaf; not read | `Draw34FC4`, `ST_DRAW34FC4` | 0 in 1,116 |
+| `func_80035AA8` | a model step in func_80022678 and func_80021AC4; not read | `ModelStep35AA8`, `ST_MODELSTEP35AA8` | 0 in 1,714 |
 
 `scripts/verify_summary.py <log>` sums a run's verify lines. The acceptance test
 passes with all 57 on (2026-11-10), and play still draws 144 frames and 20 ticks a
@@ -220,5 +221,8 @@ What is called through `FP` is not read.
 - Which objects `func_800241D0`'s three sites draw, and what `func_800251C8` and
   `func_80021AC4` draw (creatures, the hands, items are candidates).
 - The leaves `func_8001F954` and `func_8001FD00`.
-- The card screens, a fight, other areas, the area modules, `VS.EXE`.
+- The card screens, a fight on purpose, the area modules' own drawing, `VS.EXE`.
+  `scripts/tour.py` reaches 23 areas; the other 13 need an arrival point.
+- `ST_GEOPROBE` printed two windows and then nothing over the tour: something in
+  the warp's load leaves it unbalanced. Not read.
 - Who checks the packet buffer's end, and what the menu does with buffer 0's top.

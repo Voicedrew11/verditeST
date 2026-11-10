@@ -31,14 +31,6 @@ public static class AgentServer
     const uint AreaRequest = 0x801B5924;
     const uint LoadArea = 0x80044EE8;
 
-    // The maps with an area module, FDAT.T entry 10n+2 (config/st.json); the others'
-    // entries are not modules.
-    static readonly HashSet<int> Maps =
-    [
-        0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 20,
-        21, 23, 24, 25, 26, 27, 28, 30, 32, 33, 37, 38, 40, 41, 44, 45, 46, 47,
-    ];
-
     static readonly Dictionary<string, ushort> Buttons = new(StringComparer.OrdinalIgnoreCase)
     {
         ["Select"] = Controller.Select, ["Start"] = Controller.Start,
@@ -225,16 +217,22 @@ public static class AgentServer
     }
 
     // warp <map> [x y z]. The area module loads over the next few frames; state's map
-    // says when it is in. Without a point the player keeps their coordinates, which in
-    // another map is usually no floor: map 0's start in map 1 is a death on arrival.
+    // says when it is in. Without a point the player arrives where a door into that map
+    // would put them (Arrivals), or, for a map with no known door, keeps their
+    // coordinates, which in another map is usually no floor and a death.
     static string Warp(string[] words)
     {
         int map = int.Parse(words[1], CultureInfo.InvariantCulture);
-        if (!Maps.Contains(map)) throw new ArgumentException($"map {map} has no area module");
+        if (!Arrivals.Maps.Contains(map)) throw new ArgumentException($"map {map} has no area module");
         if (AgentBeacon.Program != "st") throw new InvalidOperationException("warp needs ST.EXE running");
         if (words.Length is not (2 or 5)) throw new ArgumentException("warp takes a map and optionally x y z");
 
         string arrival = "where the player stands";
+        if (words.Length == 2 && Arrivals.For(map) is { } door)
+        {
+            words = [words[0], words[1], door.X.ToString(CultureInfo.InvariantCulture),
+                     door.Y.ToString(CultureInfo.InvariantCulture), door.Z.ToString(CultureInfo.InvariantCulture)];
+        }
         if (words.Length == 5)
         {
             int x = int.Parse(words[2], CultureInfo.InvariantCulture);

@@ -227,6 +227,28 @@ height for the eye (`0x800525D0..0x80052628`). The record's field offsets are no
 pinned down yet. Read as `+0x05`, map 0's records have types `0xE0`, `0xEC` and
 `0x32` and no door of either kind, so its way into map 1 would be something else.
 
+**The record's fields**, read from the door branch (`0x80052338..0x80052628`), where
+`s1` is the record + 0x50: `+0x05` the type (`0xED`, `0xEF` a door), `+0x20` a heading
+the player must face within 0x190 of (unless the pad's `+0x36` button is held, or the
+type is `0xEF`), `+0x24`/`+0x28`/`+0x2C` the trigger's position (`func_8004FD28`, a box
+of 0xC00), `+0x36` a heading kept at `player+0x22A`, `+0x48` the target map, `+0x49`
+to `+0x4B` the arrival cell (x, height, z, each biased by 0x40), `+0x4C` to `+0x4E`
+signed fine offsets (times 0x80), `+0x4F` the arrival heading (times 0x400, to
+`player+0x26A`). Before loading, the branch saves the player's map, cell and offset
+in the cell into `player+0x220..+0x22A`, and marks every record of the same type.
+
+### Arrival points
+
+`scripts/door_census.py` warped into all 36 maps on 2026-11-10 and read every record
+naming another map. ED and EF doors name arrival points in 24 maps; warping to each
+and standing six seconds, 23 kept the player alive and on a floor. Map 2's (from map
+38's record 10) killed the player at once. They are `patches/Arrivals.cs`, and `warp
+<map>` with no point uses them. Twelve maps have no ED or EF door into them in any
+record: 1, 2 (but for the fatal one), 3, 4, 8, 11, 12, 21, 26, 27, 28, 32, 40. Other
+types also name maps (`0xE0`, `0xE1`, `0x32`, `0x33` and more, with +0x48 in range),
+which are not doors by this code and are not read. Map 0's ways out are not ED or EF
+either.
+
 **Arriving with no floor is a death.** Loading map 1 with the player at map 0's start
 coordinates drops the height by `0x39D0` at once and kills the player within a second.
 Phase 2's acceptance test changed area that way before saving, so it saved a dead
