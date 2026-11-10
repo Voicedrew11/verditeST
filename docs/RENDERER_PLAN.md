@@ -51,7 +51,7 @@ The world's families, as known:
 | frame | `FrameHead` (`ClearOTagR` 0x1000, front table 0x40), swap `func_80017680` |
 | camera | `CameraSetup` → matrix `0x8017BD78`, eye `0x8017BE58`, angles `0x8017BE68` |
 | map | `Scene`: `VisibleCells`, `ScenePrepare1..4` (no packets; the projection is here), `MapQuads` GT4, `MapTriangles` GT3, near `SceneStep1E5A0`/`1EEAC` through libgte's division (`0x80075EC4`, `0x80076884`) |
-| scene's own | `SceneQuads` FT4 (records at `0x8017BED0`), `SceneTriangles` FT3 |
+| scene's own | `SceneQuads` FT4, `SceneTriangles` FT3: the map's cells whose `+4 & 3` is 0, flat and unfogged |
 | models | `Models`, `Models2` → `ModelDraw` → `ModelPolygons` (FT3..GT4); `ModelLight` per entity |
 | poses | `func_80033CFC`, `func_80074A04`; slots `MarkClipSlots` `0x8016768C`, `MarkPoseSlots` `0x8016780C` |
 | view-space | `HeldModel` (0) and (1): the hands, probably; nothing held in a new game |

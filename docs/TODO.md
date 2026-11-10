@@ -47,9 +47,9 @@ projection, lighting record and linear fog (`docs/GPU_RENDERER.md`). The scene
 census (`ST_SCENE_CENSUS=1`) gives every packet of the session an owner, 0
 unattributed. Verify compares RAM, scratchpad, registers, GTE and the calls each
 routine makes: 0 mismatches over the session. The map reference
-(`ST_MAP_REFERENCE=1`) works out every bulk quad and triangle in plain C#, light and
-fog included, and matches the game's packets word for word. Next: the near splits,
-the scene's own faces, then the models' light inputs; the census and call
+(`ST_MAP_REFERENCE=1`) works out every bulk face of the map in plain C#, the scene's flat
+cells included, light and fog too, and matches the game's packets word for word.
+Next: the near splits, then the models' light inputs; the census and call
 order in the contexts not reached (held models, text, tints, the flicker).
 
 ## Phase 10: what is left

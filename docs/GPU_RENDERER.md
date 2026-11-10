@@ -22,7 +22,7 @@ cell records at `0x8017BED0`:
 |---|---|
 | `+0x00` | u8, the mesh's index in the area's bank |
 | `+0x03` | u8, `& 3`: the cell's rotation, a quarter turn each |
-| `+0x04` | u8, `& 3`: 0 skips the cell's faces (its vertices still advance the buffer below) |
+| `+0x04` | u8, `& 3`: 0 hands the cell to `SceneQuads`/`SceneTriangles`, drawn flat and unfogged; the map routines skip it (its vertices still advance the buffer below) |
 | `+0x08` | u8, the cell's X: origin `X = b8 << 12` (world units; cells are 0x1000 wide) |
 | `+0x09` | u8, the cell's height: `Y = (b9 << 12) + ((b11 - 0x80) << 7)` (larger is lower) |
 | `+0x0A` | u8, the cell's Z: `Z = b10 << 12` |
@@ -165,8 +165,8 @@ this session reaches.
 ## The map reference
 
 `ST_MAP_REFERENCE=1` (`patches/Render/MapReference.cs`, the arithmetic in
-`MapLight.cs`, the two face shapes in `MapFaces.cs`): Step 2's reference for the
-map's faces. Before `MapTriangles` or `MapQuads` runs, every visible cell's faces of
+`MapLight.cs`, the face shapes in `MapFaces.cs`): Step 2's reference for the
+map's faces. Before `MapTriangles`, `MapQuads`, `SceneTriangles` or `SceneQuads` runs, every visible cell's faces of
 its shape are worked out in plain C# from the records alone, without the
 GTE: the facing (`NCLIP` of corners 0-1-2 and 3-1-2), the drop by depth, the near
 path's choice, the order key, each corner's fog factor from its depth, the face's
@@ -181,7 +181,16 @@ differences** in any count. 892,747 bulk quads matched whole, 3,570,988 corner f
 factors, the back colour and colour matrix against the record every frame, every tag
 and 182,969 heads; 367,547 near faces stepped over, each at the cursor. With the
 triangles added, a second run: 888,372 GT4s and 102,176 GT3s matched whole, 3,860,016
-fog factors, 365,821 near quads and 24,959 near triangles stepped over, 0 differences. A negative control (one bit off in the reference's red)
+fog factors, 365,821 near quads and 24,959 near triangles stepped over, 0 differences.
+
+**The scene's own faces are the map's too.** `SceneQuads` and `SceneTriangles` walk
+the same visible cells, meshes and face records, but draw only the cells whose
+`+4 & 3` is 0, the ones the map routines skip, as FT4 and FT3: one `NCCS` colour a
+face (code `| 0x2C`, `| 0x24`), no fog, no near path (a face of any size is a bulk
+packet), the same facing, keys and drop. Added to the reference as two more entries
+of `MapFaces`; a third run: 38,821 FT4s and 469 FT3s matched whole beside 894,112
+GT4s and 102,263 GT3s, 0 differences. So the retained map is one mesh set with a
+per-cell shading choice, not two kinds of geometry. A negative control (one bit off in the reference's red)
 failed at the first quad. Along the way:
 
 - the fog's two quirks above;
@@ -192,7 +201,7 @@ failed at the first quad. Along the way:
 
 Not yet covered: the flicker's per-corner calls when `0x8017BE8C & 6` (colours
 skipped and counted then; not reached in map 0), the near splits' own arithmetic,
-the scene's own faces (`SceneQuads`, `SceneTriangles`), and the models.
+and the models.
 
 ## What verify compares
 

@@ -48,17 +48,18 @@ public static class MapReference
     {
         SymbolRegistry.Build();
         MethodInfo Hook(string n) => typeof(MapReference).GetMethod(n, BindingFlags.Public | BindingFlags.Static)!;
-        var hooks = new[] { (MapFaces.Triangles, "Triangles"), (MapFaces.Quads, "Quads") };
         var targets = new List<MethodInfo>();
-        foreach (var (shape, name) in hooks)
+        for (int i = 0; i < MapFaces.All.Length; i++)
         {
+            var shape = MapFaces.All[i];
             if (SymbolRegistry.Resolve(MainLoop.Overlay, null, shape.Routine) is not { } t) return false;
-            if (SymbolRegistry.Resolve(MainLoop.Overlay, null, shape.NearSplit) is not { } split) return false;
-            HookManager.AddPre(_self, t, Hook("Pre" + name));
+            HookManager.AddPre(_self, t, Hook("Pre" + i));
             HookManager.AddPost(_self, t, Hook(nameof(Post)));
+            targets.Add(t);
+            if (shape.NearSplit is not { } at) continue;
+            if (SymbolRegistry.Resolve(MainLoop.Overlay, null, at) is not { } split) return false;
             HookManager.AddPre(_self, split, Hook(nameof(SplitPre)));
             HookManager.AddPost(_self, split, Hook(nameof(SplitPost)));
-            targets.Add(t);
             targets.Add(split);
         }
         HookManager.Commit();
@@ -67,8 +68,11 @@ public static class MapReference
         return on;
     }
 
-    public static void PreTriangles(CpuContext c, IMemory m) => Pre(MapFaces.Triangles, m);
-    public static void PreQuads(CpuContext c, IMemory m) => Pre(MapFaces.Quads, m);
+    // One per entry of MapFaces.All, by its index: a hook knows its target only so.
+    public static void Pre0(CpuContext c, IMemory m) => Pre(MapFaces.All[0], m);
+    public static void Pre1(CpuContext c, IMemory m) => Pre(MapFaces.All[1], m);
+    public static void Pre2(CpuContext c, IMemory m) => Pre(MapFaces.All[2], m);
+    public static void Pre3(CpuContext c, IMemory m) => Pre(MapFaces.All[3], m);
 
     static void Pre(MapFaces shape, IMemory m)
     {
@@ -106,7 +110,7 @@ public static class MapReference
         {
             uint cell = Cells + m.ReadU16(VisibleList + (uint)i * 2) * 12u;
             uint mesh = bank + 0xC + m.ReadU8(cell) * 0x28u;
-            if ((m.ReadU8(cell + 4) & 3) != 0)
+            if (_shape.DrawsCell(m.ReadU8(cell + 4) & 3))
             {
                 int turn = m.ReadU8(cell + 3) & 3;
                 uint l = record + (uint)turn * 0x14;
@@ -163,7 +167,7 @@ public static class MapReference
         if (!(n1 > 0 || n2 < 0)) { Count("faces turned away"); return; }
         int key = (Max(sz) >> 5) + (sbyte)m.ReadU8(q + 0xA);
         if (key >= 4096 || key < nearLimit) { Count("faces dropped by depth"); return; }
-        if (n1 > 16384 || n2 < -16384)
+        if (_shape.NearSplit != null && (n1 > 16384 || n2 < -16384))
         {
             // The near path splits the face through libgte; its packets are not modelled
             // here, only stepped over.
@@ -183,11 +187,9 @@ public static class MapReference
                                 (short)m.ReadU16(normal + 4), (rgb & 0xFFFFFF) | code);
         var w = new uint[_shape.PacketSize / 4];
         foreach (var (word, off, half) in _shape.Texture) w[word] = half ? m.ReadU16(q + off) : m.ReadU32(q + off);
-        for (int k = 0; k < n; k++)
-        {
-            w[1 + k * 3] = MapLight.Fogged(lit, light, fog[k]);
-            w[2 + k * 3] = sxy[k];
-        }
+        for (int k = 0; k < n; k++) w[_shape.Positions[k]] = sxy[k];
+        if (_shape.Colouring == MapFaces.Shading.Flat) w[_shape.Colours[0]] = lit;
+        else for (int k = 0; k < n; k++) w[_shape.Colours[k]] = MapLight.Fogged(lit, light, fog[k]);
         _expected.Add(new Expected(key, w));
     }
 
@@ -253,7 +255,7 @@ public static class MapReference
     {
         for (int i = 1; i < words.Length; i++)
         {
-            bool colour = i % 3 == 1 && i < _shape.Corners * 3;
+            bool colour = _shape.Colours.Contains(i);
             if (colour && !_colours) continue;
             // A halfword UV shares its word with something that is not the face's.
             uint mask = _shape.Texture.Any(t => t.Word == i && t.Half) ? 0xFFFFu : 0xFFFFFFFFu;
