@@ -46,6 +46,8 @@ public sealed partial class GlCore
     int _uwModelKeep = -1, _uwnModelKeep = -1;
     // 0103. RetainedScene.ModelNearClip, per program.
     int _uwModelClip = -1, _uwnModelClip = -1;
+    // 0124. ModelInstance's colour rule after the cue.
+    int _uwModelRecolour = -1, _uwModelRecolourScale = -1;
     // The view-space placement (the arm), per program: uModelView, then the three rows and T.
     readonly int[] _uwView = [-1, -1, -1, -1, -1], _uwnView = [-1, -1, -1, -1, -1];
     static readonly string[] ViewNames = ["uModelView", "uModelVR0", "uModelVR1", "uModelVR2", "uModelVT"];
@@ -59,11 +61,13 @@ public sealed partial class GlCore
         _uwModelRgbc = L("uModelRgbc"); _uwModelMat = L("uModelMat"); _uwModelGteC = L("uModelGteC");
         _uwModelPose = L("uModelPose"); _uwModelPoseW = L("uModelPoseW"); _uwModelSky = L("uModelSky");
         _uwModelTile = L("uModelTile"); _uwModelKeep = L("uModelKeep"); _uwModelClip = L("uModelClip");
+        _uwModelRecolour = L("uModelRecolour"); _uwModelRecolourScale = L("uModelRecolourScale");
         for (int i = 0; i < ViewNames.Length; i++) _uwView[i] = L(ViewNames[i]);
         _gl.UseProgram(_progWorld);
         if (_uwModelKeep >= 0) _gl.Uniform1(_uwModelKeep, 1f);
         if (_uwModelSky >= 0) _gl.Uniform1(_uwModelSky, 0);
         if (_uwModelTile >= 0) _gl.Uniform1(_uwModelTile, 0);
+        if (_uwModelRecolour >= 0) _gl.Uniform2(_uwModelRecolour, 0, 0);
         if (_uwView[0] >= 0) _gl.Uniform1(_uwView[0], 0);
         if (_uwModel >= 0) _gl.Uniform1(_uwModel, 0);
         int u = L("uModelVerts");
@@ -360,6 +364,8 @@ public sealed partial class GlCore
         if (_uwModelLlm >= 0) _gl.UniformMatrix3(_uwModelLlm, 1, true, _m9);
         if (_uwModelCue >= 0) _gl.Uniform3(_uwModelCue, m.Dqa, m.Dqb, m.Curve);
         if (_uwModelRgbc >= 0) _gl.Uniform1(_uwModelRgbc, m.Rgbc);
+        if (_uwModelRecolour >= 0) _gl.Uniform2(_uwModelRecolour, m.RecolourFrom, m.RecolourCap);
+        if (_uwModelRecolourScale >= 0) _gl.Uniform3(_uwModelRecolourScale, (float)m.RecolourR, m.RecolourG, m.RecolourB);
         if (_uwModelMat >= 0) _gl.Uniform1(_uwModelMat, m.Material);
         if (_uwModelKeep >= 0) _gl.Uniform1(_uwModelKeep, 1f - Math.Clamp(m.FadeOut, 0f, 1f));
         if (_uwBk >= 0) _gl.Uniform3(_uwBk, m.Bk0, m.Bk1, m.Bk2);

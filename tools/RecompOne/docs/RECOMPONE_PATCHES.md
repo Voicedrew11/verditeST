@@ -2147,6 +2147,26 @@ Four files in the directory have no entry below:
   where it used to throw. Only the two throw sites changed; the RAM, scratchpad
   and register paths are untouched. Off by default (KF1's fuzzer turns it on), so
   nothing changes for a port that does not set it. **No recompile.**
+- `0125-retained-blend-without-reorder.patch` — the table walk drew the retained
+  world's water and models' blended faces (`DrawRetainedWater`) only while `0079`'s
+  reordering was active, which needs packet depth records (`GtePacketDepth.Active`). A
+  port whose Z-buffer takes its depths from the address map alone (Shadow Tower) had
+  its blended faces published, taken off the packets and never drawn. The water's
+  draws now follow `WaterPending` whenever the walk is not an asset pack's custom
+  order; without `0079` every packet is a barrier, so the faces go in at their slots
+  before the next packet that draws, as before a barrier under it. For a game with
+  `0079` active the condition is the same as before, so **Verdite2 and Verdite3 do
+  not move. No recompile.**
+- `0124-model-recolour.patch` — a colour rule after the depth cue for a retained
+  model instance: `ModelInstance.RecolourFrom` (the channel plus one, 0 none),
+  `RecolourCap` and `RecolourR`/`G`/`B`: the fogged corner colour's channel, held at
+  the cap, times each multiplier makes the corner's colour. Lit per corner while set
+  (the per-pixel light and fog are skipped for that instance), as a game that rewrites
+  its fogged colour word does. Shadow Tower's flickering light makes `(3b, 2b, b)` from
+  the blue held under 0x56, or `(r, 3r, 3r)` from the red. `uModelRecolour` and
+  `uModelRecolourScale` in `WorldVs`, set per instance in `SendInstance` and reset to
+  none at start. Every existing instance leaves the fields 0, so **nothing changes for a
+  game that does not set them. No recompile.**
 - `0123-linear-fog-factor.patch` — a sixth and seventh fog curve for the retained
   world shaders, `LinearFogFactor`: the factor linear in depth on the CPU's own
   integers, `(SZ - near) * 4096 / (far - near)` with SZ read back as a short, the

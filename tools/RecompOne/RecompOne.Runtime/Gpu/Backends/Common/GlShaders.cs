@@ -734,6 +734,10 @@ internal static class GlShaders
         uniform mat3  uModelLlm;
         uniform vec3  uModelCue;
         uniform uint  uModelRgbc;
+        // 0124. ModelInstance's colour rule after the cue: x the channel plus one (0
+        // none), y its cap; uModelRecolourScale the three multipliers.
+        uniform ivec2 uModelRecolour;
+        uniform vec3  uModelRecolourScale;
         uniform uint  uModelMat;
         // The GTE's own screen centre (OFX, OFY), for its saturated projection.
         uniform vec2  uModelGteC;
@@ -1903,6 +1907,14 @@ internal static class GlShaders
             }
             // 0088. A blended pixel is shaded from the lit colour, per pixel lighting or not.
             if (vNb.x != 0u && vLight == 0u) vLit = color;
+            // 0124. One channel of the fogged corner colour, capped and scaled into the
+            // three, as a game's own rule after its depth cue; lit per corner then.
+            if (uModel != 0 && uModelRecolour.x > 0) {
+                vec3 c = floor(clamp(lit * cueKeep(cue, z), 0.0, 255.0));
+                float s = min(c[uModelRecolour.x - 1], float(uModelRecolour.y));
+                vColor = vec4(clamp(s * uModelRecolourScale, 0.0, 255.0) / 255.0, 0.0);
+                vLight = 0u; vLit = vec3(0.0); vFog = 0.0; vCue = vec2(0.0);
+            }
             uint mip = inMip;
             if (uMipIndirect != 0) mip = inMip == 0u ? 0u : texelFetch(uMipTable, int(inMip) - 1).r;
             vTex = uvec2(inRect, (flags & 0x80000000u) | mip);

@@ -93,7 +93,9 @@ public static class LibGpu
                     if (!gpu.DrawRetainedMain()) RetainedScene.MainMissed++;
                     else
                     {
-                        water = RetainedScene.WaterPending && reorder;
+                        // 0125. Not only under 0079: without it every packet is a
+                        // barrier, and the faces go in at their slots all the same.
+                        water = RetainedScene.WaterPending && !custom;
                         underTo = slot + RetainedScene.UnderSlots;
                     }
                     RetainedScene.MainSerial = 0;

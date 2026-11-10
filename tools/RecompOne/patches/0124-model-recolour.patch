@@ -1,0 +1,83 @@
+diff --git a/RecompOne.Runtime/Gpu/Backends/Common/GlModelMeshes.cs b/RecompOne.Runtime/Gpu/Backends/Common/GlModelMeshes.cs
+index 934f117..0ea332a 100644
+--- a/RecompOne.Runtime/Gpu/Backends/Common/GlModelMeshes.cs
++++ b/RecompOne.Runtime/Gpu/Backends/Common/GlModelMeshes.cs
+@@ -46,6 +46,8 @@ public sealed partial class GlCore
+     int _uwModelKeep = -1, _uwnModelKeep = -1;
+     // 0103. RetainedScene.ModelNearClip, per program.
+     int _uwModelClip = -1, _uwnModelClip = -1;
++    // 0124. ModelInstance's colour rule after the cue.
++    int _uwModelRecolour = -1, _uwModelRecolourScale = -1;
+     // The view-space placement (the arm), per program: uModelView, then the three rows and T.
+     readonly int[] _uwView = [-1, -1, -1, -1, -1], _uwnView = [-1, -1, -1, -1, -1];
+     static readonly string[] ViewNames = ["uModelView", "uModelVR0", "uModelVR1", "uModelVR2", "uModelVT"];
+@@ -59,11 +61,13 @@ public sealed partial class GlCore
+         _uwModelRgbc = L("uModelRgbc"); _uwModelMat = L("uModelMat"); _uwModelGteC = L("uModelGteC");
+         _uwModelPose = L("uModelPose"); _uwModelPoseW = L("uModelPoseW"); _uwModelSky = L("uModelSky");
+         _uwModelTile = L("uModelTile"); _uwModelKeep = L("uModelKeep"); _uwModelClip = L("uModelClip");
++        _uwModelRecolour = L("uModelRecolour"); _uwModelRecolourScale = L("uModelRecolourScale");
+         for (int i = 0; i < ViewNames.Length; i++) _uwView[i] = L(ViewNames[i]);
+         _gl.UseProgram(_progWorld);
+         if (_uwModelKeep >= 0) _gl.Uniform1(_uwModelKeep, 1f);
+         if (_uwModelSky >= 0) _gl.Uniform1(_uwModelSky, 0);
+         if (_uwModelTile >= 0) _gl.Uniform1(_uwModelTile, 0);
++        if (_uwModelRecolour >= 0) _gl.Uniform2(_uwModelRecolour, 0, 0);
+         if (_uwView[0] >= 0) _gl.Uniform1(_uwView[0], 0);
+         if (_uwModel >= 0) _gl.Uniform1(_uwModel, 0);
+         int u = L("uModelVerts");
+@@ -360,6 +364,8 @@ public sealed partial class GlCore
+         if (_uwModelLlm >= 0) _gl.UniformMatrix3(_uwModelLlm, 1, true, _m9);
+         if (_uwModelCue >= 0) _gl.Uniform3(_uwModelCue, m.Dqa, m.Dqb, m.Curve);
+         if (_uwModelRgbc >= 0) _gl.Uniform1(_uwModelRgbc, m.Rgbc);
++        if (_uwModelRecolour >= 0) _gl.Uniform2(_uwModelRecolour, m.RecolourFrom, m.RecolourCap);
++        if (_uwModelRecolourScale >= 0) _gl.Uniform3(_uwModelRecolourScale, (float)m.RecolourR, m.RecolourG, m.RecolourB);
+         if (_uwModelMat >= 0) _gl.Uniform1(_uwModelMat, m.Material);
+         if (_uwModelKeep >= 0) _gl.Uniform1(_uwModelKeep, 1f - Math.Clamp(m.FadeOut, 0f, 1f));
+         if (_uwBk >= 0) _gl.Uniform3(_uwBk, m.Bk0, m.Bk1, m.Bk2);
+diff --git a/RecompOne.Runtime/Gpu/Backends/Common/GlShaders.cs b/RecompOne.Runtime/Gpu/Backends/Common/GlShaders.cs
+index 9124233..f403b5f 100644
+--- a/RecompOne.Runtime/Gpu/Backends/Common/GlShaders.cs
++++ b/RecompOne.Runtime/Gpu/Backends/Common/GlShaders.cs
+@@ -734,6 +734,10 @@ internal static class GlShaders
+         uniform mat3  uModelLlm;
+         uniform vec3  uModelCue;
+         uniform uint  uModelRgbc;
++        // 0124. ModelInstance's colour rule after the cue: x the channel plus one (0
++        // none), y its cap; uModelRecolourScale the three multipliers.
++        uniform ivec2 uModelRecolour;
++        uniform vec3  uModelRecolourScale;
+         uniform uint  uModelMat;
+         // The GTE's own screen centre (OFX, OFY), for its saturated projection.
+         uniform vec2  uModelGteC;
+@@ -1903,6 +1907,14 @@ internal static class GlShaders
+             }
+             // 0088. A blended pixel is shaded from the lit colour, per pixel lighting or not.
+             if (vNb.x != 0u && vLight == 0u) vLit = color;
++            // 0124. One channel of the fogged corner colour, capped and scaled into the
++            // three, as a game's own rule after its depth cue; lit per corner then.
++            if (uModel != 0 && uModelRecolour.x > 0) {
++                vec3 c = floor(clamp(lit * cueKeep(cue, z), 0.0, 255.0));
++                float s = min(c[uModelRecolour.x - 1], float(uModelRecolour.y));
++                vColor = vec4(clamp(s * uModelRecolourScale, 0.0, 255.0) / 255.0, 0.0);
++                vLight = 0u; vLit = vec3(0.0); vFog = 0.0; vCue = vec2(0.0);
++            }
+             uint mip = inMip;
+             if (uMipIndirect != 0) mip = inMip == 0u ? 0u : texelFetch(uMipTable, int(inMip) - 1).r;
+             vTex = uvec2(inRect, (flags & 0x80000000u) | mip);
+diff --git a/RecompOne.Runtime/Gpu/RetainedScene.cs b/RecompOne.Runtime/Gpu/RetainedScene.cs
+index 93a5f82..cba2e08 100644
+--- a/RecompOne.Runtime/Gpu/RetainedScene.cs
++++ b/RecompOne.Runtime/Gpu/RetainedScene.cs
+@@ -1022,6 +1022,12 @@ public static class RetainedScene
+         /// (gone), through the same ordered dither as <see cref="DistanceFade"/> and on top
+         /// of it, in the colour pass and the normal pass alike.</summary>
+         public float FadeOut;
++        /// <summary>0124. A colour rule after the depth cue: the fogged colour's channel
++        /// <see cref="RecolourFrom"/> less one (1 red, 2 green, 3 blue; 0, the default,
++        /// none), held at <see cref="RecolourCap"/>, times each of <see cref="RecolourR"/>,
++        /// <see cref="RecolourG"/> and <see cref="RecolourB"/> makes the corner's
++        /// colour. Lit per corner while it is set, whatever the per-pixel switch.</summary>
++        public int RecolourFrom, RecolourCap, RecolourR, RecolourG, RecolourB;
+         /// <summary>0116. How far, in world units, this model may sink into the map and
+         /// still draw: tested against the map's depth pulled this much towards the
+         /// camera, against other models at its true depth. 0, the default, is none. The

@@ -1022,6 +1022,12 @@ public static class RetainedScene
         /// (gone), through the same ordered dither as <see cref="DistanceFade"/> and on top
         /// of it, in the colour pass and the normal pass alike.</summary>
         public float FadeOut;
+        /// <summary>0124. A colour rule after the depth cue: the fogged colour's channel
+        /// <see cref="RecolourFrom"/> less one (1 red, 2 green, 3 blue; 0, the default,
+        /// none), held at <see cref="RecolourCap"/>, times each of <see cref="RecolourR"/>,
+        /// <see cref="RecolourG"/> and <see cref="RecolourB"/> makes the corner's
+        /// colour. Lit per corner while it is set, whatever the per-pixel switch.</summary>
+        public int RecolourFrom, RecolourCap, RecolourR, RecolourG, RecolourB;
         /// <summary>0116. How far, in world units, this model may sink into the map and
         /// still draw: tested against the map's depth pulled this much towards the
         /// camera, against other models at its true depth. 0, the default, is none. The
