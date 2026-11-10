@@ -23,7 +23,10 @@ cell records at `0x8017BED0`:
 | `+0x00` | u8, the mesh's index in the area's bank |
 | `+0x03` | u8, `& 3`: the cell's rotation, a quarter turn each |
 | `+0x04` | u8, `& 3`: 0 skips the cell's faces (its vertices still advance the buffer below) |
-| `+0x08..+0x0A` | three bytes biased by 0x40 (`41 42 3F` in cell 0): the cell's position, probably, as the door records' arrival cells are; not read in code yet |
+| `+0x08` | u8, the cell's X: origin `X = b8 << 12` (world units; cells are 0x1000 wide) |
+| `+0x09` | u8, the cell's height: `Y = (b9 << 12) + ((b11 - 0x80) << 7)` (larger is lower) |
+| `+0x0A` | u8, the cell's Z: `Z = b10 << 12` |
+| `+0x0B` | u8, a fine height, biased by 0x80, in steps of 0x80 |
 
 **The projected corners.** The scene's preparation passes (`ScenePrepare1..4`, which
 write no packets) project every visible cell's vertices into a buffer the
@@ -60,8 +63,13 @@ the scratchpad's `+0xC`; its offsets are from `bank + 0xC`:
 **The projection** (`ScenePrepare4`, `func_8001CDF8`). Per visible cell, the GTE's
 rotation is one of four matrices at `0x8017BDB8` (0x20 bytes each), picked by the
 cell's rotation, and its translation is the cell's entry in a 16-byte-a-cell table
-the caller passes in `a0` (built by `ScenePrepare3`, the pass with `MVMVA`: the cell's
-origin in view space, probably). The four matrices are the view's rotation times each
+the caller passes in `a0`, built by `ScenePrepare3` (`func_8001CB88`): the cell's
+origin minus the eye (the player's `+0x248`, `+0x24C` plus the s16s at `+0x2CE` and
+`+0x2D2`, `+0x250`), halved until each axis fits an s16 with the count of halvings
+kept at the entry's `+0xC`, then turned into view space by `MVMVA` with the view's
+rotation. Cell 0 in map 0 (`41 42 3F`, fine `80`) is at `(0x41000, 0x42000,
+0x3F000)`, beside the player at `(0x40000, 0x415C0, 0x3F000)`, so the bytes are
+world cells with no bias taken off. The four matrices are the view's rotation times each
 quarter turn, rebuilt every frame: standing in map 0 at heading 0, the first read
 `[0 0 -1; 0 1 0; 1 0 0]` in 4.12. The vertices are 8-byte `SVECTOR`s in the mesh's
 own space, three to an `RTPT`.
@@ -107,5 +115,5 @@ and back colour, which fits the shared `GteLightMap`; the fog is linear between 
 record's near and far depths toward a far colour from three fixed choices, which is
 the shape of the shared `LinearDepthCue` (Verdite3's near/far cue), with this game's
 own arithmetic (full `SZ`, truncating division, the top saturated by `DPCS`). Still
-to read: the cell origin's units (`ScenePrepare3`), the triangles' 0x14-byte record,
+to read: what the halving count does to the vertices, the triangles' 0x14-byte record,
 the record table's index, and when the record changes within an area.
