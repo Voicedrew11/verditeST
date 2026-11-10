@@ -149,8 +149,8 @@ Started 2026-11-10: the camera and the models' positions and angles are carried
 (`docs/SMOOTHING.md`). The poses blend between keys,
 so the carried clip time smooths them. The HUD's gauges step
 once, with nothing to carry. The measured gate is met (a creature in map 24 new
-on every frame, the eye still). Left: the arm's swing, which steps at 20 Hz (Triangle
-swings it; "The arm" in `docs/SMOOTHING.md`). The cell
+on every frame, the eye still). The arm's swing is carried too ("The arm" in
+`docs/SMOOTHING.md`); left: the user's eye on it (Triangle swings). The cell
 cull trails the carried eye on about 1% of walking frames (`docs/SMOOTHING.md`).
 
 ## Phase 5: what is left

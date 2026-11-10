@@ -158,8 +158,16 @@ against the HUD's 960, the world's 61,320 tested unchanged. `ST_HELDLAYER=0`
 compares. The ST_GEOPROBE rows for `21AC4` read "no packets" because the probe walks
 the main table only.
 
-Carrying the swing between ticks: the time steps once a tick, so the arm's pose
-steps at 20 Hz; not carried yet.
+**Carried between ticks** (`patches/ArmSmoothing.cs`, on with the models,
+`ST_SMOOTH_MODELS=0` compares): the time steps 0x114 a tick, so the arm's pose stepped
+at 20 Hz. Around the draw stage's two calls (returning to `0x80026D1C` and
+`0x80026D24`) each hand's time is replaced by the one interpolated between the last
+two ticks' and put back after. Not interpolated: a swing's first tick (from rest), its
+end, a change of the clip byte at `player+0x150 + hand`, and a step over 0x800.
+Measured 2026-11-10 over Triangle swings at 120 fps (`ST_SMOOTH_PROBE=1`): **365 of
+369 swing frames drew a new time** (the rest are each swing's first tick, about six
+frames), against about one frame in six with it off; 0 snaps. Hand 1's angles from
+`player+0x2DE..0x2E2` are not carried (all 0 on the save measured).
 
 ## The HUD's gauges
 
@@ -170,6 +178,6 @@ once on the tick, as on the console; there is no eased animation to carry.
 
 ## Not carried yet
 
-The arm, sprite cels (held
+Sprite cels (held
 to the tick by `patches/DrawStageTick.cs`, not carried), and the loops that draw
 their own frames (the menu, whose backdrop is a still of the world).

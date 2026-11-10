@@ -131,6 +131,7 @@ St.EyeSmoothing.Install();
 St.ModelSmoothing.Configure(Verdite.Core.Game.Env("SMOOTH"), Verdite.Core.Game.Env("SMOOTH_MODELS"),
                             Verdite.Core.Game.Env("SMOOTH_PROBE"));
 St.ModelSmoothing.Install();
+St.ArmSmoothing.Install();
 // The mouse through the game's own turn and look velocities. See "Mouse look" in docs/INPUT.md.
 Verdite.Core.Mouse.Configure(St.MouseLook.Game);
 Verdite.Core.Mouse.Install();
