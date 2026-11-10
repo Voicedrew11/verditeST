@@ -7,12 +7,12 @@ using static St.Mips;
 namespace St;
 
 /// <summary>
-/// <c>func_80026508</c>: a draw-stage call when 0x801D2D23 is set and 0x801B5929 is under 0x2C; not read. <c>ST_DRAW26508</c>.
+/// <c>func_80026508</c>: the HP and MP numbers: reads the player's +2 and +6 (against +0x18A and +0x18C) and draws each with func_80026228; when 0x801D2D23 is set and 0x801B5929 is under 0x2C. <c>ST_HUDHPMP</c>.
 /// </summary>
-public static class Draw26508
+public static class HudHpMp
 {
-    public static readonly Literal R = new(typeof(Draw26508), "draw-26508", "DRAW26508", 0x80026508, Run,
-        "a draw-stage call when 0x801D2D23 is set and 0x801B5929 is under 0x2C; not read.");
+    public static readonly Literal R = new(typeof(HudHpMp), "HUD HP and MP", "HUDHPMP", 0x80026508, Run,
+        "the HP and MP numbers: reads the player's +2 and +6 (against +0x18A and +0x18C) and draws each with func_80026228; when 0x801D2D23 is set and 0x801B5929 is under 0x2C.");
 
     static void Replace(Action<CpuContext, IMemory> orig, CpuContext c, IMemory m) => R.Replace(orig, c, m);
 

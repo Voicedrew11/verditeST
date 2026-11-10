@@ -7,12 +7,12 @@ using static St.Mips;
 namespace St;
 
 /// <summary>
-/// <c>func_80026228</c>: called up to five times by the draw stage, one per active entry of a table at 0x8007F3F4; not read. <c>ST_DRAW26228</c>.
+/// <c>func_80026228</c>: a number on the HUD, split into digits by 1000, 100 and 10; one call per active entry of the panel table at 0x8007F3F4, and two from func_80026508. <c>ST_HUDNUMBER</c>.
 /// </summary>
-public static class Draw26228
+public static class HudNumber
 {
-    public static readonly Literal R = new(typeof(Draw26228), "draw-26228", "DRAW26228", 0x80026228, Run,
-        "called up to five times by the draw stage, one per active entry of a table at 0x8007F3F4; not read.");
+    public static readonly Literal R = new(typeof(HudNumber), "HUD number", "HUDNUMBER", 0x80026228, Run,
+        "a number on the HUD, split into digits by 1000, 100 and 10; one call per active entry of the panel table at 0x8007F3F4, and two from func_80026508.");
 
     static void Replace(Action<CpuContext, IMemory> orig, CpuContext c, IMemory m) => R.Replace(orig, c, m);
 

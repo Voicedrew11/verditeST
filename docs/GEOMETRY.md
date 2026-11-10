@@ -174,8 +174,8 @@ The tour over the 12 areas the fixed warp reaches is below the table.
 | `func_80025C24` | one HUD panel record drawn as a sprite with its mode packet; called by func_80026964 | `HudSprite`, `ST_HUDSPRITE` | 0 in 17,718 |
 | `func_80025E00` | one HUD panel record drawn as an FT4; called by func_80026964 | `HudQuad`, `ST_HUDQUAD` | 0 in 4,454 |
 | `func_80026020` | one HUD panel record drawn as an F4 with its mode packet; called by func_80026964 | `HudFill`, `ST_HUDFILL` | 0 in 4,454 |
-| `func_80026228` | called up to five times by the draw stage, one per active entry of a table at 0x8007F3F4; not read | `Draw26228`, `ST_DRAW26228` | 0 in 10 |
-| `func_80026508` | a draw-stage call when 0x801D2D23 is set and 0x801B5929 is under 0x2C; not read | `Draw26508`, `ST_DRAW26508` | 0 in 1,115 |
+| `func_80026228` | a number on the HUD, split into digits by 1000, 100 and 10; one call per active entry of the panel table at 0x8007F3F4, and two from func_80026508 | `HudNumber`, `ST_HUDNUMBER` | 0 in 10 |
+| `func_80026508` | the HP and MP numbers: reads the player's +2 and +6 (against +0x18A and +0x18C) and draws each with func_80026228; when 0x801D2D23 is set and 0x801B5929 is under 0x2C | `HudHpMp`, `ST_HUDHPMP` | 0 in 1,115 |
 | `func_80026964` | the HUD's panel list: 0x14-byte records from 0x8007F3F4 + 0x14 * a0, to a 0xFF, each drawn as a sprite, an FT4 or an F4 | `HudPanels`, `ST_HUDPANELS` | 0 in 2,228 |
 | `func_80026ECC` | drawn by the menu at (0x6A, y); not read | `Text26ECC`, `ST_TEXT26ECC` | 0 in 216,471 |
 | `func_8002732C` | a line of text at a position; the menu and the prompt; not read | `Text2732C`, `ST_TEXT2732C` | 0 in 12,763 |
