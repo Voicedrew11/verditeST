@@ -8,9 +8,9 @@ open now.
 About 95 commits on `main`. At your word at 12:34, `main` was pushed to `origin`
 (90 commits) and the fork's `main` to `4125070`. In order:
 
-- **Pacing (Phase 5):** `VSync(n)` now waits n vblanks, so the world runs at the
+- **Pacing (Phase 4):** `VSync(n)` now waits n vblanks, so the world runs at the
   game's 20 Hz under a 144 fps picture.
-- **Draw path in C# (Phase 7):** 57 draw routines run as C# transcriptions, checked
+- **Draw path in C# (Phase 5):** 57 draw routines run as C# transcriptions, checked
   against the original by literal verify: 0 mismatches in all 23 warpable maps, and
   over the 12-map tour all at 0 but three known bytes of sound-chip state in
   `Models`. Verify now compares the calls each routine makes as well as RAM,
@@ -21,11 +21,11 @@ About 95 commits on `main`. At your word at 12:34, `main` was pushed to `origin`
 - **Smoothing (Phase 6):** the camera, the models' positions, angles and animation
   time are carried between ticks, so 144 distinct frames a second; texture
   animations, effect timers and full-screen tints are held to the game's tick.
-- **Picture (Phase 8):** no dither, 24-bit colour, perspective-correct textures,
+- **Picture (Phase 7):** no dither, 24-bit colour, perspective-correct textures,
   sub-pixel vertices and a Z-buffer on by default.
 - **Widescreen (Phase 9):** 16:9 by default; the world drawn live behind the
   in-game menu.
-- **Input:** a WASD layout, mouse look, and vibration (fork patch 0122).
+- **Input (Phase 8):** a WASD layout, mouse look, and vibration (fork patch 0122).
 - **Settings (Phase 10):** `Settings ▸ Testing` with the port's switches live and
   kept; first-run setup from `config/onboarding.json`.
 - **GPU renderer (Phase 11), planned on Verdite3's route:** the map's cells, faces,
