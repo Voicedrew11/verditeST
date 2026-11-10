@@ -34,6 +34,8 @@ open now.
   a ninth item needs a label drawn for it, in the menu's style. Alternatives: a
   button the menu ignores (Select, L1 or R1 in the menu) opening the Testing tab, or
   leaving it to `Settings` in the window. Recommended: the button, which needs no art.
+- **By eye:** the menu at 16:9 (`docs/WIDESCREEN.md`, "The menus"): the world drawn
+  behind it to the screen's edges, against `ST_MENUWORLD=0`.
 - **By eye:** the picture's switches (`docs/PICTURE.md`), each against its `=0`; the
   Z-buffer most of all (decals, the HUD, fades, the menu).
 
@@ -49,9 +51,9 @@ The page in the game's own menu waits on a decision ("Waiting on the user").
 Started 2026-11-10 (`docs/WIDESCREEN.md`): 16:9 by default, the tints stretched, the
 HUD movable to the edges (off), the near polygons widened. The measured gate is met:
 the same cells at both aspects (the cull is by position), and the busiest area's
-packets peak at 33% of a buffer. Next: `MenuWorld`. The menu's backdrop is a 320-wide still of
-the world taken as it opens (`docs/WIDESCREEN.md`, "The menus"), so the margin beside
-it is not the world.
+packets peak at 33% of a buffer. `MenuWorld` draws the world live behind the menu instead of
+its 320-wide still (`docs/WIDESCREEN.md`, "The menus"); the game's memory is put back
+after every pass. Left: the user's eye.
 
 ## Phase 8: what is left
 
@@ -123,6 +125,8 @@ The gate's test passes (`scripts/acceptance.py`, three runs, 2026-11-09). Still 
   at 41 → 30, which does not open.
 - ~~After the in-game menu load, `call` and `warp` stop running.~~ No longer
   reproduces (2026-11-10, `docs/DEVELOPMENT.md`).
+- The acceptance test fails at "never reached map 1" about one run in four
+  (2026-11-10, with and without the new patches); the warp to map 1 is not read yet.
 - `ST_AUTOSTART=load` takes the first save the card screen offers; picking a slot is
   not done.
 - ~~A main-loop marker for the beacon.~~ Added with a menu marker (2026-11-10,

@@ -88,6 +88,9 @@ St.Widescreen.Configure(Verdite.Core.Game.Env("WIDESCREEN"), Verdite.Core.Game.E
 St.Widescreen.Install();
 St.NearScreen.Configure(Verdite.Core.Game.Env("NEARSCREEN"));
 St.NearScreen.Install();
+// The world live behind the in-game menu, not its 320-wide still (docs/WIDESCREEN.md).
+St.MenuWorld.Configure(Verdite.Core.Game.Env("MENUWORLD"), Verdite.Core.Game.Env("MENUWORLD_PROBE"));
+St.MenuWorld.Install();
 St.MapCoverage.Install(Verdite.Core.Game.Env("MAPCOVERAGE"));
 St.WordWatch.Install(Verdite.Core.Game.Env("WORDWATCH"));
 

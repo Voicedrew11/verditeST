@@ -46,6 +46,7 @@ public sealed class TestingSection : ISettingsSection
         new("st.subpixel", "ST_SUBPIXEL", () => Subpixel.Enabled, v => Subpixel.Enabled = v),
         new("st.zbuffer", "ST_ZBUFFER", () => ZBuffer.Enabled, v => ZBuffer.Enabled = v),
         new("st.nearscreen", "ST_NEARSCREEN", () => NearScreen.Enabled, v => NearScreen.Enabled = v),
+        new("st.menuworld", "ST_MENUWORLD", () => MenuWorld.Enabled, v => MenuWorld.Enabled = v),
         new(Widescreen.HudKey, "ST_WIDESCREEN_HUD", () => Widescreen.AnchorHud, Widescreen.SetAnchorHud),
         new(Mouse.OnKey, "ST_MOUSE", () => Mouse.Enabled, v => Mouse.Enabled = v),
         new(Mouse.LeadKey, "ST_MOUSE_LEAD", () => Mouse.Lead, v => Mouse.Lead = v),
@@ -260,6 +261,8 @@ public sealed class TestingSection : ISettingsSection
         if (ImGui.IsItemHovered()) ImGui.SetTooltip("Wider shows more of the room, not a stretched 4:3.");
         Toggle("HUD at the screen's edges", K(Widescreen.HudKey),
             "Moves the gauges and panels out to the widened edges instead of the 4:3 box.");
+        Toggle("The world live behind the menu", K("st.menuworld"),
+            "Draws the world behind the menu to the screen's edges, instead of the game's 320-wide still of it.");
         Toggle("Near polygons into the margin", K("st.nearscreen"),
             "Keeps the pieces of large near polygons that fall in the widened margin.");
         Toggle("Perspective-correct textures", K("st.perspective"),

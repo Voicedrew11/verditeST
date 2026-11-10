@@ -13,6 +13,8 @@ Most on/off switches and `ST_FPS` are also on `Settings ▸ Testing`, kept in
 | `ST_BOOTEXE` | none | start at `title`, `optxt`, `st`, `end` or `vs` instead of the movies; a diagnostic, since `st` gets none of the title's hand-over |
 | `ST_AGENT` | off | `1`: print the beacon's state about once a second and on every load |
 | `ST_AUTOSTART` | off | `new` or `load`: boot into play with nobody at the pad |
+| `ST_MENUWORLD` | on | `0`: the menu's own 320-wide still of the world behind it, not the world drawn live ("The menus" in `docs/WIDESCREEN.md`) |
+| `ST_MENUWORLD_PROBE` | off | `1`: a line a second while the menu is up: passes, packet bytes, game-memory bytes put back |
 | `ST_SETUP` | when due | `1`: show the first-run setup at boot regardless; `0`: never on its own ("First-run setup" in `docs/DEVELOPMENT.md`) |
 | `ST_SHELL` | off | `1` or a port: the command channel, see "Driving the game without a person" in `docs/DEVELOPMENT.md` |
 | `ST_PACING` | on | `0`: frame pacing off; the game keeps its own pace, which `VBlankPacing` holds to 20 |

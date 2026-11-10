@@ -19,7 +19,7 @@ disc. Started 2026-11-10.
 | the cell cull | nothing to widen: built from the player's position alone (below) |
 | the near polygons | `NearScreen.cs`: libgte's division's screen width widened |
 | the packet buffer | measured, below |
-| the world behind menus | not ported: the menu's backdrop is a 320-wide still of the world (below) |
+| the world behind menus | `MenuWorld.cs`: the world drawn live in place of the menu's 320-wide still (below) |
 
 ## The menus
 
@@ -34,8 +34,27 @@ drawn over it. Measured with a probe on both calls: one `StoreImage` (return
 `0x80136C88` a frame (return `0x80029518`).
 
 So at 16:9 the backdrop is 320 wide and the margin beside it is whatever the
-runtime keeps there. Verdite3's `MenuWorld` draws the world live behind the menu
-instead; here that is the next step. The death prompt (`func_8002CEF8`) draws no
+runtime keeps there.
+
+**`MenuWorld`** (`patches/MenuWorld.cs`, `ST_MENUWORLD=0` for the still) skips that
+paste and, in its place, runs stage 14's world half (the camera from the last main-loop
+stage 14's arguments, the slot marks, `func_80021AC4`, the scene, the three
+visibility lists, both model lists) into an ordering table of its own in the still's
+store, with its packets after it. Its front table is linked in as `func_80017634`
+does, its end to the head of the menu's table, and the menu's `DrawOTag` starts at
+it. Not run: the texture animations, effects (`rand`), cels, tints, the fade, the
+HUD; the light's flicker takes the held `rand` (`DrawStageTick`).
+
+The pass runs with interrupts held off (`EnterCriticalSection`'s), and every byte of
+game memory it changed outside its store and the stack is put back after it. That
+is 60 bytes a pass in map 0: the camera block, the table and descriptor pointers and
+frame counters, a saved stack pointer at `0x80087C50`, and the pose slots at
+`0x8016780C`, which the menu frees and the models claim again (a creature's record
+then points at slot 0). Measured 2026-11-10 with `ST_MENUWORLD_PROBE=1`: 20 passes a
+second, 0x3958 bytes of packets of 0x216F0, and inside the menu the slots read the
+game's own `08 FFFFFF`. After the menu closes, slot 0's flags read `09` or `0A` with
+the pass on or off, run to run. The acceptance test passed 2 of 3 with it on and 2
+of 2 off; its one failure is the "never reached map 1" that runs off show too. The death prompt (`func_8002CEF8`) draws no
 backdrop. The load fade follows the vblank count (`0x801B5938`), not the tick.
 
 ## The margin, the latches and the tints

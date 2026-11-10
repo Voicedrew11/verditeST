@@ -114,7 +114,7 @@ public static class DrawStageTick
 
     public static bool BeforeRand(CpuContext c, IMemory m)
     {
-        if (c.RA != FlickerRandReturn || !FramePacing.DrawingIdleFrame) return true;
+        if (c.RA != FlickerRandReturn || !(FramePacing.DrawingIdleFrame || MenuWorld.Drawing)) return true;
         c.V0 = _flickerRand;
         return false;
     }
