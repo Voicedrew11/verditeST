@@ -80,7 +80,11 @@ plain mean left about 13% of smooth faces a step off in every channel; with the
 rules above, a second run over the session: **all eight writers, 358,572 faces, 0
 differences** (fogged: 30,206 FT3s, 268,381 FT4s, 17,935 GT3s, 8,953 GT4s). In map 0
 most models are fogged (12,995 calls of each fogged writer against 1,397 unfogged).
-`ModelStep1BF10`'s mixed writers are not covered yet. The flicker's calls through
+`ModelStep1BF10`'s mixed writers are not covered yet: map 0 never runs them
+(`ST_LITERAL_PROBE=1`, 0 runs); maps 4, 21, 23 and 24 do. Each picks `NCDS` or `NCCS`
+per face from `0x8017BE8C`, adds the scratchpad's `+0x98` to the UVs (a texture
+scroll, by the look of it) and has a near path of its own through a second vertex
+buffer at `+0x48`. The flicker's calls through
 `0x8017BE8C & 6` would rewrite a fogged colour after `NCDS`; colours are then not
 compared, and map 0 never sets it.
 

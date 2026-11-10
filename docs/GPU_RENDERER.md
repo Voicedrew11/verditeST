@@ -204,6 +204,12 @@ skipped and counted then; not reached in map 0), the near splits' own arithmetic
 (measured from outside: "The near splits"),
 and the models.
 
+**Over the tour** (`scripts/tour.py` with `ST_MAP_REFERENCE=1`, 2026-11-10): maps 0, 2,
+4, 21, 23, 24, 32, 38, 41, 44 and 46 (45 never loaded this run), about 3 million map
+and model faces matched, **0 differences** in any count. Maps 24 and 32 run the
+flicker (`0x8017BE8C & 6`), so their map faces' colours were skipped and counted
+(132,879 and 6,942), not checked.
+
 ## The near splits
 
 Measured 2026-11-10 by `ST_MAP_REFERENCE=1` (`patches/Render/NearSplits.cs`) from
