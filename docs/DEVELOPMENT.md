@@ -102,8 +102,9 @@ it means. It prints the player's HP and position after each move and judges noth
 the probe's lines are in the log. About 1 minute 30. `carda.sav` is not touched by
 the moves, but copy it aside anyway.
 
-`scripts/tour.py <log> [ST_X=1 ...]` warps to each of the 23 maps with an arrival point,
-stands and turns a circle in each: about ten minutes. Under `ST_LITERAL=verify` it is
+`scripts/tour.py <log> [ST_X=1 ...]` warps to each of the 12 maps with an arrival point,
+stands and turns a circle in each, booting a new game after a death: about six
+minutes. Under `ST_LITERAL=verify` it is
 the draw path's verify corpus beside the session.
 
 `ST_GEOPROBE=1`, `ST_PRESENTPROBE=1` and `ST_PRIMBUF_PROBE=1` are the probes; the tables in
@@ -139,7 +140,7 @@ One request per line, one line back:
 |---|---|
 | `state` | the beacon's JSON, above |
 | `press <a+b> [ms]` | hold pad buttons, default 150 ms |
-| `warp <map> [x y z]` | load that map's module, and place the player at x y z (decimal) first; without a point the player lands where a door into the map would put them (`patches/Arrivals.cs`, 23 maps), or keeps their coordinates in a map with none, which is usually a death |
+| `warp <map> [x y z]` | load that map's module, and place the player at x y z (decimal) first; asks for the area as a door does and places the player once it is in (`patches/Warp.cs`); without a point the player lands at `patches/Arrivals.cs`'s point (12 maps), or keeps their coordinates, which in another map is usually a death; a dead player loads no area |
 | `peek <addr> [bytes]`, `poke <addr> <hex>` | read and write guest memory |
 | `dump <file>` | the 2 MB of RAM |
 | `call <addr> [a0] [a1]` | run a game routine, from the next vblank that comes from the game's own `VSync`; the reply says only that it is queued |

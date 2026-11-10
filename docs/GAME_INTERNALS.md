@@ -27,7 +27,7 @@ iteration, while the word at `gp+0x2E4` (`0x800881A4`, `gp` is `0x80087EC0`) is 
 | | (inline) | `0x80014C10` | `sb 0 → player+0x21C` (`0x80199144`) | the inline store between Verdite3's stages 6 and 7 |
 | 8 | `func_8005735C` | `0x80014C0C` | **the area module's tick**: calls slot 1 of the module header through `*0x801B592C + 4` (`0x801EB564`, the module's slots) | |
 | 9 | `func_800456F8` | `0x80014C14` | the area loader's state machine (`0x801B5920`) | stage 8 `func_80018358`, the loader (0.31) |
-| 10 | `func_8003E734(sp+0x18, sp+0x28)` | `0x80014C20` | fills the two buffers stage 14 draws with | stage 10 `func_8002B330`, the camera (0.91) |
+| 10 | `func_8003E734(sp+0x18, sp+0x28)` | `0x80014C20` | **the camera's tick**: fills the two buffers stage 14's `func_800176A8` turns into the eye (16 bytes of position at `sp+0x18`, three angles at `sp+0x28`; "The draw path" in `docs/GEOMETRY.md`) | stage 10 `func_8002B330`, the camera (0.91) |
 | 11 | `func_80058288(sp+0x18, sp+0x28)` | `0x80014C2C` | | stage 11 `func_800156BC` (0.66) |
 | 12 | `func_80045FFC` | `0x80014C34` | parses streamed images, 16 sectors a call ("The disc queue") | stage 13 `func_80018CD0` (0.68) |
 | 13 | `func_80058620` | `0x80014C3C` | | stage 14 `func_80015A48` (0.64) |
@@ -240,14 +240,30 @@ in the cell into `player+0x220..+0x22A`, and marks every record of the same type
 ### Arrival points
 
 `scripts/door_census.py` warped into all 36 maps on 2026-11-10 and read every record
-naming another map. ED and EF doors name arrival points in 24 maps; warping to each
-and standing six seconds, 23 kept the player alive and on a floor. Map 2's (from map
-38's record 10) killed the player at once. They are `patches/Arrivals.cs`, and `warp
-<map>` with no point uses them. Twelve maps have no ED or EF door into them in any
-record: 1, 2 (but for the fatal one), 3, 4, 8, 11, 12, 21, 26, 27, 28, 32, 40. Other
-types also name maps (`0xE0`, `0xE1`, `0x32`, `0x33` and more, with +0x48 in range),
-which are not doors by this code and are not read. Map 0's ways out are not ED or EF
-either.
+naming another map. ED and EF doors name arrival points in 24 maps. Other types also
+carry a map byte at `+0x48` (`0xE0`, `0xE1`, `0x32`, `0x33` and more); every `0xE1`
+naming a map decodes to cell (0x40, 0x40, 0x40), `(262144, 260544, 262144)`. `0xE0`
+records use the same bytes for something else.
+
+**The first warp loaded areas wrongly**, through the start-up loader `func_80044EE8`:
+the module came in but no scene was drawn (81 packets a frame, the HUD alone, in every
+map), so standing tests passed in maps with no floor to fall to. The warp now asks for
+the area as a door does (`patches/Warp.cs`): `func_80045044(map, map, map, 0xFF,
+0xFF, 0x7F, 0x7F, 0x7F, 0, 0, 0)`, the main loop's loader stage does the rest, and the
+arrival point is written only once the map is in and the loader idle, with the door's
+resets of the player's motion (`+0x288..+0x28C`, `+0x2C8..+0x2CC`, `+0x2E4..+0x2F0`,
+`+0x21E` = 1, from the door code and `func_8003EAD0`). Writing the point before the
+load drops the player through the old map and kills them, and **a dead player loads
+no area**, so a warp after a death never arrives.
+
+With that, `scripts/tour.py` visits kept the player alive, with the scene drawn, in 12
+maps: 0 (the new game's start), 23, 24, 38, 41, 44, 45, 46 at a door's point and 2, 4,
+21, 32 at the `0xE1` cell. They are `patches/Arrivals.cs`. Elsewhere the decoded points
+killed the player: in 5, 6, 14, 15, 25, 33 the height dropped by about 0x3BD0 (a fall),
+in 3, 8, 9, 10, 11, 12, 13, 28, 30, 37, 40 it did not change and HP still went to 0,
+and 17, 26 and 47 never finished loading (a death in the map before). So the decode
+is right for some doors and not others; the height byte's bias, or a field the door
+code sets elsewhere, is the suspect. Not read further.
 
 **Arriving with no floor is a death.** Loading map 1 with the player at map 0's start
 coordinates drops the height by `0x39D0` at once and kills the player within a second.

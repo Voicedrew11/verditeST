@@ -24,12 +24,6 @@ public static class AgentServer
     const int MaxPeekBytes = 4096;
     const uint GameStackFloor = 0x80000000;
 
-    // func_80044EE8 loads the area whose map number is in the byte at AreaRequest,
-    // with the four bytes after it 0. A door writes the arrival point into the player
-    // block while the module loads (func_80050768, at 0x800525E8); the warp writes it
-    // with the request. See "Changing areas" in docs/GAME_INTERNALS.md.
-    const uint AreaRequest = 0x801B5924;
-    const uint LoadArea = 0x80044EE8;
 
     static readonly Dictionary<string, ushort> Buttons = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -50,7 +44,7 @@ public static class AgentServer
     // Written and read on the game thread only.
     static ushort _heldBits;
     static long _heldUntilMs;
-    static readonly Queue<(uint Address, uint A0, uint A1)> _calls = new();
+    static readonly Queue<(uint Address, uint[] Args)> _calls = new();
     static bool _calling;
 
     public static void Install(string? spec, IMemory memory)
@@ -105,6 +99,7 @@ public static class AgentServer
         _calling = true;
         try
         {
+            Warp.Settle(e.Memory);
             while (_calls.TryDequeue(out var call)) RunCall(e, call);
         }
         finally
@@ -113,11 +108,18 @@ public static class AgentServer
         }
     }
 
-    static void RunCall(VSyncEvent e, (uint Address, uint A0, uint A1) call)
+    // A0 to A3 from the first four arguments, the rest on the stack from SP+0x10, as
+    // the MIPS convention places them; the frame is below the game's own.
+    static void RunCall(VSyncEvent e, (uint Address, uint[] Args) call)
     {
         var saved = e.Context.Snapshot();
-        e.Context.A0 = call.A0;
-        e.Context.A1 = call.A1;
+        uint[] a = call.Args;
+        e.Context.A0 = a.Length > 0 ? a[0] : 0;
+        e.Context.A1 = a.Length > 1 ? a[1] : 0;
+        e.Context.A2 = a.Length > 2 ? a[2] : 0;
+        e.Context.A3 = a.Length > 3 ? a[3] : 0;
+        e.Context.SP -= 0x80;
+        for (int i = 4; i < a.Length; i++) e.Memory.WriteU32(e.Context.SP + 0x10 + (uint)(i - 4) * 4, a[i]);
         Dispatcher.Call(e.Context, e.Memory, call.Address);
         e.Context.Restore(saved);
         Console.WriteLine($"[ST] agent server: call {call.Address:X8} returned");
@@ -198,7 +200,7 @@ public static class AgentServer
     static string Execute(string[] words) => words[0].ToLowerInvariant() switch
     {
         "state" => AgentBeacon.Snapshot(),
-        "warp" => Warp(words),
+        "warp" => WarpTo(words),
         "press" => Press(words),
         "peek" => Peek(words),
         "poke" => Poke(words),
@@ -212,41 +214,16 @@ public static class AgentServer
         uint address = ParseAddress(words[1]);
         uint a0 = words.Length > 2 ? ParseAddress(words[2]) : 0;
         uint a1 = words.Length > 3 ? ParseAddress(words[3]) : 0;
-        _calls.Enqueue((address, a0, a1));
+        _calls.Enqueue((address, [a0, a1]));
         return $"queued {address:X8}({a0:X}, {a1:X})";
     }
 
-    // warp <map> [x y z]. The area module loads over the next few frames; state's map
-    // says when it is in. Without a point the player arrives where a door into that map
-    // would put them (Arrivals), or, for a map with no known door, keeps their
-    // coordinates, which in another map is usually no floor and a death.
-    static string Warp(string[] words)
+    // warp <map> [x y z]: patches/Warp.cs.
+    static string WarpTo(string[] words)
     {
-        int map = int.Parse(words[1], CultureInfo.InvariantCulture);
-        if (!Arrivals.Maps.Contains(map)) throw new ArgumentException($"map {map} has no area module");
-        if (AgentBeacon.Program != "st") throw new InvalidOperationException("warp needs ST.EXE running");
-        if (words.Length is not (2 or 5)) throw new ArgumentException("warp takes a map and optionally x y z");
-
-        string arrival = "where the player stands";
-        if (words.Length == 2 && Arrivals.For(map) is { } door)
-        {
-            words = [words[0], words[1], door.X.ToString(CultureInfo.InvariantCulture),
-                     door.Y.ToString(CultureInfo.InvariantCulture), door.Z.ToString(CultureInfo.InvariantCulture)];
-        }
-        if (words.Length == 5)
-        {
-            int x = int.Parse(words[2], CultureInfo.InvariantCulture);
-            int y = int.Parse(words[3], CultureInfo.InvariantCulture);
-            int z = int.Parse(words[4], CultureInfo.InvariantCulture);
-            _memory.WriteU32(AgentBeacon.PosX, (uint)x);
-            _memory.WriteU32(AgentBeacon.PosY, (uint)y);
-            _memory.WriteU32(AgentBeacon.PosZ, (uint)z);
-            arrival = $"({x}, {y}, {z})";
-        }
-        _memory.WriteU8(AreaRequest, (byte)map);
-        _memory.WriteU32(AreaRequest + 1, 0);
-        _calls.Enqueue((LoadArea, 0, 0));
-        return $"warping to map {map} at {arrival}";
+        var (reply, request) = Warp.Start(words, _memory);
+        if (request != null) _calls.Enqueue((Warp.RequestArea, request));
+        return reply;
     }
 
     static string Press(string[] words)

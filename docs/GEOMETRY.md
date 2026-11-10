@@ -34,7 +34,7 @@ Map 0's start, standing and turning, per call:
 
 | return address | routine | packets | what |
 |---|---|---|---|
-| `0x80026B30` | `func_800176A8` | none | frame set-up (calls `func_80049CD4`, `func_800498CC`) |
+| `0x80026B30` | `func_800176A8` | none | **the camera**: the eye's position (16 bytes, stage 10's first buffer) to `0x8017BE58`, its angles (the second) to `0x8017BE68`, `RotMatrix` into `0x8017BD78`; then `func_80049CD4` and `func_800498CC` |
 | `0x80026B74` | `func_800174C4` | removes the last frame's | **frame head**: clears the ordering table |
 | `0x80026D14` | `func_80021654` | FT4S, now and then | |
 | `0x80026D2C` | `func_80020A80` | GT4 120-200, GT3 11-22, FT4 1-30 | **the scene** (below) |
@@ -63,6 +63,16 @@ The other calls added nothing in this session: `func_80016A14`, `func_80033110`,
 | `0x80020DDC` | `func_8001D2A8` | **GT3**, 11 to 22 | **map triangles**; calls only `func_80075EC4` (8 bytes) |
 | `0x80020DE8` | `func_8001DB64` | **GT4**, 120 to 200 | **map quads**; calls only `func_80076884` (8 bytes) |
 | `0x80020DC4`, `0x80020DD0`, `0x80020DF4`, `0x80020E00` | `func_80020164`, `func_80020588`, `func_8001E5A0`, `func_8001EEAC` | none here | |
+
+**The scene's working block** is in the scratchpad from `0x1F800000`, set up by
+`func_80020A80` before its calls, which read it there: `+0x00` the ordering table
+(`*0x80165174`), `+0x04` 0x1000 (its entries), `+0x0C` `*0x8017BE98` when
+`*0x8017BE84` is set, else `*0x8017BE94`, `+0x10` the packet cursor and `+0x14` the
+buffer's end (from the record at `*0x80165394`), `+0x8C` 4, `+0x90`/`+0x92` the screen,
+240 and 320, `+0x44..+0x46` the light's colour (0x80, or from `rand()` when
+`0x8017BE8C & 2`), and `+0x1B0..+0x1E0` the eleven words from `0x801653AC` that the
+frame head zeroes (per-frame counters, by the look of `+0x1BC`/`+0x1C0` in the map
+writers). Read 2026-11-10 from the disassembly.
 
 The light's flicker `rand()` is at `0x80020B98` ("What runs at the drawn rate" in
 `docs/GAME_INTERNALS.md`).
@@ -118,14 +128,17 @@ verify reads 0. Verify was checked once by planting a wrong constant in
 `60`, ours `61`.
 
 Verified 2026-11-10 over `scripts/session.py` (map 0, the menu, a death) and
-`scripts/tour.py` (23 areas, standing and turning; `scripts/literal_table.py` writes
-this table from `patches/Draw/` and the two runs' logs):
+`scripts/tour.py` (standing and turning; `scripts/literal_table.py` writes this table
+from `patches/Draw/` and the runs' logs). **The first tour drew no scene**: the warp
+then loaded areas through the start-up loader, which left every map with the HUD
+alone, so the counts below from it are HUD and set-up calls, not 23 areas' geometry.
+The tour over the 12 areas the fixed warp reaches is below the table.
 
 | routine | what | class, switch | mismatches in calls |
 |---|---|---|---|
 | `func_80016A14` | the draw stage's second call; calls func_80079DCC and func_80079D0C (libgpu); not read | `Draw16A14`, `ST_DRAW16A14` | 0 in 1,114 |
 | `func_800174C4` | the frame head: flips the buffer, rewinds the packet cursor, clears both ordering tables | `FrameHead`, `ST_FRAMEHEAD` | 0 in 7,238 |
-| `func_800176A8` | the draw stage's first call, before the frame head | `FrameSetup`, `ST_FRAMESETUP` | 0 in 1,114 |
+| `func_800176A8` | the camera: the eye's position and angles from stage 10's buffers, the view matrix | `CameraSetup`, `ST_CAMERASETUP` | 0 in 1,114 |
 | `func_80017D28` | one model's set-up step in func_80022678 and func_80021AC4; not read | `ModelStep17D28`, `ST_MODELSTEP17D28` | 0 in 1,864 |
 | `func_800192D4` | a model step in func_80022678; not read | `ModelStep192D4`, `ST_MODELSTEP192D4` | 0 in 7,602 |
 | `func_80019DC8` | a model step in func_80022678 and func_80021AC4; not read | `ModelStep19DC8`, `ST_MODELSTEP19DC8` | 0 in 4,646 |
@@ -222,7 +235,5 @@ What is called through `FP` is not read.
   `func_80021AC4` draw (creatures, the hands, items are candidates).
 - The leaves `func_8001F954` and `func_8001FD00`.
 - The card screens, a fight on purpose, the area modules' own drawing, `VS.EXE`.
-  `scripts/tour.py` reaches 23 areas; the other 13 need an arrival point.
-- `ST_GEOPROBE` printed two windows and then nothing over the tour: something in
-  the warp's load leaves it unbalanced. Not read.
+  `scripts/tour.py` reaches 12 areas; the other 24 need an arrival point that holds.
 - Who checks the packet buffer's end, and what the menu does with buffer 0's top.

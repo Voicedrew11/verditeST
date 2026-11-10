@@ -8,8 +8,8 @@ open now.
 Started 2026-11-10: the first inventory is in `docs/GEOMETRY.md`, from map 0 and the
 menu and death prompt. Next, in order:
 
-- The contexts not reached: the card screens, a fight on purpose, 13 areas without an
-  arrival point, the area modules' own drawing, `VS.EXE`.
+- The contexts not reached: the card screens, a fight on purpose, 24 areas without an
+  arrival point that holds, the area modules' own drawing, `VS.EXE`.
 - Three routines never ran (`func_8001BF10`, `func_80034604`, `func_80028784`), and
   the frames that present (menu, prompt, blank) cannot be verified by running twice.
 - Name the routines still called `Draw<address>`, `ModelStep<address>` and so on.
@@ -38,9 +38,9 @@ The gate's test passes (`scripts/acceptance.py`, three runs, 2026-11-09). Still 
 
 - **The fuzzer** (Verdite1's `Fuzz.cs`, `scripts/fuzz.py`, fork `0112`). It needs a
   warp that lands on a floor in any map, which needs the next item.
-- **Arrival points**: 23 of 36 maps done (2026-11-10, `patches/Arrivals.cs`). The other
-  13 have no safe ED or EF door into them; the other record types that name maps
-  (`0xE0`, `0xE1`, `0x32`, `0x33`) are next.
+- **Arrival points**: 12 of 36 maps hold (2026-11-10, `patches/Arrivals.cs`); in the
+  rest the decoded door points kill the player ("Arrival points" in
+  `docs/GAME_INTERNALS.md`). Why some doors' points are wrong is the next question.
 - After the in-game menu load, `call` and `warp` stop running (no vblank from the
   game's own `VSync`). Find the loop it sits in.
 - `ST_AUTOSTART=load` takes the first save the card screen offers; picking a slot is

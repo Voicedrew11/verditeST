@@ -7,12 +7,12 @@ using static St.Mips;
 namespace St;
 
 /// <summary>
-/// <c>func_800176A8</c>: the draw stage's first call, before the frame head. <c>ST_FRAMESETUP</c>.
+/// <c>func_800176A8</c>: the camera: copies the eye's position (16 bytes at a0, stage 10's first buffer) to 0x8017BE58 and its three angles (a1, the second) to 0x8017BE68, builds the view matrix with RotMatrix into 0x8017BD78, then func_80049CD4 (the X angle, into 0x8017BE38) and func_800498CC (the matrix, into 0x8017BDB8). <c>ST_FRAMESETUP</c>.
 /// </summary>
-public static class FrameSetup
+public static class CameraSetup
 {
-    public static readonly Literal R = new(typeof(FrameSetup), "frame setup", "FRAMESETUP", 0x800176A8, Run,
-        "the draw stage's first call, before the frame head.");
+    public static readonly Literal R = new(typeof(CameraSetup), "camera setup", "CAMERASETUP", 0x800176A8, Run,
+        "the camera: copies the eye's position (16 bytes at a0, stage 10's first buffer) to 0x8017BE58 and its three angles (a1, the second) to 0x8017BE68, builds the view matrix with RotMatrix into 0x8017BD78, then func_80049CD4 (the X angle, into 0x8017BE38) and func_800498CC (the matrix, into 0x8017BDB8).");
 
     static void Replace(Action<CpuContext, IMemory> orig, CpuContext c, IMemory m) => R.Replace(orig, c, m);
 
