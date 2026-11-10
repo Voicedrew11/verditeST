@@ -17,7 +17,9 @@ menu. A second process loads from the title (`ST_AUTOSTART=load`), warps to map 
 the saved spot and checks the player is alive, warps to map 1, where the player dies
 on arrival, and presses Cross back to the title. It judges by the beacon's state and
 the card, never the picture. About 1 minute 50. `carda.sav` is set aside for the run
-and put back. Passed three times in a row on 2026-11-09, which is Phase 3's gate.
+and put back. Passed three times in a row on 2026-11-09, which is Phase 3's gate. A warp
+waits up to 40 s for its area: since 2026-11-10 the warp loads as a door does
+(`patches/Warp.cs`), which takes the main loop several seconds, and 15 s fell short once.
 
 The save step enters the game's own save screen through `call`, because the in-world
 trigger is not found yet (`docs/GAME_INTERNALS.md`). Area changes use `warp`, not a
