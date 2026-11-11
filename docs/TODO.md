@@ -60,7 +60,7 @@ runtime `0123` to `0125`.
   applied to this checkout's `settings.json` (it was RecompOne's stock keys; Input
   settings has both). Whether L2/R2 should have keys for a player without a mouse,
   and whether Circle's item panel belongs on E.
-- **By hand:** mouse look (`docs/INPUT.md`): a click captures; turning, looking, and
+- **By hand:** mouse look (`docs/INPUT.md`): a click captures; turning and looking (smooth between ticks, the view moving the frame the hand does), and
   whether mouse down should look down.
 - **By hand:** vibration on a real pad (`docs/INPUT.md`): the options' vibration on,
   then a hit or a fall.

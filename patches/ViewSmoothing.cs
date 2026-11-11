@@ -87,10 +87,17 @@ public static class ViewSmoothing
     {
         _restore = false;
         if (c.RA != DrawStageSite || !FramePacing.InMainLoopDraw || c.A0 == 0 || c.A1 == 0) return;
-        if (!Active) { _primed = false; return; }
         _pos = c.A0;
         _rot = c.A1;
         var handed = Camera.Read(m, _pos, _rot);
+        if (!Active)
+        {
+            _primed = false;
+            // Carrying off under pacing, the mouse still leads: the tick's view plus
+            // what the hand has moved since.
+            if (MouseLead.Leading && MouseLead.Lead(m, handed, 1.0, false) is { } led) Hand(m, handed, led);
+            return;
+        }
 
         long tick = FramePacing.Ticks;
         if (!_primed)
@@ -105,20 +112,31 @@ public static class ViewSmoothing
             _prev = _cur;
             _cur = handed;
             _samples++;
-            if (Jump(_prev, _cur)) { _prev = _cur; _snaps++; }
+            MouseLead.Ticked(m);
+            if (Jump(_prev, _cur)) { _prev = _cur; _snaps++; MouseLead.Snapped(); }
         }
         else if (handed != _cur)
         {
             // Moved without a tick of the world: no pair to carry.
             _prev = _cur = handed;
             _snaps++;
+            MouseLead.Snapped();
         }
 
-        var view = MouseLook.Lead(Lerp(_prev, _cur, FramePacing.TickFraction), _cur);
+        double frac = FramePacing.TickFraction;
+        var view = Lerp(_prev, _cur, frac);
+        if (MouseLead.Leading) view = MouseLead.Lead(m, view, frac, true) ?? view;
+        Hand(m, handed, view);
+        if (_probe) Probe(view);
+    }
+
+    /// <summary>Hand the camera set-up <paramref name="view"/>, putting the tick's
+    /// back after it.</summary>
+    static void Hand(IMemory m, in Camera handed, in Camera view)
+    {
         _handed = handed;
         view.Write(m, _pos, _rot);
         _restore = true;
-        if (_probe) Probe(view);
     }
 
     public static void After(CpuContext c, IMemory m)

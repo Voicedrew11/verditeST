@@ -104,19 +104,26 @@ screen did not finish (`docs/DEVELOPMENT.md`, "What is still open").
 
 ### Instant mouse look (the lead)
 
-The camera's pitch and yaw, as stage 10 hands them to the camera set-up, are the
-player's `+0x278` and `+0x27A` exactly (read on every tick of a synthetic turn). So
-`MouseLook.Lead`, called by `ViewSmoothing` on every drawn frame, draws the tick's
-angles plus the hand's motion since (`Mouse.Pending`), pitch held to the game's limit,
-in place of the carried angles: a turn shows on the next frame instead of a tick
-later. Only on an axis the mouse drives (it drove the last tick, or has moved since),
-so a pad turn keeps the carried view. `Mouse.Lead`, on by default (`ST_MOUSE_LEAD=0`).
+`patches/MouseLead.cs`, Verdite3's lead (its `ViewSmoothing`, from Verdite2's
+`FrameSmoothing.MouseLead`). The look routine spends the mouse once a tick and the
+carried view reaches that turn only at the next tick. So on every drawn frame
+`ViewSmoothing` drains the host's motion (`Mouse.Poll`), replaces the lerp's share of
+the last tick's mouse turn (measured off the base angles, `Mouse.SpentThisFrame`) with
+all of it, and adds the motion not yet spent (`Mouse.Pending`) on top, pitch held to
+the game's limit off the base angle. Only the mouse's share is led, so a pad turn
+keeps the carried view. With carrying off under pacing (`ST_SMOOTH=0`) the view is
+still the tick's plus the pending motion. `Mouse.Lead`, on by default
+(`ST_MOUSE_LEAD=0`).
 
-Measured 2026-11-10 with the synthetic hand at 51 a tick (it leads by its step times
-the tick's fraction, and runs 40 ticks of every 60 so the lead knows what the next tick
-applies), 2,000 frames at 144 fps: drawn yaw stepped 1 to 9 a frame (7 in 1,210),
-**0 backward, no jump at a tick**; with the lead off, 3 to 9 a frame. With the lead the
-view is ahead of the carried one by a whole tick, 50 ms at 20 Hz.
+**The first lead never polled the mouse** (fixed 2026-11-10): it read `Mouse.Pending`,
+which only `Mouse.TakeLook`, once a tick, filled and then emptied, so between ticks it
+was 0 and a real mouse's view jumped to each tick's angle at 20 Hz, uncarried. The
+synthetic hand did not go through `Mouse` and hid it.
+
+Measured 2026-11-10 with the synthetic hand at 51, 7 a tick (40 ticks of 60) at 120
+fps: a new camera on 120 of 120 frames a second while turning, 0 backward, 0 snaps,
+the drawn yaw about a tick ahead of the handed one; with `ST_SMOOTH=0` the lead ran
+in play at 120 fps without a fault.
 
 **Not measured**: a real pointer (capture, sensitivity), the buttons.
 **By hand (the user):** turning and looking with a mouse; whether mouse down should

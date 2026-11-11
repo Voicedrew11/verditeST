@@ -64,7 +64,6 @@ public static class MouseLook
 
     static bool _queued;
     static float _fracTurn, _fracPitch;
-    static int _drovePitch, _droveYaw;
     static (int Yaw, int Pitch)? _synth;
     static bool _probe;
 
@@ -125,38 +124,19 @@ public static class MouseLook
         if (held != pad) m.WriteU16(Held, pad);
         if (yaw != 0) m.WriteU16(YawVel, 0);
         if (look != 0) m.WriteU16(PitchVel, 0);
-        _droveYaw = yaw;
-        _drovePitch = look;
 
         if (_probe) MouseLookProbe.Tick(yaw, look, Wrap(m.ReadU16(Yaw) - yawBefore), Wrap(m.ReadU16(Pitch) - pitchBefore),
                                         m.ReadU16(Pitch));
     }
 
-    /// <summary>
-    /// Instant mouse look: the drawn view's yaw and pitch are the tick's (the camera's
-    /// angles are the player's <c>+0x27A</c> and <c>+0x278</c>, read so on every tick) plus
-    /// what the hand has moved since, so a turn shows on the next frame, not the next
-    /// tick. Only on an axis the mouse is driving (it drove the last tick, or has moved
-    /// since); a pad turn keeps the carried view. Pitch is held to the game's limit.
-    /// The synthetic hand leads by its step times the tick's fraction.
-    /// </summary>
-    public static Camera Lead(in Camera carried, in Camera tick)
+    /// <summary>What the synthetic hand has moved since the tick, for the lead: the
+    /// next tick's step times the tick's fraction. Null without the synthetic hand.</summary>
+    public static (float Turn, float Pitch)? SynthPending(double frac)
     {
-        if (!Mouse.Lead) return carried;
-        float turn, pitch;
-        if (_synth is { } s) (turn, pitch) = SynthStep(s) is (var t, var p, _) && (t != 0f || p != 0f)
-            ? (t * (float)FramePacing.TickFraction, p * (float)FramePacing.TickFraction) : (0f, 0f);
-        else if (Mouse.Enabled && Mouse.Captured) (turn, pitch) = Mouse.Pending;
-        else return carried;
-
-        short yaw = carried.Yaw, look = carried.Pitch;
-        if (_droveYaw != 0 || turn != 0f) yaw = (short)((tick.Yaw + (int)MathF.Round(turn)) & 0xFFF);
-        if (_drovePitch != 0 || pitch != 0f)
-            look = (short)(Math.Clamp(Wrap(tick.Pitch) + (int)MathF.Round(pitch), -PitchLimit, PitchLimit) & 0xFFF);
-        return carried with { Yaw = yaw, Pitch = look };
+        if (_synth is not { } s) return null;
+        var (t, p, _) = SynthStep(s);
+        return (t * (float)frac, p * (float)frac);
     }
-
-    const int PitchLimit = 0x2BC;
 
     /// <summary>The synthetic hand: its step for 40 ticks of every 60, nothing for 20.</summary>
     static (float, float, bool) SynthStep((int Yaw, int Pitch) s) =>
