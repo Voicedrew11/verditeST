@@ -145,8 +145,19 @@ arrows. The port's, by the button table above:
 | Space, Q | Square, Triangle | the hands (the mouse's left and right buttons too) |
 | F | Cross | the action: doors, what is in front |
 | E | Circle | the item panel (above) |
-| Tab, Escape | Select | the menu (Escape presses Select inside the pad read) |
+| Tab | Select | opens the menu, and closes it (`MenuKey`, below) |
 | Enter | Start | |
+
+**One key for the menu** (`patches/MenuKey.cs`, 2026-11-10). The menu's loop ignores
+Select and leaves on Circle, so Tab opened the menu and could not close it. While the
+menu runs (`MenuPointer`'s hooks on `func_80058EF4`), a Select press that began inside
+it is rewritten to Circle in the pad read: it closes the menu, or backs out of a
+screen under it. The opening press must be let go first, and a Select still held when
+the menu closes is hidden until let go, so a held key does not toggle it twice. A
+pad's Select does the same. Escape no longer opens the menu: it opened it and could
+not close it. Measured with the command channel's presses: Select at 150 ms and at
+1,500 ms opened and closed the menu alternately four and six times, and Circle still
+closed it.
 
 A fresh install gets it as the default; an existing one is migrated once, only from
 exactly RecompOne's stock keys, and `st.keys.layout` in `interface.ini` records it.

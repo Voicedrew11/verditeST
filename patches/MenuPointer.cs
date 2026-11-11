@@ -13,7 +13,7 @@ namespace St;
 /// Gives the captured pointer back whenever something wants a pointer, as Verdite3
 /// does, so the mouse is never stuck locked and hidden over a menu.
 ///
-/// **The game's menu.** <c>func_80058EF4</c> (Select, or Escape through KeyLayout)
+/// **The game's menu.** <c>func_80058EF4</c> (Select: Tab, which also closes it through MenuKey)
 /// runs the whole menu session, its loop and every screen under it, and returns when
 /// the menu closes. Its start is <see cref="Mouse.Suspend"/>(true): the pointer is
 /// let go, and the mouse buttons stop pressing pad buttons in the menu. Its return is
@@ -35,7 +35,7 @@ public static class MenuPointer
     {
         Event.AddListener<KeyboardEvent>(OnKey);
         // A load or a reset leaves any menu; a suspension must not outlive it.
-        Event.AddListener<OverlayLoadedEvent>(_ => Mouse.Suspend(false));
+        Event.AddListener<OverlayLoadedEvent>(_ => { Open = false; Mouse.Suspend(false); });
         HookAttach.OnOverlayLoad("menu pointer", Attach);
     }
 
@@ -56,9 +56,20 @@ public static class MenuPointer
         return ok;
     }
 
-    public static void MenuOpened(CpuContext c, IMemory m) => Mouse.Suspend(true);
+    /// <summary>Whether the game's menu session is running.</summary>
+    public static bool Open { get; private set; }
 
-    public static void MenuClosed(CpuContext c, IMemory m) => Mouse.Suspend(false);
+    public static void MenuOpened(CpuContext c, IMemory m)
+    {
+        Open = true;
+        Mouse.Suspend(true);
+    }
+
+    public static void MenuClosed(CpuContext c, IMemory m)
+    {
+        Open = false;
+        Mouse.Suspend(false);
+    }
 
     /// <summary>F1 is about to show the bar (the host flips it on its next poll).</summary>
     static void OnKey(KeyboardEvent e)
