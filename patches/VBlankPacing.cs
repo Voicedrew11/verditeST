@@ -24,8 +24,9 @@ namespace St;
 ///
 /// With <see cref="FramePacing"/> on, the main loop's own draw (stage 14 called from
 /// the loop, <see cref="FramePacing.InMainLoopDraw"/>) is exempt: its frame boundary
-/// is FramePacing's. Loops that call stage 14
-/// themselves (the menu, fades) are held, so they step at the console's rate. Unlike
+/// is FramePacing's, as is a loop's that <see cref="PickupSmoothing"/> steps once a tick.
+/// Other loops that call stage 14 themselves (the menu, fades) are held, so they step
+/// at the console's rate. Unlike
 /// Verdite3's, this runs with pacing off too, since that is what holds the game to
 /// its own rate there. See "Frame pacing" in docs/DEVELOPMENT.md.
 /// </summary>
@@ -108,7 +109,7 @@ public static class VBlankPacing
         if (!Enabled || RecompOne.Runtime.Interrupts.Turbo) return;
         int mode = (int)c.A0;
         if (mode < 0 || mode == 1) return;
-        if (FramePacing.Enabled && FramePacing.InMainLoopDraw) { _exempt++; return; }
+        if (FramePacing.Enabled && (FramePacing.InMainLoopDraw || FramePacing.InSteppedLoopDraw)) { _exempt++; return; }
 
         int vblanks = mode == 0 ? 1 : mode;
         double now = _clock.Elapsed.TotalMilliseconds;

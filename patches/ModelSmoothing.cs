@@ -17,7 +17,10 @@ namespace St;
 ///   <c>+0x74</c>, angles <c>+0x8C</c>, clip time <c>+0x2A</c>;
 /// - the objects, <c>func_800246E4</c>: 0x58-byte records from <c>0x801C2230</c>, those in
 ///   use named by the u16 indices at <c>0x801C74C4</c>, as many as the byte at
-///   <c>0x801C7584</c>; position <c>+0x24</c>, angles <c>+0x34</c>, clip time <c>+0x10</c>.
+///   <c>0x801C7584</c>; position <c>+0x24</c>, angles <c>+0x34</c>, clip time <c>+0x10</c>;
+/// - the items, <c>func_800251C8</c>: 0x30-byte records from <c>0x801CAE08</c> (64), those
+///   in view named by the bytes at <c>0x801C76FF</c>, as many as the byte at
+///   <c>0x801C76FE</c>; position <c>+8</c>, angles <c>+0x18</c>, no clip time.
 ///
 ///     ST_SMOOTH=0                 off, with the camera (on whenever pacing is)
 ///     ST_SMOOTH_MODELS=0          the models alone off
@@ -29,11 +32,14 @@ public static class ModelSmoothing
 {
     const uint ObjectIndices = 0x801C74C4, ObjectCount = 0x801C7584;
     const int ObjectSlots = (int)((ObjectIndices - 0x801C2230) / 0x58);
+    const uint ItemIndices = 0x801C76FF, ItemCount = 0x801C76FE;
+    const int ItemSlots = 64;
 
     static readonly CarriedList[] Lists =
     [
         new("entities", 0x800241D0, 0x80026D4C, 0x801BA138, 0xD4, 0x6100 / 0xD4, 0x74, 0x8C, 0x2A),
         new("objects", 0x800246E4, 0x80026D54, 0x801C2230, 0x58, ObjectSlots, 0x24, 0x34, 0x10, ListedObjects),
+        new("items", 0x800251C8, 0x80026D5C, 0x801CAE08, 0x30, ItemSlots, 0x08, 0x18, null, ListedItems),
     ];
 
     static readonly ModInfo _self = new() { Id = "st.modelsmoothing", Name = "Model smoothing", Version = "1.0" };
@@ -106,6 +112,13 @@ public static class ModelSmoothing
     {
         int count = m.ReadU8(ObjectCount);
         for (int k = 0; k < count && k < 0x60; k++) yield return m.ReadU16(ObjectIndices + (uint)(2 * k));
+    }
+
+    // The items in view this frame (func_8001CAB8's list): the drawer walks these from the last down.
+    static IEnumerable<int> ListedItems(IMemory m)
+    {
+        int count = m.ReadU8(ItemCount);
+        for (int k = 0; k < count && k < ItemSlots; k++) yield return m.ReadU8(ItemIndices + (uint)k);
     }
 
     // The packet cursor of the frame being built: the record 0x80165394 points at, +8.

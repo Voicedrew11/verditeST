@@ -22,7 +22,7 @@ iteration, while the word at `gp+0x2E4` (`0x800881A4`, `gp` is `0x80087EC0`) is 
 | 3 | `func_80042D74` | `0x80014BE4` | **the player's tick**: writes the heading (`+0x268`) and, through `func_80041150`/`func_8004162C`, the position; the menu, the load and the rumble calls run inside it | stage 4 `func_80030FCC` (0.23, weak) |
 | 4 | `func_80050768` | `0x80014BEC` | the area's object records, doors among them ("Changing areas") | |
 | 5 | `func_8004E324` | `0x80014BF4` | | |
-| 6 | `func_80053AA4` | `0x80014BFC` | | |
+| 6 | `func_80053AA4` | `0x80014BFC` | **the items' tick**: the 64 item records ("The items") by kind at `+0x22`: 1 falls and bounces, 3 runs the pickup `func_8005335C` | |
 | 7 | `func_8003BC40` | `0x80014C04` | | stage 6 `func_8005BC50` (0.73) |
 | | (inline) | `0x80014C10` | `sb 0 → player+0x21C` (`0x80199144`) | the inline store between Verdite3's stages 6 and 7 |
 | 8 | `func_8005735C` | `0x80014C0C` | **the area module's tick**: calls slot 1 of the module header through `*0x801B592C + 4` (`0x801EB564`, the module's slots) | |
@@ -38,6 +38,32 @@ second each: stages 1 to 13 changed 0 of its 4096 words and presented no frame;
 stage 14 wrote all 4096 and presented one frame a call. Stage 14 is also called by
 loops that draw their own frames: `func_80026DD4`, `func_80042CFC`, stage 3 at
 `0x80043134` (the menu), `func_800500AC` (after the loop ends) and `func_8005335C`.
+
+### The items
+
+Items lying in the world, dropped by creatures or placed, are 64 records of 0x30 bytes
+from `0x801CAE08` (read 2026-11-10 from the disassembly and by peeking): `u16 +0` the
+item (`0xFFFF` free; it indexes 0x2C-byte records at `0x801C7810`), `+2` a cell, `+8`
+the position (three s32), `+0x18` three angles (s16), `+0x22` the kind, `+0x23` the kind
+before a pickup, `+0x25` a bounce count, `s16 +0x26` a fall speed, `+0x2C` the area.
+`func_8001CAB8` lists those in this area and a visible cell into bytes from
+`0x801C76FF`, as many as the byte at `0x801C76FE`, and stage 14's `func_800251C8` draws
+the listed ones of kind 1, 2, 3 or 5 (0 and 4 not), position and angles to the model
+drawer, the time 0 (no animation); kind 2 is drawn without its first angle.
+
+- **Kind 1, falling** (a creature's drop, made by `func_800559BC`): stage 6 adds the
+  speed to `+0xC`, the speed growing by 8 a tick to `0x100`; at the floor it bounces,
+  the speed halved and turned, and after four bounces the kind becomes 2. On items
+  below `0x47` the first angle is set to the height above the floor, so it tumbles.
+- **Kind 2, lying**: placed by the area, still. Maps 2 and 4 hold seven and nine.
+- **Kind 3, picked up**: Cross in front of an item (`func_80053174`, in the action
+  routine at `0x80055374`) sets it, and stage 6 then calls `func_8005335C(item, 0)`,
+  which **draws frames of its own**: 16 steps lifting the item from where it lies to
+  in front of the eye, a hold until a button, then 16 steps to the player (taken: the
+  record is freed by `func_80052D98`/`func_80052E50`) or back (the record restored, kind
+  from `+0x23`). Each step writes the position and angles, linear in the step counter
+  `s0`, and calls stage 14 (returning to `0x80053894` in the lift, `0x80053A04` on the
+  way away), then `func_8003C24C`. Carried in `docs/SMOOTHING.md`, "The item picked up".
 
 `player+0x21C` is set by stages 3 to 5 (`func_80050768`, `func_80052894`) and read by
 stage 5 (`func_8004E324`), so it is set and consumed within one iteration and the

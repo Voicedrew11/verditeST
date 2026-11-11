@@ -4,13 +4,14 @@ namespace St;
 
 /// <summary>
 /// Where one drawer's records keep what places and poses a model: a position (three s32),
-/// three angles (s16, 0x1000 a turn) and a clip time (u16, wrapping at 0x1000), in
-/// records of <c>RecordBytes</c> from <c>Records</c>. <c>Listed</c> names the slots in use
-/// this frame (all <c>MaxSlots</c> when null).
+/// three angles (s16, 0x1000 a turn) and a clip time (u16, wrapping at 0x1000; null for a
+/// list whose models are not animated), in records of <c>RecordBytes</c> from
+/// <c>Records</c>. <c>Listed</c> names the slots in use this frame (all <c>MaxSlots</c>
+/// when null).
 /// </summary>
 public sealed record CarriedList(
     string Name, uint Routine, uint DrawSite, uint Records, uint RecordBytes, int MaxSlots,
-    uint Position, uint Angles, uint ClipTime, Func<IMemory, IEnumerable<int>>? Listed = null);
+    uint Position, uint Angles, uint? ClipTime, Func<IMemory, IEnumerable<int>>? Listed = null);
 
 /// <summary>
 /// One record list carried between world ticks: on each drawn frame every listed slot's
@@ -98,13 +99,13 @@ public sealed class RecordCarry(CarriedList list)
     Pose Read(IMemory m, uint r) => new(
         (int)m.ReadU32(r + list.Position), (int)m.ReadU32(r + list.Position + 4), (int)m.ReadU32(r + list.Position + 8),
         (short)m.ReadU16(r + list.Angles), (short)m.ReadU16(r + list.Angles + 2), (short)m.ReadU16(r + list.Angles + 4),
-        (short)m.ReadU16(r + list.ClipTime));
+        list.ClipTime is { } t ? (short)m.ReadU16(r + t) : (short)0);
 
     void Write(IMemory m, uint r, in Pose p)
     {
         m.WriteU32(r + list.Position, (uint)p.X); m.WriteU32(r + list.Position + 4, (uint)p.Y); m.WriteU32(r + list.Position + 8, (uint)p.Z);
         m.WriteU16(r + list.Angles, (ushort)p.A); m.WriteU16(r + list.Angles + 2, (ushort)p.B); m.WriteU16(r + list.Angles + 4, (ushort)p.C);
-        m.WriteU16(r + list.ClipTime, (ushort)p.T);
+        if (list.ClipTime is { } t) m.WriteU16(r + t, (ushort)p.T);
     }
 
     static bool Jump(in Pose a, in Pose b) =>

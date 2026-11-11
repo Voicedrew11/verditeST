@@ -86,8 +86,19 @@ public static class FramePacing
     public static bool InMainLoopDraw => _mainLoopDraws > 0;
 
     /// <summary>Stage 14 is drawing a frame the world did not tick on: what it would
-    /// advance (<see cref="DrawStageTick"/>) is held.</summary>
-    public static bool DrawingIdleFrame => Enabled && _mainLoopDraws > 0 && !_iterationTicks;
+    /// advance (<see cref="DrawStageTick"/>) is held. A stepped loop's repeat counts.</summary>
+    public static bool DrawingIdleFrame =>
+        Enabled && ((_mainLoopDraws > 0 && !_iterationTicks) || (InSteppedLoopDraw && SteppedLoopRepeat));
+
+    /// <summary>A loop of the game's own that steps once a tick (<see cref="PickupSmoothing"/>)
+    /// is drawing a frame: presented at the drawn rate, not held by VSync.</summary>
+    public static bool InSteppedLoopDraw { get; set; }
+
+    /// <summary>That frame repeats the loop's step, drawn between two ticks.</summary>
+    public static bool SteppedLoopRepeat { get; set; }
+
+    /// <summary>The world clock ticked at the last frame boundary.</summary>
+    public static bool TickedAtBoundary => _tickThisFrame;
 
     static int _mainLoopDraws;
 

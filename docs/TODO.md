@@ -163,7 +163,7 @@ menu and death prompt. Next, in order:
 - Three routines never ran (`func_8001BF10`, `func_80034604`, `func_80028784`), and
   the frames that present (menu, prompt, blank) cannot be verified by running twice.
 - Name the routines still called `Draw<address>`, `ModelStep<address>` and so on.
-- What `func_800241D0`'s three model sites, `func_800251C8` and `func_80021AC4` draw;
+- What `func_800241D0`'s three model sites draw (`func_800251C8` is the items, `func_80021AC4` the arm);
   the leaves `func_8001F954` and `func_8001FD00`.
 - Then Step 2: literal C# for each routine, verified with `Differential`.
 

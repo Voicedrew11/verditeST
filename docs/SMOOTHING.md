@@ -189,6 +189,41 @@ Measured 2026-11-10 over Triangle swings at 120 fps (`ST_SMOOTH_PROBE=1`): **365
 frames), against about one frame in six with it off; 0 snaps. Hand 1's angles from
 `player+0x2DE..0x2E2` are not carried (all 0 on the save measured).
 
+## The items
+
+The user saw items dropped by creatures and items picked up not smoothed (2026-11-10).
+Both are the item records of "The items" in `docs/GAME_INTERNALS.md`, drawn by the draw
+stage's `func_800251C8` (return `0x80026D5C`), which the eye section calls the second
+model list.
+
+**Lying and falling.** The items are the model carry's third row (`ModelSmoothing.Lists`):
+0x30-byte records from `0x801CAE08`, the slots listed at `0x801C76FF` (count
+`0x801C76FE`), position `+8`, angles `+0x18`, no clip time (`CarriedList.ClipTime` is
+null for it). An item lying still is not written; one falling (kind 1: Y and the
+tumbling first angle step on stage 6's tick) is drawn between its last two ticks.
+Measured 2026-11-10 in map 4 at 120 fps: a lying item poked to kind 1 and lifted
+0x1800, in front of the player, three times: **120 item draws carried a second** while
+it fell and bounced (every frame), 0 snaps; lying, none.
+
+**The item picked up.** `func_8005335C` runs its own loop of 16 steps, a hold and 16
+steps more, calling stage 14 for each. Such loops are held to the swap's `VSync(3)` by
+`VBlankPacing`, so the item moved at 20 Hz. `patches/PickupSmoothing.cs` presents the
+loop's frames at the drawn rate instead (`FramePacing.InSteppedLoopDraw` exempts its
+`VSync`) and repeats each step until the world clock ticks: after stage 14 returns
+without a tick, the loop's counter `s0` is put back, so the routine computes the same
+step again (the lift loop holds at 0 by itself). The pickup keeps the console's 0.8 s
+each way. Each frame draws the item at `FramePacing.TickFraction` between the last two
+steps (the steps are linear in `s0`, so the mix is exact), and the step's own pose is
+put back after. A repeat is an idle frame to `DrawStageTick`
+(`FramePacing.SteppedLoopRepeat`), and the status flash `func_8003C24C`, which fades a
+tick's worth a call, runs on a step's first frame only. The loop reads the pad on
+every frame, as it did on every step; the press it waits for leaves the loop.
+
+Measured 2026-11-10 in map 4 at 120 fps (`ST_SMOOTH_PROBE=1`, Cross in front of an
+item, held up for about 3 s, Cross again): **83 steps, 494 frames, 181 of them between
+two steps**, about six frames a moving step where there was one. The item was taken
+(its record freed). By eye (the user): the lift, the hold and the take.
+
 ## The HUD's gauges
 
 Nothing to carry: dropping HP from 752 to 300 by poke changed one byte of the HUD's
@@ -200,4 +235,5 @@ once on the tick, as on the console; there is no eased animation to carry.
 
 Sprite cels (held
 to the tick by `patches/DrawStageTick.cs`, not carried), and the loops that draw
-their own frames (the menu, whose backdrop is a still of the world).
+their own frames (the menu, whose backdrop is a still of the world) other than the
+pickup's.

@@ -171,7 +171,7 @@ The tour over the 12 areas the fixed warp reaches is below the table.
 | `func_80023ED8` | func_800251C8's last call | `ModelExtras2`, `ST_MODELEXTRAS2` | 0 in 2,266 |
 | `func_800241D0` | the model list: the entity records (0xD4 bytes from 0x801BA138) named by the u16 list at 0x801C023C, counted at 0x801C0238, each through func_80022678 | `Models`, `ST_MODELS` | 0 in 1,131 |
 | `func_800246E4` | an effect drawn when a timer kept in vblanks runs out (calls rand()); FT3 and FT4; not read | `Effect246E4`, `ST_EFFECT246E4` | 0 in 1,134 |
-| `func_800251C8` | a second model list, the same shape as func_800241D0's; drew nothing in map 0 | `Models2`, `ST_MODELS2` | 0 in 1,134 |
+| `func_800251C8` | the items lying in the world ("The items" in `docs/GAME_INTERNALS.md`); drew nothing in map 0, which has none | `Models2`, `ST_MODELS2` | 0 in 1,134 |
 | `func_80025C24` | one HUD panel record drawn as a sprite with its mode packet; called by func_80026964 | `HudSprite`, `ST_HUDSPRITE` | 0 in 17,718 |
 | `func_80025E00` | one HUD panel record drawn as an FT4; called by func_80026964 | `HudQuad`, `ST_HUDQUAD` | 0 in 4,454 |
 | `func_80026020` | one HUD panel record drawn as an F4 with its mode packet; called by func_80026964 | `HudFill`, `ST_HUDFILL` | 0 in 4,454 |
@@ -242,8 +242,8 @@ What is called through `FP` is not read.
 
 ## Open
 
-- Which objects `func_800241D0`'s three sites draw, and what `func_800251C8` and
-  `func_80021AC4` draw (creatures, the hands, items are candidates).
+- Which objects `func_800241D0`'s three sites draw. (`func_800251C8` draws the items,
+  `func_80021AC4` the arm.)
 - The leaves `func_8001F954` and `func_8001FD00`.
 - The card screens, a fight on purpose, the area modules' own drawing, `VS.EXE`.
   `scripts/tour.py` reaches 12 areas; the other 24 need an arrival point that holds.
