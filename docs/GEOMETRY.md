@@ -39,7 +39,7 @@ Map 0's start, standing and turning, per call:
 | `0x80026D14` | `func_80021654` | FT4S, now and then | the area load's fade |
 | `0x80026D2C` | `func_80020A80` | GT4 120-200, GT3 11-22, FT4 1-30 | **the scene** (below) |
 | `0x80026D4C` | `func_800241D0` | FT4 26-76, FT3, GT3, GT4, and their S forms | **the models** (below) |
-| `0x80026D54` | `func_800246E4` | FT3 5, FT4 2.5, in one window | an effect on a timer kept in vblanks |
+| `0x80026D54` | `func_800246E4` | FT3 5, FT4 2.5, in one window | **the objects**: the visible objects' list, their effect timers and their models (`docs/SMOOTHING.md`, "The objects") |
 | `0x80026C7C` | `func_80026964(0)` | E1-6 10, sprite 8, F4 2, FT4 2; 80 words | **the HUD**: `func_80025C24` a sprite, `func_80025E00` an FT4, `func_80026020` an F4, each with its mode packet |
 | `0x80026D90` | `func_80028784` | | only when the byte at `0x8017BEA6` is set (by the entity routines `func_80054368` and `func_80054858`: a speaker, probably); text (`func_80028364`, `func_80028220`, `func_800286A8`) |
 | `0x80026D98` | `func_80017680` | | **the swap**: `DrawSync`, `VSync(3)`, the environments, `DrawOTag` |

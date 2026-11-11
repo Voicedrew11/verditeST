@@ -91,6 +91,26 @@ with something moving carried 32 to 303 entity draws a second at 144 fps, one or
 moving entities on every frame; snaps came in two windows only (44 and 39), around area
 loads. Most windows had nothing moving. The acceptance test passes with it on.
 
+**The objects** (the user saw object animations not smoothed, 2026-11-10). The draw
+stage's `func_800246E4` (return `0x80026D54`), which the eye section calls the effect,
+is the visible objects' list (`docs/GAME_INTERNALS.md`, "Effect timers"): it walks the
+u16 indices at `0x801C74C4` (as many as the byte at `0x801C7584`, from the last down)
+into 0x58-byte records from `0x801C2230`, and hands each one with a model to the model
+drawer: position `+0x24` (three s32, the drawer's `a2`), angles `+0x34`/`+0x36`/`+0x38`
+(copied to the scratchpad's `+0xD8`, its `a3`), clip `+2` and clip time u16 `+0x10`
+(the drawer's stack arguments `+0x1C` and `+0x20`), then once more with clip 0x80 and
+time 0 (a second part, unanimated). The routine writes none of those fields itself. A
+temporary probe on the drawer's arguments in map 24, with four animated objects in
+view: their time stepped 0x190 to 0x1A4 a tick and was the **same on every frame of a
+tick**, while the entity list's creature had a new one each frame. The model list's
+carry is now a table of record lists (`patches/RecordCarry.cs`, rows in
+`ModelSmoothing.Lists`), the objects its second row, carried for the listed slots only;
+a slot not listed on the tick before starts from what it is handed. After it, the same
+place: **480 object draws carried a second** (four objects at 120 fps), 0 snaps, every
+frame a new time (`7C3, 809, 84E, 895, ...`, through the wrap at 0x1000). The objects
+appear in map 24 only while the player lives (they died in most tour runs); the HP was
+poked ten times a second to keep them. The acceptance test passes.
+
 **Poses.** The model drawer builds a pose from the u16 at `+0x2A`, passed to
 `func_80034604`/`func_80035AA8` with the pose state at `+0xA4` (per-entity pose slots
 of 0x94 bytes, allocated by `func_800152D0`; not read further). Sampled in map 2, an
