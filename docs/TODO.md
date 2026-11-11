@@ -198,6 +198,12 @@ The gate's test passes (`scripts/acceptance.py`, three runs, 2026-11-09). Still 
   reproduces (2026-11-10, `docs/DEVELOPMENT.md`).
 - ~~The acceptance test fails at "never reached map 1" about one run in four.~~ A
   warp sent into a busy loader (2026-11-10, `docs/DEVELOPMENT.md`); fixed.
+- The agent server's `call` waits for a vblank delivered inside the game's own
+  `VSync`, and under pacing most come from the interrupt poll, so a call can sit
+  queued for the whole run: the acceptance test then fails at "the prompts ran out"
+  on the save screen. Seen 2026-11-10 in most runs with a hook on the camera set-up or
+  the arm, and in some without ("The field of view" in `docs/WIDESCREEN.md`). Not
+  fixed: running calls from another safe point, such as `FramePacing.Boundary`, would.
 - `ST_AUTOSTART=load` takes the first save the card screen offers; picking a slot is
   not done.
 - ~~A main-loop marker for the beacon.~~ Added with a menu marker (2026-11-10,

@@ -90,6 +90,9 @@ St.Widescreen.Configure(Verdite.Core.Game.Env("WIDESCREEN"), Verdite.Core.Game.E
 St.Widescreen.Install();
 St.NearScreen.Configure(Verdite.Core.Game.Env("NEARSCREEN"));
 St.NearScreen.Install();
+// The projection distance, from a chosen field of view (docs/WIDESCREEN.md).
+St.FieldOfView.Configure(Verdite.Core.Game.Env("FOV"));
+St.FieldOfView.Install();
 // The world live behind the in-game menu, not its 320-wide still (docs/WIDESCREEN.md).
 St.MenuWorld.Configure(Verdite.Core.Game.Env("MENUWORLD"), Verdite.Core.Game.Env("MENUWORLD_PROBE"));
 St.MenuWorld.Install();

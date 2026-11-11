@@ -19,6 +19,7 @@ disc. Started 2026-11-10.
 | the cell cull | nothing to widen: built from the player's position alone (below) |
 | the near polygons | `NearScreen.cs`: libgte's division's screen width widened |
 | the packet buffer | measured, below |
+| the field of view | `FieldOfView.cs`: the GTE's H from a chosen angle (below) |
 | the world behind menus | `MenuWorld.cs`: the world drawn live in place of the menu's 320-wide still (below) |
 
 ## The menus
@@ -104,6 +105,34 @@ drops pieces past `OFX ± w/2`, so at 16:9 near pieces in the margin were lost.
 second widened; with it on, **5,300 more primitives drawn (+0.4%) and 7,200 more in
 the margin** than with `ST_NEARSCREEN=0`. Standing at map 0's start nothing changed:
 no near piece there was past the edge.
+
+## The field of view
+
+The game writes the GTE's projection distance H (control register 26) as an
+immediate **300** in its four display set-ups (`func_80016FB8`, `func_800171C8`,
+`func_800172BC`, `func_800173A8`; libgte's `InitGeom` writes 1000 before them) and
+never again; no area module writes it. So the 320-wide screen spans
+2·atan(160/300) = **56°** across, and at 16:9 (margin 54) 71°. Every reader takes H
+from the GTE: libgte's divisions (`func_80075ACC`, `func_80075ECC`, `func_8007636C`,
+`func_8007688C`, `cfc2` 26) and `GpuWorld.SceneIn`.
+
+`FieldOfView.cs` (`ST_FOV`, Settings ▸ Testing ▸ *Field of view*, kept as `st.fov`)
+takes degrees across the 4:3 screen and writes H = 160 / tan(angle/2) at each frame
+boundary, only over the stock 300 or its own last value. Widescreen adds to the sides
+(Hor+). The arm is drawn at the same H, so it looks smaller at a wide angle.
+
+**No hook.** A first version wrote H after the camera set-up (`func_800176A8`) and drew
+the arm at 300 with a pre and post hook on `func_80021AC4`. Either hook alone, even
+writing nothing, stopped the acceptance test's save call (and a direct `call
+80058DC4`) running in most runs: the agent server runs a queued call only on a vblank
+delivered inside the game's own `VSync` (game stack), and with those hooks every vblank
+came from the interrupt poll (`SP 0x0000E000`, `RA` in `func_8001C...`). Without them
+the call ran at `SP 0x807FFF08`, `RA 0x800175C4`, after about 240 vblanks from the
+poll. So the harness depends on where vblanks land, which is open in `docs/TODO.md`.
+
+Measured 2026-11-10: `ST_FOV=90` gives H 160, written on the first frame of play
+(`H 300 -> 160`). **By eye (the user):** the picture at a wide angle, objects at the
+edges (any cull by angle would show as pop-in), the arm's size.
 
 ## The packet buffer
 

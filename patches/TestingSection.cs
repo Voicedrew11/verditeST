@@ -260,6 +260,7 @@ public sealed class TestingSection : ISettingsSection
             Rt.SaveView();
         }
         if (ImGui.IsItemHovered()) ImGui.SetTooltip("Wider shows more of the room, not a stretched 4:3.");
+        FieldOfView.DrawSlider();
         Toggle("HUD at the screen's edges", K(Widescreen.HudKey),
             "Moves the gauges and panels out to the widened edges instead of the 4:3 box.");
         Toggle("The world live behind the menu", K("st.menuworld"),
