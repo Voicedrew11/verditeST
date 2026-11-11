@@ -79,6 +79,14 @@ velocity at 0, so the view stops dead with the hand. Mouse right is a negative s
 as Left raises the yaw; mouse down raises the pitch, the way R2 does. The mouse
 buttons press Square, Triangle and Cross (the hands and the action; `ST_MOUSE_BUTTONS`).
 
+**Giving the pointer back** (`patches/MenuPointer.cs`, as Verdite3's MenuWorld does). The
+game's menu, `func_80058EF4`, runs the whole session and returns when it closes, so a pre
+hook on it is `Mouse.Suspend(true)` (the pointer is let go and the mouse buttons stop
+pressing pad buttons in the menu) and a post hook is `Suspend(false)` (captured again).
+F1 showing the menu bar while captured lets the pointer go too. Before this, nothing but
+switching windows freed a captured pointer: the menu and the bar were reached blind, and
+clicks in the menu pressed Square, Triangle and Cross.
+
 ### Measured
 
 2026-11-10, with the synthetic hand (`ST_MOUSE_SYNTH=yaw,pitch`: that step every tick,

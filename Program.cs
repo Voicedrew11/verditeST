@@ -137,6 +137,8 @@ Verdite.Core.Mouse.Configure(St.MouseLook.Game);
 Verdite.Core.Mouse.Install();
 St.MouseLook.Configure(Verdite.Core.Game.Env("MOUSE_SYNTH"), Verdite.Core.Game.Env("MOUSE_PROBE"));
 St.MouseLook.Install();
+// The pointer let go while the game's menu or the menu bar wants it (MenuPointer).
+St.MenuPointer.Install();
 // The port's switches, live and kept (Settings ▸ Testing, docs/DEVELOPMENT.md).
 St.TestingSection.Install();
 // First-run setup from config/onboarding.json, in the game (there is no launcher yet).
